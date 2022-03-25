@@ -1,0 +1,81 @@
+Arguments: 
+  C:\Program Files\nodejs\node.exe C:\Users\hadan\AppData\Roaming\npm\node_modules\yarn\bin\yarn.js
+
+PATH: 
+  C:\Users\hadan\AppData\Local\oh-my-posh;C:\Users\hadan\Downloads\WINDOWS.X64_193000_db_home\bin;C:\Users\hadan\Downloads\WINDOWS.X64_213000_db_home\bin;C:\app\hadan\product\21c\dbhomeXE\bin;C:\Program Files\Common Files\Oracle\Java\javapath;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\Python310\Scripts\;C:\Python310\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\ProgramData\chocolatey\bin;C:\Program Files\Git\cmd;C:\Program Files\nodejs\;C:\Program Files\LLVM\bin;C:\Program Files\Java\jdk-17.0.2\bin;C:\Program Files\dotnet\;C:\Users\hadan\AppData\Local\Android\Sdk\platform-tools;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\170\Tools\Binn\;C:\Program Files (x86)\Microsoft SQL Server\150\Tools\Binn\;C:\Program Files\Microsoft SQL Server\150\Tools\Binn\;C:\Program Files\Microsoft SQL Server\150\DTS\Binn\;C:\Program Files (x86)\Microsoft SQL Server\150\DTS\Binn\;C:\Program Files\Azure Data Studio\bin;C:\Program Files\Microsoft SQL Server\130\Tools\Binn\;C:\Program Files\MySQL\MySQL Shell 8.0\bin\;C:\Users\hadan\AppData\Local\Microsoft\WindowsApps;C:\Users\hadan\AppData\Local\Programs\Microsoft VS Code\bin;C:\tools\neovim\Neovim\bin;C:\Users\hadan\AppData\Roaming\npm;C:\Users\hadan\.dotnet\tools;C:\Users\hadan\AppData\Local\Programs\oh-my-posh\bin
+
+Yarn version: 
+  1.22.17
+
+Node version: 
+  16.13.2
+
+Platform: 
+  win32 x64
+
+Trace: 
+  SyntaxError: C:\Users\hadan\Documents\UIT\Phat_Trien_Ung_Dung_Tren_Thiet_Bi_Di_Dong\TH\Do_An_CK\client\package.json: Unexpected token } in JSON at position 278
+      at JSON.parse (<anonymous>)
+      at C:\Users\hadan\AppData\Roaming\npm\node_modules\yarn\lib\cli.js:1625:59
+      at Generator.next (<anonymous>)
+      at step (C:\Users\hadan\AppData\Roaming\npm\node_modules\yarn\lib\cli.js:310:30)
+      at C:\Users\hadan\AppData\Roaming\npm\node_modules\yarn\lib\cli.js:321:13
+
+npm manifest: 
+  {
+    "name": "client",
+    "version": "1.0.0",
+    "main": "./src/AppEntry.js",
+    "scripts": {
+      "start": "expo start",
+      "android": "expo start --android",
+      "ios": "expo start --ios",
+      "web": "expo start --web",
+      "eject": "expo eject",
+      "test": "jest --watchAll",
+    },
+    "jest": {
+      "preset": "jest-expo"
+    },
+    "dependencies": {
+      "@expo/vector-icons": "^12.0.0",
+      "@react-native-async-storage/async-storage": "^1.17.0",
+      "@react-native-community/slider": "^4.2.1",
+      "@react-navigation/bottom-tabs": "^6.0.5",
+      "@react-navigation/native": "^6.0.2",
+      "@react-navigation/native-stack": "^6.1.0",
+      "expo": "~44.0.0",
+      "expo-asset": "~8.4.4",
+      "expo-constants": "~13.0.0",
+      "expo-font": "~10.0.4",
+      "expo-linking": "~3.0.0",
+      "expo-splash-screen": "~0.14.0",
+      "expo-status-bar": "~1.2.0",
+      "expo-web-browser": "~10.1.0",
+      "react": "17.0.1",
+      "react-dom": "17.0.1",
+      "react-native": "0.64.3",
+      "react-native-safe-area-context": "3.3.2",
+      "react-native-screens": "~3.10.1",
+      "react-native-svg": "^12.3.0",
+      "react-native-track-player": "^2.1.2",
+      "react-native-web": "0.17.1"
+    },
+    "devDependencies": {
+      "@babel/core": "^7.12.9",
+      "@types/react": "~17.0.21",
+      "@types/react-native": "~0.64.12",
+      "expo-yarn-workspaces": "^1.7.0",
+      "jest": "^26.6.3",
+      "jest-expo": "~44.0.1",
+      "react-test-renderer": "17.0.1",
+      "typescript": "~4.3.5"
+    },
+    "private": true
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
