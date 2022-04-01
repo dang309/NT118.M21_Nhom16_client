@@ -1,12 +1,43 @@
-import { useState } from "react";
-import { StyleSheet, Image, TextInput, TouchableOpacity } from "react-native";
+import { useState, useEffect } from "react";
+import {
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Text,
+  View,
+  ScrollView,
+} from "react-native";
 
-import EditScreenInfo from "../components/EditScreenInfo";
-import { Text, View } from "../components/Themed";
+import {
+  TextInput,
+  Button,
+  Divider,
+  HelperText,
+  Snackbar,
+} from "react-native-paper";
 
-import { Icon } from "../components";
+import { Icon, GGButton } from "../components";
 
 import { NavigationRegisterProps } from "../types";
+
+import { useFormik, Form, FormikProvider } from "formik";
+
+import { useAppDispatch } from "../app/hook";
+import { SET_USER } from "../features/UserSlice";
+
+import * as Yup from "yup";
+import { REQUEST } from "../utils";
+
+import {
+  REQUIRED_USERNAME,
+  REQUIRED_EMAIL,
+  REQUIRED_PASSWORD,
+  INVALID_EMAIL,
+  MUST_MATCHED_CONFIRM_PASSWORD,
+  ALREADY_HAD_ACCOUNT,
+  SIGN_UP,
+  SIGN_IN,
+} from "../constants/Auth";
 
 const BORDER_RADIUS = 8;
 const BORDER_COLOR = "#e5e5e5";
@@ -15,142 +46,249 @@ const PRIMARY_COLOR = "#00ADB5";
 export default function RegisterScreen({
   navigation,
 }: NavigationRegisterProps) {
-  const [username, setUsername] = useState<string>("");
+  const dispatch = useAppDispatch();
+
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [error, setError] = useState("");
 
-  const handleChangeUsername = (newText: string) => {
-    setUsername(newText);
+  const RegisterSchema = Yup.object().shape({
+    username: Yup.string().required(REQUIRED_USERNAME),
+    email: Yup.string().email(INVALID_EMAIL).required(REQUIRED_EMAIL),
+    password: Yup.string().required(REQUIRED_PASSWORD),
+    confirmPassword: Yup.string().oneOf(
+      [Yup.ref("password"), null],
+      MUST_MATCHED_CONFIRM_PASSWORD
+    ),
+  });
+
+  const formik = useFormik({
+    initialValues: {
+      username: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+    validationSchema: RegisterSchema,
+    validateOnChange: false,
+    validateOnBlur: false,
+    onSubmit: async (values) => {
+      try {
+        setError("");
+        const dataToSend = {
+          username: values.username.trim(),
+          email: values.email.trim(),
+          password: values.password.trim(),
+        };
+        const res = await REQUEST({
+          method: "POST",
+          url: "/auth/register",
+          data: dataToSend,
+        });
+
+        if (res && res.data.result) {
+          navigation.navigate("Login");
+        }
+      } catch (err) {
+        setError(err.response.data.message);
+      }
+    },
+  });
+
+  const {
+    errors,
+    touched,
+    values,
+    isSubmitting,
+    handleSubmit,
+    handleBlur,
+    handleChange,
+    getFieldProps,
+  } = formik;
+
+  const handleToggleShowPassword = () => {
+    setShowPassword((prev) => !prev);
   };
 
-  const handleChangeEmail = (newText: string) => {
-    setEmail(newText);
-  };
-
-  const handleChangePassword = (newText: string) => {
-    setPassword(newText);
-  };
-
-  const handleChangeConfirmPassword = (newText: string) => {
-    setConfirmPassword(newText);
+  const handleSignInWithGG = async () => {
+    console.log("logged in");
   };
 
   return (
-    <View style={styles.container}>
-      <View style={{ justifyContent: "center" }}>
-        <Text style={styles.logo}>N16 - Logo</Text>
-      </View>
-      <View style={{ justifyContent: "center", marginBottom: 16 }}>
-        <TextInput
-          value={username}
-          onChangeText={handleChangeUsername}
-          placeholder="Tên đăng nhập"
-          style={{ ...styles.input, marginBottom: 8 }}
-        />
-        <TextInput
-          value={email}
-          onChangeText={handleChangeEmail}
-          placeholder="Email"
-          style={{ ...styles.input, marginBottom: 8 }}
-        />
-
-        <TextInput
-          value={password}
-          onChangeText={handleChangePassword}
-          placeholder="Mật khẩu"
-          style={{ ...styles.input, marginBottom: 8 }}
-          secureTextEntry
-        />
-        <TextInput
-          value={confirmPassword}
-          onChangeText={handleChangeConfirmPassword}
-          placeholder="Nhập lại mật khẩu"
-          style={{ ...styles.input, marginBottom: 8 }}
-          secureTextEntry
-        />
-      </View>
-
-      <View style={{ marginBottom: 16 }}>
-        <TouchableOpacity
-          onPress={() => console.log("dasd")}
-          disabled={
-            !username ||
-            !email.length ||
-            !password.length ||
-            !confirmPassword.length
-          }
-        >
-          <View
-            style={{
-              ...styles.signInBtn,
-              opacity:
-                !username ||
-                !email.length ||
-                !password.length ||
-                !confirmPassword.length
-                  ? 0.36
-                  : 1,
-            }}
-          >
-            <Text
-              style={{
-                color: "#ffffff",
-                textAlign: "center",
-                fontWeight: "bold",
-              }}
-            >
-              Đăng ký
-            </Text>
-          </View>
-        </TouchableOpacity>
-
-        <Text style={{ textAlign: "center" }}>
-          Đã có tài khoản?{" "}
-          <Text
-            style={{ fontWeight: "bold", color: PRIMARY_COLOR }}
-            onPress={() => navigation.navigate("Login")}
-          >
-            Đăng nhập
-          </Text>
-        </Text>
-      </View>
-
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: "#fff",
+        flexDirection: "row",
+        alignItems: "center",
+      }}
+    >
       <View
         style={{
+          borderStartColor: "#fff",
           flexDirection: "row",
-          justifyContent: "center",
           alignItems: "center",
-          marginBottom: 16,
         }}
       >
-        <View style={{ height: 1, backgroundColor: "#000" }}></View>
-        <View>
-          <Text style={{ color: "#999999" }}>Hoặc</Text>
-        </View>
-        <View style={{ height: 1, backgroundColor: BORDER_COLOR }}></View>
-      </View>
+        <ScrollView>
+          <View style={styles.container}>
+            <View style={{ justifyContent: "center" }}>
+              <Text style={styles.logo}>N16 - Logo</Text>
+            </View>
+            <View style={{ justifyContent: "center", marginBottom: 16 }}>
+              <View style={{ marginBottom: 8 }}>
+                <TextInput
+                  value={values.username}
+                  onChangeText={handleChange("username")}
+                  placeholder="Tên đăng nhập"
+                  label="Tên đăng nhập"
+                  mode="outlined"
+                  autoComplete="off"
+                  outlineColor="#e5e5e5"
+                  right={<TextInput.Icon name="person-outline" color="#999" />}
+                  error={Boolean(errors.username)}
+                  style={{ ...styles.input }}
+                />
+                {errors.username?.length && (
+                  <HelperText type="error" visible={!!errors.username?.length}>
+                    <Text>{errors.username}</Text>
+                  </HelperText>
+                )}
+              </View>
+              <View style={{ marginBottom: 8 }}>
+                <TextInput
+                  value={values.email}
+                  onChangeText={handleChange("email")}
+                  placeholder="Email"
+                  label="Email"
+                  mode="outlined"
+                  autoComplete="off"
+                  outlineColor="#e5e5e5"
+                  right={<TextInput.Icon name="at" color="#999" />}
+                  error={Boolean(errors.email)}
+                  style={{ ...styles.input }}
+                />
+                {errors.email?.length && (
+                  <HelperText type="error" visible={!!errors.email?.length}>
+                    <Text>{errors.email}</Text>
+                  </HelperText>
+                )}
+              </View>
+              <View style={{ marginBottom: 8 }}>
+                <TextInput
+                  value={values.password}
+                  onChangeText={handleChange("password")}
+                  placeholder="Mật khẩu"
+                  label="Mật khẩu"
+                  mode="outlined"
+                  autoComplete="off"
+                  outlineColor="#e5e5e5"
+                  right={
+                    showPassword ? (
+                      <TextInput.Icon
+                        name="eye-off"
+                        color="#999"
+                        onPress={handleToggleShowPassword}
+                      />
+                    ) : (
+                      <TextInput.Icon
+                        name="eye"
+                        color="#999"
+                        onPress={handleToggleShowPassword}
+                      />
+                    )
+                  }
+                  error={Boolean(errors.password)}
+                  style={{ ...styles.input }}
+                  secureTextEntry={!showPassword}
+                />
+                {errors.password?.length && (
+                  <HelperText type="error" visible={!!errors.password}>
+                    <Text>{errors.password}</Text>
+                  </HelperText>
+                )}
+              </View>
 
-      <View>
-        <TouchableOpacity>
-          <View
+              <View style={{ marginBottom: 8 }}>
+                <TextInput
+                  value={values.confirmPassword}
+                  onChangeText={handleChange("confirmPassword")}
+                  placeholder="Mật khẩu"
+                  label="Mật khẩu"
+                  mode="outlined"
+                  autoComplete="off"
+                  outlineColor="#e5e5e5"
+                  right={
+                    showPassword ? (
+                      <TextInput.Icon
+                        name="eye-off"
+                        color="#999"
+                        onPress={handleToggleShowPassword}
+                      />
+                    ) : (
+                      <TextInput.Icon
+                        name="eye"
+                        color="#999"
+                        onPress={handleToggleShowPassword}
+                      />
+                    )
+                  }
+                  error={Boolean(errors.confirmPassword)}
+                  style={{ ...styles.input }}
+                  secureTextEntry={!showPassword}
+                />
+                {errors.confirmPassword?.length && (
+                  <HelperText type="error" visible={!!errors.confirmPassword}>
+                    <Text>{errors.confirmPassword}</Text>
+                  </HelperText>
+                )}
+              </View>
+            </View>
+
+            <View style={{ marginBottom: 16 }}>
+              <Button
+                mode="contained"
+                disabled={
+                  !values.username ||
+                  !values.email.length ||
+                  !values.password.length ||
+                  !values.confirmPassword.length
+                }
+                loading={isSubmitting}
+                onPress={handleSubmit}
+                style={{ marginBottom: 8 }}
+              >
+                {SIGN_UP}
+              </Button>
+
+              <Text style={{ textAlign: "center" }}>
+                {ALREADY_HAD_ACCOUNT}{" "}
+                <Text
+                  style={{ fontWeight: "bold", color: PRIMARY_COLOR }}
+                  onPress={() => navigation.navigate("Login")}
+                >
+                  {SIGN_IN}
+                </Text>
+              </Text>
+            </View>
+
+            <View>
+              <GGButton />
+            </View>
+          </View>
+
+          <Snackbar
+            visible={!!error.length}
+            duration={5000}
+            onDismiss={() => setError("")}
             style={{
-              flexDirection: "row",
-              justifyContent: "center",
-              alignItems: "center",
-              backgroundColor: "#ffffff",
-              borderWidth: 1,
-              borderColor: BORDER_COLOR,
-              padding: 8,
-              borderRadius: BORDER_RADIUS,
+              backgroundColor: "#ff0033",
             }}
           >
-            <Text style={{ textAlign: "center", marginRight: 8 }}>
-              Đăng nhập bằng
-            </Text>
-            <Icon name="logo-google" size={24} color="#EA4335" />
-          </View>
-        </TouchableOpacity>
+            {error}
+          </Snackbar>
+        </ScrollView>
       </View>
     </View>
   );
@@ -161,6 +299,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     padding: 32,
+    backgroundColor: "#fff",
   },
   logo: {
     textAlign: "center",
@@ -168,12 +307,7 @@ const styles = StyleSheet.create({
   },
   input: {
     width: "100%",
-    borderWidth: 1,
-    borderColor: BORDER_COLOR,
-    borderRadius: BORDER_RADIUS,
-    padding: 8,
-    paddingLeft: 24,
-    backgroundColor: "#f2f2f2",
+    backgroundColor: "#fff",
   },
   signInBtn: {
     backgroundColor: PRIMARY_COLOR,

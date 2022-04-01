@@ -17,10 +17,21 @@ import {
   TouchableOpacity,
   View,
   Text,
+  Button,
 } from "react-native";
+
+import { IconButton, Menu, Divider } from "react-native-paper";
 
 import Colors from "../constants/Colors";
 import useColorScheme from "../hooks/useColorScheme";
+
+import PROFILE_CONSTANT from "./../constants/Profile";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import { CLEAR_USER, SET_USER } from "../features/UserSlice";
+
+import { REQUEST } from "../utils";
 
 // Screens
 import {
@@ -41,6 +52,11 @@ import {
   RootTabParamList,
   RootTabScreenProps,
 } from "../types";
+
+import { useAppDispatch, useAppSelector } from "./../app/hook";
+import { TOGGLE_PROFILE_ACTIONS_DIALOG } from "../features/UserSlice";
+import { IUser } from "./../features/UserSlice";
+import { useNavigation } from "@react-navigation/native";
 
 export default function Navigation({
   colorScheme,
@@ -64,7 +80,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function RootNavigator() {
   return (
-    <Stack.Navigator initialRouteName="Root">
+    <Stack.Navigator initialRouteName="Login">
       <Stack.Screen
         name="Login"
         component={LoginScreen}
@@ -184,6 +200,33 @@ const BottomTab = createBottomTabNavigator<RootTabParamList>();
 
 function BottomTabNavigator() {
   const colorScheme = useColorScheme();
+  const dispatch = useAppDispatch();
+  const cUser = useAppSelector<IUser>((state) => state.user);
+  const navigation = useNavigation();
+
+  const handleToggleProfileActionsDialog = () => {
+    dispatch(TOGGLE_PROFILE_ACTIONS_DIALOG());
+  };
+
+  const handleLogout = async () => {
+    try {
+      const tokens = await AsyncStorage.getItem("@tokens");
+
+      await REQUEST({
+        method: "POST",
+        url: "/auth/logout",
+        data: {
+          refreshToken: tokens?.length ? JSON.parse(tokens).refresh.token : "",
+        },
+      });
+      await AsyncStorage.removeItem("@tokens");
+      dispatch(CLEAR_USER());
+      navigation.navigate("Login");
+      handleToggleProfileActionsDialog();
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   return (
     <BottomTab.Navigator
@@ -202,7 +245,55 @@ function BottomTabNavigator() {
 
       <BottomTab.Screen name="CryptoMarket" component={NewsFeedScreen} />
 
-      <BottomTab.Screen name="Profile" component={ProfileScreen} />
+      <BottomTab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          headerShown: true,
+          headerLeft: () => (
+            <IconButton
+              icon="arrow-back"
+              size={24}
+              onPress={() => navigation.goBack()}
+            />
+          ),
+          title: cUser.currentUserInfo.user.username || "Profile",
+          headerRight: () => (
+            <>
+              <Menu
+                visible={
+                  !!cUser?.currentUserInfo?.actions?.showProfileActionsDialog
+                }
+                onDismiss={handleToggleProfileActionsDialog}
+                anchor={
+                  <IconButton
+                    icon="ellipsis-vertical"
+                    size={24}
+                    onPress={handleToggleProfileActionsDialog}
+                  />
+                }
+              >
+                <Menu.Item
+                  onPress={() => {}}
+                  title={PROFILE_CONSTANT.EDIT_PROFILE}
+                  icon="pencil"
+                />
+                <Menu.Item
+                  onPress={() => {}}
+                  title={PROFILE_CONSTANT.BOOKMARK}
+                  icon="bookmark"
+                />
+                <Divider style={{ height: 1 }} />
+                <Menu.Item
+                  onPress={handleLogout}
+                  title={PROFILE_CONSTANT.SIGN_OUT}
+                  icon="log-out-outline"
+                />
+              </Menu>
+            </>
+          ),
+        }}
+      />
     </BottomTab.Navigator>
   );
 }

@@ -53,3 +53,27 @@ export type NavigationRegisterProps = NativeStackScreenProps<
   RootStackParamList,
   "Register"
 >;
+
+export type User = {
+  user: {
+    id: string;
+    email: string;
+    username: string;
+    bio: string;
+    avatar: string;
+    following: string;
+    followers: string;
+    balance_dcoin: number;
+    hobbies: string;
+  };
+  tokens: {
+    access: {
+      token: string;
+      expires: string;
+    };
+    refresh: {
+      token: string;
+      expires: string;
+    };
+  };
+};

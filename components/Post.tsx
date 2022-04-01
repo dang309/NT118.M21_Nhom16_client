@@ -7,6 +7,8 @@ import Slider from "@react-native-community/slider";
 
 import { Audio, AVPlaybackStatus } from "expo-av";
 
+import { REQUEST } from "../utils";
+
 const Post = () => {
   const [audioStatus, setAudioStatus] = useState<boolean>(false);
   const [sound, setSound] = useState<Audio.Sound | null>(null);
@@ -79,10 +81,6 @@ const Post = () => {
 
   useEffect(() => {
     loadSound();
-
-    // return () => {
-    //   sound?.unloadAsync();
-    // };
   }, []);
 
   useEffect(() => {
@@ -124,18 +122,20 @@ const Post = () => {
 
       <View style={styles.body}>
         <Image
-          style={{ width: "50%", height: "100%" }}
-          source={require("../assets/images/271321844_1925057337680940_2884675758387849294_n.jpg")}
+          style={{
+            width: "45%",
+            height: "95%",
+            borderRadius: 16,
+            marginHorizontal: "auto",
+          }}
+          source={require("../assets/images/271987287_1729402474071277_8864390323789019617_n.png")}
         />
         <View
           style={{
             alignItems: "center",
             justifyContent: "center",
             width: "50%",
-            borderTopColor: "#e5e5e5",
-            borderBottomColor: "#e5e5e5",
-            borderTopWidth: 1,
-            borderBottomWidth: 1,
+
             paddingVertical: 16,
           }}
         >
@@ -313,16 +313,13 @@ const styles = StyleSheet.create({
   },
   body: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "space-evenly",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 12,
-    },
-    shadowOpacity: 0.58,
-    shadowRadius: 16.0,
-    elevation: 20,
+
+    borderTopColor: "#e5e5e5",
+    borderBottomColor: "#e5e5e5",
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
 
     marginBottom: 8,
   },
