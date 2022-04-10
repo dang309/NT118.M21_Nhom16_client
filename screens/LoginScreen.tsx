@@ -190,6 +190,7 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
               textAlign: "right",
               fontWeight: "bold",
             }}
+            onPress={() => navigation.navigate("ForgotPassword")}
           >
             Quên mật khẩu
           </Text>

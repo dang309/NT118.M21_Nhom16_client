@@ -7,3 +7,6 @@ export const SIGN_IN = "Đăng nhập";
 export const SIGN_UP = "Đăng ký";
 export const ALREADY_HAD_ACCOUNT = "Đã có tài khoản?";
 export const NOT_ALREADY_HAD_ACCOUNT = "Chưa có tài khoản?";
+export const NEXT = "Tiếp theo";
+export const FORGOT_PASSWORD = "Quên mật khẩu";
+export const RETRIEVE_PASSWORD = "Lấy lại mật khẩu";

@@ -41,6 +41,7 @@ import {
   NotFoundScreen,
   LoginScreen,
   RegisterScreen,
+  ForgotPasswordScreen,
 } from "../screens";
 
 // Components
@@ -89,6 +90,11 @@ function RootNavigator() {
       <Stack.Screen
         name="Register"
         component={RegisterScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ForgotPassword"
+        component={ForgotPasswordScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen

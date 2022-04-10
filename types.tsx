@@ -19,6 +19,9 @@ declare global {
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
+  ForgotPassword: undefined;
+  ResetPassword: undefined;
+  EmailVerification: undefined;
   Root: NavigatorScreenParams<RootTabParamList> | undefined;
   NotFound: undefined;
 };
@@ -32,10 +35,6 @@ export type RootTabParamList = {
   AddPost: undefined;
   CryptoMarket: undefined;
   Profile: undefined;
-  EditProfile: undefined;
-  ResetPassword: undefined;
-  EmailVerification: undefined;
-  ForgotPassword: undefined;
 };
 
 export type RootTabScreenProps<Screen extends keyof RootTabParamList> =
@@ -52,6 +51,11 @@ export type NavigationLoginProps = NativeStackScreenProps<
 export type NavigationRegisterProps = NativeStackScreenProps<
   RootStackParamList,
   "Register"
+>;
+
+export type NavigationForgotPasswordProps = NativeStackScreenProps<
+  RootStackParamList,
+  "ForgotPassword"
 >;
 
 export type User = {
