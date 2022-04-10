@@ -9,3 +9,5 @@ export { default as ProfileScreen } from "./ProfileScreen";
 export { default as EditProfileScreen } from "./EditProfileScreen";
 export { default as RankingScreen } from "./RankingScreen";
 export { default as NotFoundScreen } from "./NotFoundScreen";
+export { default as ChatContactScreen } from "./ChatContactScreen";
+export { default as ChatConversationScreen } from "./ChatConversationScreen";
