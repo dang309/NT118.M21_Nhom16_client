@@ -31,6 +31,8 @@ import { REQUEST } from "../utils";
 
 import * as AUTH_CONSTANT from "../constants/Auth";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 const BORDER_RADIUS = 8;
 const BORDER_COLOR = "#e5e5e5";
 const PRIMARY_COLOR = "#00ADB5";
@@ -68,19 +70,21 @@ export default function ResetPasswordScreen({
     onSubmit: async (values) => {
       try {
         setError("");
-        // const dataToSend = {
-        //   password: values.password.trim(),
-        // };
-        // const res = await REQUEST({
-        //   method: "POST",
-        //   url: "/auth/reset-password",
-        //   data: dataToSend,
-        // });
+        const _email = await AsyncStorage.getItem("@email/retrieve-password");
+        const dataToSend = {
+          email: _email,
+          password: values.password.trim(),
+        };
+        const res = await REQUEST({
+          method: "POST",
+          url: "/auth/reset-password",
+          data: dataToSend,
+        });
 
-        // if (res && res.data.result) {
-        //   navigation.navigate("Login");
-        // }
-        navigation.navigate("Login");
+        if (res && res.data.result) {
+          await AsyncStorage.removeItem("@email/retrieve-password");
+          navigation.navigate("Login");
+        }
       } catch (err) {
         setError(err.response.data.message);
       }
@@ -214,6 +218,17 @@ export default function ResetPasswordScreen({
                 {AUTH_CONSTANT.NEXT}
               </Button>
             </View>
+
+            <Text
+              style={{
+                color: PRIMARY_COLOR,
+                textAlign: "center",
+                fontWeight: "bold",
+              }}
+              onPress={() => navigation.navigate("Login")}
+            >
+              {AUTH_CONSTANT.SIGN_IN}
+            </Text>
           </View>
 
           <Snackbar

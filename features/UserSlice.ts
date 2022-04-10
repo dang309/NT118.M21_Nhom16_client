@@ -63,18 +63,14 @@ const UserSlice = createSlice({
   initialState: INITIAL_STATE,
   reducers: {
     SET_USER: (state, action) => {
-      state.currentUserInfo = action.payload;
+      Object.assign(state.currentUserInfo, { ...action.payload });
     },
     CLEAR_USER: (state) => {
       Object.assign(state.currentUserInfo, INITIAL_STATE);
     },
     TOGGLE_PROFILE_ACTIONS_DIALOG: (state) => {
-      Object.assign(state.currentUserInfo, {
-        actions: {
-          showProfileActionsDialog:
-            !state.currentUserInfo.actions.showProfileActionsDialog,
-        },
-      });
+      state.currentUserInfo.actions.showProfileActionsDialog =
+        !state.currentUserInfo.actions.showProfileActionsDialog;
     },
   },
 });

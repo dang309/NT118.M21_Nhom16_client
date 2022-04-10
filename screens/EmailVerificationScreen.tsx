@@ -62,20 +62,18 @@ export default function EmailVerificationScreen({
     onSubmit: async (values) => {
       try {
         setError("");
-        // const dataToSend = {
-        //   otp: values.otp.toString().trim(),
-        // };
-        // const res = await REQUEST({
-        //   method: "POST",
-        //   url: "/auth/forgot-password",
-        //   data: dataToSend,
-        // });
+        const dataToSend = {
+          otp: values.otp.toString().trim(),
+        };
+        const res = await REQUEST({
+          method: "POST",
+          url: "/auth/verify-email",
+          data: dataToSend,
+        });
 
-        // if (res && res.data.result) {
-        //   dispatch(SET_USER(res.data.data));
-        //   navigation.navigate("ResetPassword");
-        // }
-        navigation.navigate("ResetPassword");
+        if (res && res.data.result) {
+          navigation.navigate("ResetPassword");
+        }
       } catch (err) {
         setError(err.response.data.message);
       }
@@ -100,20 +98,6 @@ export default function EmailVerificationScreen({
   const handleSignInWithGG = async () => {
     console.log("logged in");
   };
-
-  const checkAuth = async () => {
-    let tokens = await AsyncStorage.getItem("@tokens");
-    if (tokens?.length) {
-      const _tokens = JSON.parse(tokens);
-      if (new Date().valueOf() < new Date(_tokens.access.expires).valueOf()) {
-        navigation.navigate("Root");
-      }
-    }
-  };
-
-  useEffect(() => {
-    checkAuth();
-  }, []);
 
   return (
     <>
@@ -146,7 +130,7 @@ export default function EmailVerificationScreen({
           </View>
         </View>
 
-        <View style={{ marginBottom: 16 }}>
+        <View style={{ marginBottom: 4 }}>
           <Button
             mode="contained"
             disabled={!values.otp.length}
@@ -157,6 +141,17 @@ export default function EmailVerificationScreen({
             {AUTH_CONSTANT.NEXT}
           </Button>
         </View>
+
+        <Text
+          style={{
+            color: PRIMARY_COLOR,
+            textAlign: "center",
+            fontWeight: "bold",
+          }}
+          onPress={() => navigation.navigate("Login")}
+        >
+          {AUTH_CONSTANT.SIGN_IN}
+        </Text>
       </View>
 
       <Snackbar

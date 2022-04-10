@@ -80,7 +80,10 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
           navigation.navigate("Root");
         }
       } catch (err) {
-        setError(err.response.data.message);
+        console.log(err);
+        if (err.response) {
+          setError(err.response.data.message);
+        }
       }
     },
   });
@@ -188,7 +191,7 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
             }}
             onPress={() => navigation.navigate("ForgotPassword")}
           >
-            Quên mật khẩu
+            {AUTH_CONSTANT.FORGOT_PASSWORD}
           </Text>
         </View>
 

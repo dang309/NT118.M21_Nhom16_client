@@ -43,8 +43,6 @@ export default function ForgotPasswordScreen({
   const dispatch = useAppDispatch();
   const theme = useColorScheme();
 
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState("");
 
@@ -64,20 +62,22 @@ export default function ForgotPasswordScreen({
     onSubmit: async (values) => {
       try {
         setError("");
-        // const dataToSend = {
-        //   email: values.email.trim(),
-        // };
-        // const res = await REQUEST({
-        //   method: "POST",
-        //   url: "/auth/forgot-password",
-        //   data: dataToSend,
-        // });
+        const dataToSend = {
+          email: values.email.trim(),
+        };
+        const res = await REQUEST({
+          method: "POST",
+          url: "/auth/forgot-password",
+          data: dataToSend,
+        });
 
-        // if (res && res.data.result) {
-        //   dispatch(SET_USER(res.data.data));
-        //   navigation.navigate("EmailVerification");
-        // }
-        navigation.navigate("EmailVerification");
+        if (res && res.data.result) {
+          await AsyncStorage.setItem(
+            "@email/retrieve-password",
+            dataToSend.email
+          );
+          navigation.navigate("EmailVerification");
+        }
       } catch (err) {
         setError(err.response.data.message);
       }
@@ -158,6 +158,17 @@ export default function ForgotPasswordScreen({
             {AUTH_CONSTANT.NEXT}
           </Button>
         </View>
+
+        <Text
+          style={{
+            color: PRIMARY_COLOR,
+            textAlign: "center",
+            fontWeight: "bold",
+          }}
+          onPress={() => navigation.navigate("Login")}
+        >
+          {AUTH_CONSTANT.SIGN_IN}
+        </Text>
       </View>
 
       <Snackbar

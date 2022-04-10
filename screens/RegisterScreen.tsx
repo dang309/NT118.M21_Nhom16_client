@@ -28,16 +28,7 @@ import { SET_USER } from "../features/UserSlice";
 import * as Yup from "yup";
 import { REQUEST } from "../utils";
 
-import {
-  REQUIRED_USERNAME,
-  REQUIRED_EMAIL,
-  REQUIRED_PASSWORD,
-  INVALID_EMAIL,
-  MUST_MATCHED_CONFIRM_PASSWORD,
-  ALREADY_HAD_ACCOUNT,
-  SIGN_UP,
-  SIGN_IN,
-} from "../constants/Auth";
+import * as AUTH_CONSTANT from "../constants/Auth";
 
 const BORDER_RADIUS = 8;
 const BORDER_COLOR = "#e5e5e5";
@@ -52,10 +43,12 @@ export default function RegisterScreen({
   const [error, setError] = useState("");
 
   const RegisterSchema = Yup.object().shape({
-    username: Yup.string().required(REQUIRED_USERNAME),
-    email: Yup.string().email(INVALID_EMAIL).required(REQUIRED_EMAIL),
+    username: Yup.string().required(AUTH_CONSTANT.REQUIRED_USERNAME),
+    email: Yup.string()
+      .email(AUTH_CONSTANT.INVALID_EMAIL)
+      .required(AUTH_CONSTANT.REQUIRED_EMAIL),
     password: Yup.string()
-      .required(REQUIRED_PASSWORD)
+      .required(AUTH_CONSTANT.REQUIRED_PASSWORD)
       .min(8, AUTH_CONSTANT.MIN_LENGTH_PASSWORD)
       .matches(
         /^(?=.*[0-9])(?=.*[a-zA-Z])([a-zA-Z0-9]+)$/,
@@ -63,7 +56,7 @@ export default function RegisterScreen({
       ),
     confirmPassword: Yup.string().oneOf(
       [Yup.ref("password"), null],
-      MUST_MATCHED_CONFIRM_PASSWORD
+      AUTH_CONSTANT.MUST_MATCHED_CONFIRM_PASSWORD
     ),
   });
 
@@ -183,8 +176,8 @@ export default function RegisterScreen({
                 <TextInput
                   value={values.password}
                   onChangeText={handleChange("password")}
-                  placeholder="Mật khẩu"
-                  label="Mật khẩu"
+                  placeholder={AUTH_CONSTANT.PASSWORD}
+                  label={AUTH_CONSTANT.PASSWORD}
                   mode="outlined"
                   autoComplete="off"
                   outlineColor="#e5e5e5"
@@ -218,8 +211,8 @@ export default function RegisterScreen({
                 <TextInput
                   value={values.confirmPassword}
                   onChangeText={handleChange("confirmPassword")}
-                  placeholder="Mật khẩu"
-                  label="Mật khẩu"
+                  placeholder={AUTH_CONSTANT.CONFIRM_PASSWORD}
+                  label={AUTH_CONSTANT.CONFIRM_PASSWORD}
                   mode="outlined"
                   autoComplete="off"
                   outlineColor="#e5e5e5"
@@ -263,16 +256,16 @@ export default function RegisterScreen({
                 onPress={handleSubmit}
                 style={{ marginBottom: 8 }}
               >
-                {SIGN_UP}
+                {AUTH_CONSTANT.SIGN_UP}
               </Button>
 
               <Text style={{ textAlign: "center" }}>
-                {ALREADY_HAD_ACCOUNT}{" "}
+                {AUTH_CONSTANT.ALREADY_HAD_ACCOUNT}{" "}
                 <Text
                   style={{ fontWeight: "bold", color: PRIMARY_COLOR }}
                   onPress={() => navigation.navigate("Login")}
                 >
-                  {SIGN_IN}
+                  {AUTH_CONSTANT.SIGN_IN}
                 </Text>
               </Text>
             </View>

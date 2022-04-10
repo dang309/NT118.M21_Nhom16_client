@@ -18,6 +18,7 @@ request.interceptors.request.use(
     //     },
     //   });
     // }
+    Object.assign(config, { headers: { "Content-Type": "application/json" } });
     return config;
   },
   (err) => {
