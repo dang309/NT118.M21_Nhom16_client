@@ -10,3 +10,4 @@ export const NOT_ALREADY_HAD_ACCOUNT = "Chưa có tài khoản?";
 export const NEXT = "Tiếp theo";
 export const FORGOT_PASSWORD = "Quên mật khẩu";
 export const RETRIEVE_PASSWORD = "Lấy lại mật khẩu";
+export const EMAIL_VERIFICATION = "Xác thực Email";

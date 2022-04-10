@@ -34,15 +34,7 @@ import { CLEAR_USER, SET_USER } from "../features/UserSlice";
 import { REQUEST } from "../utils";
 
 // Screens
-import {
-  NewsFeedScreen,
-  RankingScreen,
-  ProfileScreen,
-  NotFoundScreen,
-  LoginScreen,
-  RegisterScreen,
-  ForgotPasswordScreen,
-} from "../screens";
+import * as SCREENS from "../screens";
 
 // Components
 import { Icon } from "../components";
@@ -84,17 +76,27 @@ function RootNavigator() {
     <Stack.Navigator initialRouteName="Login">
       <Stack.Screen
         name="Login"
-        component={LoginScreen}
+        component={SCREENS.LoginScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Register"
-        component={RegisterScreen}
+        component={SCREENS.RegisterScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen
         name="ForgotPassword"
-        component={ForgotPasswordScreen}
+        component={SCREENS.ForgotPasswordScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="EmailVerification"
+        component={SCREENS.EmailVerificationScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ResetPassword"
+        component={SCREENS.ResetPasswordScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen
@@ -104,7 +106,7 @@ function RootNavigator() {
       />
       <Stack.Screen
         name="NotFound"
-        component={NotFoundScreen}
+        component={SCREENS.NotFoundScreen}
         options={{ title: "Oops!" }}
       />
     </Stack.Navigator>
@@ -243,17 +245,20 @@ function BottomTabNavigator() {
       }}
       tabBar={(props) => <MyTabBar {...props} />}
     >
-      <BottomTab.Screen name="NewsFeed" component={NewsFeedScreen} />
+      <BottomTab.Screen name="NewsFeed" component={SCREENS.NewsFeedScreen} />
 
-      <BottomTab.Screen name="Ranking" component={RankingScreen} />
+      <BottomTab.Screen name="Ranking" component={SCREENS.RankingScreen} />
 
-      <BottomTab.Screen name="AddPost" component={NewsFeedScreen} />
+      <BottomTab.Screen name="AddPost" component={SCREENS.NewsFeedScreen} />
 
-      <BottomTab.Screen name="CryptoMarket" component={NewsFeedScreen} />
+      <BottomTab.Screen
+        name="CryptoMarket"
+        component={SCREENS.NewsFeedScreen}
+      />
 
       <BottomTab.Screen
         name="Profile"
-        component={ProfileScreen}
+        component={SCREENS.ProfileScreen}
         options={{
           headerShown: true,
           headerLeft: () => (

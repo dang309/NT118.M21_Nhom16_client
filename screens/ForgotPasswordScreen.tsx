@@ -64,23 +64,20 @@ export default function ForgotPasswordScreen({
     onSubmit: async (values) => {
       try {
         setError("");
-        const dataToSend = {
-          email: values.email.trim(),
-        };
-        const res = await REQUEST({
-          method: "POST",
-          url: "/auth/forgot-password",
-          data: dataToSend,
-        });
+        // const dataToSend = {
+        //   email: values.email.trim(),
+        // };
+        // const res = await REQUEST({
+        //   method: "POST",
+        //   url: "/auth/forgot-password",
+        //   data: dataToSend,
+        // });
 
-        if (res && res.data.result) {
-          await AsyncStorage.setItem(
-            "@tokens",
-            JSON.stringify(res.data.data.tokens)
-          );
-          dispatch(SET_USER(res.data.data));
-          navigation.navigate("Root");
-        }
+        // if (res && res.data.result) {
+        //   dispatch(SET_USER(res.data.data));
+        //   navigation.navigate("EmailVerification");
+        // }
+        navigation.navigate("EmailVerification");
       } catch (err) {
         setError(err.response.data.message);
       }
@@ -153,7 +150,7 @@ export default function ForgotPasswordScreen({
         <View style={{ marginBottom: 16 }}>
           <Button
             mode="contained"
-            disabled={!values.email.length || !values.password.length}
+            disabled={!values.email.length}
             loading={isSubmitting}
             onPress={handleSubmit}
             style={{ marginBottom: 8 }}
