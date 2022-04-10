@@ -11,3 +11,9 @@ export const NEXT = "Tiếp theo";
 export const FORGOT_PASSWORD = "Quên mật khẩu";
 export const RETRIEVE_PASSWORD = "Lấy lại mật khẩu";
 export const EMAIL_VERIFICATION = "Xác thực Email";
+export const PASSWORD = "Mật khẩu";
+export const CONFIRM_PASSWORD = "Xác nhận mật khẩu";
+export const SET_NEW_PASSWORD = "Thiết lập mật khẩu mới";
+export const MIN_LENGTH_PASSWORD = "Mật khẩu phải có ít nhất 8 ký tự";
+export const ALPHANUMERIC_PASSWORD =
+  "Mật khẩu phải chứa ít nhất 1 ký tự và 1 số";

@@ -48,15 +48,19 @@ export default function RegisterScreen({
 }: NavigationRegisterProps) {
   const dispatch = useAppDispatch();
 
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState("");
 
   const RegisterSchema = Yup.object().shape({
     username: Yup.string().required(REQUIRED_USERNAME),
     email: Yup.string().email(INVALID_EMAIL).required(REQUIRED_EMAIL),
-    password: Yup.string().required(REQUIRED_PASSWORD),
+    password: Yup.string()
+      .required(REQUIRED_PASSWORD)
+      .min(8, AUTH_CONSTANT.MIN_LENGTH_PASSWORD)
+      .matches(
+        /^(?=.*[0-9])(?=.*[a-zA-Z])([a-zA-Z0-9]+)$/,
+        AUTH_CONSTANT.ALPHANUMERIC_PASSWORD
+      ),
     confirmPassword: Yup.string().oneOf(
       [Yup.ref("password"), null],
       MUST_MATCHED_CONFIRM_PASSWORD

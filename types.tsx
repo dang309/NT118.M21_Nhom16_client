@@ -63,6 +63,11 @@ export type NavigationEmailVerificationProps = NativeStackScreenProps<
   "EmailVerification"
 >;
 
+export type NavigationResetPasswordProps = NativeStackScreenProps<
+  RootStackParamList,
+  "ResetPassword"
+>;
+
 export type User = {
   user: {
     id: string;

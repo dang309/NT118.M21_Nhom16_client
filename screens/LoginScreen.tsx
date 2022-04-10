@@ -28,11 +28,7 @@ import { SET_USER } from "../features/UserSlice";
 import * as Yup from "yup";
 import { REQUEST } from "../utils";
 
-import {
-  REQUIRED_EMAIL,
-  REQUIRED_PASSWORD,
-  INVALID_EMAIL,
-} from "../constants/Auth";
+import * as AUTH_CONSTANT from "../constants/Auth";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -44,14 +40,14 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
   const dispatch = useAppDispatch();
   const theme = useColorScheme();
 
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState("");
 
   const LoginSchema = Yup.object().shape({
-    email: Yup.string().email(INVALID_EMAIL).required(REQUIRED_EMAIL),
-    password: Yup.string().required(REQUIRED_PASSWORD),
+    email: Yup.string()
+      .email(AUTH_CONSTANT.INVALID_EMAIL)
+      .required(AUTH_CONSTANT.REQUIRED_EMAIL),
+    password: Yup.string().required(AUTH_CONSTANT.REQUIRED_PASSWORD),
   });
 
   const formik = useFormik({
@@ -204,7 +200,7 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
             onPress={handleSubmit}
             style={{ marginBottom: 8 }}
           >
-            Đăng nhập
+            {AUTH_CONSTANT.SIGN_IN}
           </Button>
 
           <Text style={{ textAlign: "center" }}>
