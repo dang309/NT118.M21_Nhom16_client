@@ -3,6 +3,9 @@
   "compilerOptions": {
     "strict": true,
     "strictNullChecks": true,
-    "useUnknownInCatchVariables": false
+    "useUnknownInCatchVariables": false,
+    "lib": [
+      "es2020.string"
+    ]
   }
 }

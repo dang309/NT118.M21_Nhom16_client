@@ -129,6 +129,7 @@ const Post = () => {
             marginHorizontal: "auto",
           }}
           source={require("../assets/images/271987287_1729402474071277_8864390323789019617_n.png")}
+          resizeMode="cover"
         />
         <View
           style={{

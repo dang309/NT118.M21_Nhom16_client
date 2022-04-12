@@ -46,10 +46,14 @@ import {
   RootTabScreenProps,
 } from "../types";
 
+import * as ADDPOST_CONSTANT from "../constants/AddPost";
+
 import { useAppDispatch, useAppSelector } from "./../app/hook";
 import { TOGGLE_PROFILE_ACTIONS_DIALOG } from "../features/UserSlice";
 import { IUser } from "./../features/UserSlice";
+import { IPost } from "./../features/PostSlice";
 import { useNavigation } from "@react-navigation/native";
+import AddPostScreen from "../screens/AddPostScreen";
 
 export default function Navigation({
   colorScheme,
@@ -210,6 +214,7 @@ function BottomTabNavigator() {
   const colorScheme = useColorScheme();
   const dispatch = useAppDispatch();
   const cUser = useAppSelector<IUser>((state) => state.user);
+  const post = useAppSelector<IPost>((state) => state.post);
   const navigation = useNavigation();
 
   const handleToggleProfileActionsDialog = () => {
@@ -236,6 +241,22 @@ function BottomTabNavigator() {
     }
   };
 
+  const getTitleByStepIndicator = (stepIndicator: number): string => {
+    let result = "";
+    switch (stepIndicator) {
+      case 0:
+        result = ADDPOST_CONSTANT.PICK_SOUND;
+        break;
+      case 1:
+        result = ADDPOST_CONSTANT.PICK_THUMBNAIL;
+        break;
+      case 2:
+        result = ADDPOST_CONSTANT.DESC;
+        break;
+    }
+    return result;
+  };
+
   return (
     <BottomTab.Navigator
       initialRouteName="NewsFeed"
@@ -249,7 +270,21 @@ function BottomTabNavigator() {
 
       <BottomTab.Screen name="Ranking" component={SCREENS.RankingScreen} />
 
-      <BottomTab.Screen name="AddPost" component={SCREENS.NewsFeedScreen} />
+      <BottomTab.Screen
+        name="AddPost"
+        component={SCREENS.AddPostScreen}
+        options={{
+          headerShown: true,
+          title: getTitleByStepIndicator(post.actions.stepIndicatorAddPost),
+          headerLeft: () => (
+            <IconButton
+              icon="arrow-back"
+              size={24}
+              onPress={() => navigation.goBack()}
+            />
+          ),
+        }}
+      />
 
       <BottomTab.Screen
         name="CryptoMarket"
