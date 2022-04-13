@@ -8,7 +8,8 @@ import { RootTabScreenProps } from "../types";
 import * as ADDPOST_CONSTANT from "../constants/AddPost";
 
 import * as DocumentPicker from "expo-document-picker";
-import * as ImagePicker from "expo-image-picker";
+
+import FormData from "form-data";
 
 import StepIndicator from "react-native-step-indicator";
 import {
@@ -20,19 +21,10 @@ import {
   Headline,
 } from "react-native-paper";
 import { Icon } from "../components";
+import { REQUEST } from "../utils";
 
-const genres = [
-  "Pop",
-  "Rock",
-  "Blues",
-  "R&B",
-  "Hip hop",
-  "EDM",
-  "Beat",
-  "Rap",
-  "LoFi",
-  "Thêm",
-];
+import { useAppDispatch, useAppSelector } from "./../app/hook";
+import { IUser } from "./../features/UserSlice";
 
 const labels = [
   ADDPOST_CONSTANT.PICK_SOUND,
@@ -44,66 +36,55 @@ const customStyles = {
   currentStepIndicatorSize: 30,
   separatorStrokeWidth: 2,
   currentStepStrokeWidth: 3,
-  stepStrokeCurrentColor: "#fe7013",
+  stepStrokeCurrentColor: "#00adb5",
   stepStrokeWidth: 3,
-  stepStrokeFinishedColor: "#fe7013",
+  stepStrokeFinishedColor: "#00adb5",
   stepStrokeUnFinishedColor: "#aaaaaa",
-  separatorFinishedColor: "#fe7013",
+  separatorFinishedColor: "#00adb5",
   separatorUnFinishedColor: "#aaaaaa",
-  stepIndicatorFinishedColor: "#fe7013",
+  stepIndicatorFinishedColor: "#00adb5",
   stepIndicatorUnFinishedColor: "#ffffff",
   stepIndicatorCurrentColor: "#ffffff",
   stepIndicatorLabelFontSize: 13,
   currentStepIndicatorLabelFontSize: 13,
-  stepIndicatorLabelCurrentColor: "#fe7013",
+  stepIndicatorLabelCurrentColor: "#00adb5",
   stepIndicatorLabelFinishedColor: "#ffffff",
   stepIndicatorLabelUnFinishedColor: "#aaaaaa",
   labelColor: "#999999",
   labelSize: 13,
-  currentStepLabelColor: "#fe7013",
+  currentStepLabelColor: "#00adb5",
 };
 
-interface IPostInfoState {
-  sound: {
-    name: string;
-    size: number;
-    uri: string;
-  };
-
-  thumbnail: {
-    width: number;
-    height: number;
-    uri: string;
-  };
-
-  desc: {
-    caption: string;
-    genre: string;
-    hashtag: string[];
-  };
+interface IGenre {
+  id: string;
+  name: string;
 }
 
 export default function AddPostScreen({
   navigation,
 }: RootTabScreenProps<"AddPost">) {
+  const cUser = useAppSelector<IUser>((state) => state.user);
+
   const [currentStep, setCurrentStep] = useState<number>(0);
-  const [postInfo, setPostInfo] = useState<IPostInfoState>({
-    sound: {
-      name: "",
-      size: 0,
-      uri: "",
-    },
-    thumbnail: {
-      width: 0,
-      height: 0,
-      uri: "",
-    },
-    desc: {
-      caption: "",
-      genre: "",
-      hashtag: [],
-    },
-  });
+  const [genres, setGenres] = useState<IGenre[]>([]);
+  const [sound, setSound] = useState<any>(null);
+  const [thumbnail, setThumbnail] = useState<any>(null);
+  const [desc, setDesc] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const loadGenres = async () => {
+    try {
+      const res = await REQUEST({
+        method: "GET",
+        url: "/genres",
+      });
+      if (res && res.data.result) {
+        setGenres(res.data.data);
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
   const handlePickSound = async () => {
     try {
@@ -112,14 +93,7 @@ export default function AddPostScreen({
       });
 
       if (sound.type !== "cancel") {
-        let temp = Object.assign(postInfo, {
-          sound: {
-            name: sound.name,
-            size: sound.size,
-            uri: sound.uri,
-          },
-        });
-        setPostInfo(temp);
+        setSound(sound);
         setCurrentStep((prev) => prev + 1);
       }
     } catch (e) {
@@ -129,22 +103,12 @@ export default function AddPostScreen({
 
   const handlePickThumbnail = async () => {
     try {
-      let thumbnail = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.All,
-        allowsEditing: true,
-        aspect: [16, 9],
-        quality: 1,
+      const thumbnail = await DocumentPicker.getDocumentAsync({
+        type: "image/*",
       });
 
-      if (!thumbnail.cancelled) {
-        let temp = Object.assign(postInfo, {
-          thumbnail: {
-            width: thumbnail.width,
-            height: thumbnail.height,
-            uri: thumbnail.uri,
-          },
-        });
-        setPostInfo(temp);
+      if (thumbnail.type !== "cancel") {
+        setThumbnail(thumbnail);
         setCurrentStep((prev) => prev + 1);
       }
     } catch (e) {
@@ -152,30 +116,89 @@ export default function AddPostScreen({
     }
   };
 
-  const extractHashtag = () => {
-    const regex = /([#][a-zA-Z0-9]+)/gi;
-    const caption = postInfo.desc.caption;
+  // const extractHashtag = () => {
+  //   const regex = /([#][a-zA-Z0-9]+)/gi;
+  //   const caption = desc?.caption;
 
-    const matches = caption.match(regex);
+  //   const matches = caption.match(regex);
 
-    let temp = Object.assign(postInfo, {
-      desc: {
-        ...postInfo.desc,
-        hashtag: matches,
-      },
-    });
+  //   let temp = Object.assign(postInfo, {
+  //     desc: {
+  //       ...desc,
+  //       hashtag: matches,
+  //     },
+  //   });
 
-    setPostInfo(temp);
+  //   setPostInfo(temp);
+  // };
+
+  const handleFinishAddingPost = async () => {
+    try {
+      const dataToSend = new FormData();
+      dataToSend.append("user_id", cUser.currentUserInfo.user.id);
+      dataToSend.append("caption", desc?.caption);
+      dataToSend.append("sound", {
+        uri: sound?.uri,
+        name: sound?.name,
+        type: "audio/" + sound?.name.split(".")[1],
+      });
+      dataToSend.append("thumbnail", {
+        uri: thumbnail?.uri,
+        name: thumbnail?.name,
+        type: "image/" + thumbnail?.name.split(".")[1],
+      });
+      dataToSend.append("genre_id", desc?.genre);
+      // dataToSend.append("hashtag_id", desc.hashtag);
+
+      // const res = await fetch("https://api-nhom16.herokuapp.com/v1/posts", {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "multipart/form-data",
+      //   },
+      //   body: dataToSend,
+      // });
+
+      // console.log(res.json());
+
+      setIsLoading(true);
+
+      const res = await REQUEST({
+        method: "POST",
+        url: "/posts",
+        data: dataToSend,
+        responseType: "json",
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        transformRequest: (data, headers) => {
+          // !!! override data to return formData
+          // since axios converts that to string
+          return dataToSend;
+        },
+      });
+
+      if (res && res.data.result) {
+        console.log(res.data);
+      }
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleNextStep = () => {
     if (currentStep < 2) {
       setCurrentStep((prev) => prev + 1);
     } else {
-      extractHashtag();
-      console.log(postInfo);
+      // extractHashtag();
+      handleFinishAddingPost();
     }
   };
+
+  useEffect(() => {
+    loadGenres();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -190,7 +213,7 @@ export default function AddPostScreen({
 
       {currentStep === 0 && (
         <View style={{ alignItems: "center" }}>
-          {postInfo.sound.name.length > 0 && (
+          {sound && (
             <View
               style={{
                 borderWidth: 1,
@@ -208,9 +231,9 @@ export default function AddPostScreen({
                 style={{ marginBottom: 8 }}
               />
               <View style={{ alignItems: "center" }}>
-                <Title>{postInfo.sound.name}</Title>
+                <Title>{sound?.name}</Title>
                 <Subheading>
-                  {(postInfo.sound.size / 1024 ** 2).toFixed(1)} MB
+                  {(sound.size / 1024 ** 2).toFixed(1)} MB
                 </Subheading>
               </View>
             </View>
@@ -232,9 +255,9 @@ export default function AddPostScreen({
       {currentStep === 1 && (
         <View>
           <View>
-            {postInfo.thumbnail.uri.length > 0 && (
+            {thumbnail && (
               <Image
-                source={{ uri: postInfo.thumbnail.uri }}
+                source={{ uri: thumbnail?.uri }}
                 style={{
                   width: "100%",
                   height: 324,
@@ -267,12 +290,9 @@ export default function AddPostScreen({
               multiline
               numberOfLines={5}
               autoComplete="off"
-              value={postInfo.desc.caption}
+              value={desc?.caption}
               onChangeText={(v) =>
-                setPostInfo((prev) => ({
-                  ...prev,
-                  desc: { ...postInfo.desc, caption: v },
-                }))
+                setDesc((prev: any) => ({ ...prev, caption: v }))
               }
               style={{
                 backgroundColor: "#fff",
@@ -297,7 +317,7 @@ export default function AddPostScreen({
               {genres.map((item, index) => {
                 return (
                   <View
-                    key={index}
+                    key={item.id}
                     style={{
                       justifyContent: "center",
                       height: 56,
@@ -306,15 +326,12 @@ export default function AddPostScreen({
                     <Chip
                       mode={index !== genres.length - 1 ? "outlined" : "flat"}
                       onPress={() =>
-                        setPostInfo((prev) => ({
-                          ...prev,
-                          desc: { ...prev.desc, genre: item },
-                        }))
+                        setDesc((prev: any) => ({ ...prev, genre: item.id }))
                       }
                       style={{
                         marginHorizontal: 2,
                       }}
-                      selected={item === postInfo.desc.genre}
+                      selected={item.id === desc?.genre}
                       selectedColor="#00adb5"
                       ellipsizeMode="clip"
                       textStyle={{
@@ -323,7 +340,7 @@ export default function AddPostScreen({
                       }}
                       icon={index === genres.length - 1 ? "add" : ""}
                     >
-                      {item}
+                      {item.name}
                     </Chip>
                   </View>
                 );
@@ -352,10 +369,12 @@ export default function AddPostScreen({
           mode="contained"
           style={{ flex: 1, marginHorizontal: 8 }}
           disabled={
-            (currentStep === 0 && postInfo.sound.name.length === 0) ||
-            (currentStep === 1 && postInfo.thumbnail.uri.length === 0)
+            (currentStep === 0 && sound?.name.length === 0) ||
+            (currentStep === 1 && thumbnail?.uri.length === 0) ||
+            (currentStep === 2 && desc?.genre?.length === 0)
           }
           onPress={handleNextStep}
+          loading={isLoading}
         >
           {currentStep !== 2 ? "Tiếp theo" : "Xong"}
         </Button>

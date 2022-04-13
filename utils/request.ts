@@ -1,24 +1,24 @@
 import axios from "axios";
-import ASYNC_STORAGE from "../storage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const request = axios.create({
   baseURL: "https://api-nhom16.herokuapp.com/v1",
-  // baseURL: "http://localhost:5000/v1",
-  timeout: 10000,
+  // baseURL: "https://10.0.2.2:3000/v1",
+  timeout: 100000,
 });
 
 request.interceptors.request.use(
-  (config) => {
-    // if (!config.url?.startsWith("/auth/")) {
-    //   Object.assign(config, {
-    //     headers: {
-    //       Authorization: `Bearer ${
-    //         // ASYNC_STORAGE.GET("user").tokens.access.token
-    //       }`,
-    //     },
-    //   });
-    // }
-    Object.assign(config, { headers: { "Content-Type": "application/json" } });
+  async (config) => {
+    const headers = { "Content-Type": "application/json", ...config.headers };
+    if (!config.url?.startsWith("/auth/")) {
+      let tokens = await AsyncStorage.getItem("@tokens");
+      if (!tokens?.length) return;
+      const _tokens = JSON.parse(tokens);
+      Object.assign(headers, {
+        Authorization: `Bearer ${_tokens.access.token}`,
+      });
+    }
+    Object.assign(config, { headers });
     return config;
   },
   (err) => {
