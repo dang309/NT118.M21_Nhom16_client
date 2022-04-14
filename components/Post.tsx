@@ -9,14 +9,69 @@ import { Audio, AVPlaybackStatus } from "expo-av";
 
 import { REQUEST } from "../utils";
 
-const Post = () => {
+import { IPostItem } from "../features/PostSlice";
+
+import { Amplify } from "aws-amplify";
+
+interface IUser {
+  avatar: {
+    bucket: string;
+    key: string;
+  };
+  balance_dcoin: number;
+  bio: string;
+  created_at: string;
+  email: string;
+  followers: string[];
+  following: string[];
+  hobbies: string[];
+  id: string;
+  is_email_verified: false;
+  updated_at: string;
+  username: string;
+}
+
+const Post = (props: IPostItem) => {
   const [audioStatus, setAudioStatus] = useState<boolean>(false);
   const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [thumbnail, setThumbnail] = useState<any>(null);
   const [playbackStatus, setPlaybackStatus] = useState<AVPlaybackStatus | null>(
     null
   );
   const [durationMillis, setDurationMillis] = useState<number | undefined>(0);
   const [positionMillis, setPositionMillis] = useState<number | undefined>(0);
+  const [user, setUser] = useState<IUser | null>(null);
+
+  const getUserById = async () => {
+    try {
+      const res = await REQUEST({
+        method: "GET",
+        url: `/users/${props.user_id}`,
+      });
+
+      if (res && res.data.result) {
+        setUser(res.data.data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const loadThumbnail = async () => {
+    const response = await fetch(
+      `https://api-nhom16.herokuapp.com/v1/posts/thumbnail/${props.id}`,
+      {
+        method: "GET",
+      }
+    );
+    const imageBlob = await response.blob();
+    const reader = new FileReader();
+    reader.readAsDataURL(imageBlob);
+    reader.onloadend = () => {
+      const base64data = reader.result;
+      setThumbnail(base64data);
+    };
+  };
 
   const handleChangeAudioStatus = () => {
     setAudioStatus((prev) => !prev);
@@ -24,6 +79,7 @@ const Post = () => {
 
   const onPlaybackStatusUpdate = (playbackStatus: AVPlaybackStatus) => {
     if (playbackStatus.isLoaded) {
+      console.log(playbackStatus);
       setPlaybackStatus(playbackStatus);
     } else {
       setPlaybackStatus(null);
@@ -34,9 +90,22 @@ const Post = () => {
     try {
       const sound = new Audio.Sound();
       sound.setOnPlaybackStatusUpdate(onPlaybackStatusUpdate);
-      await sound.loadAsync(
-        require("../assets/sounds/relationship_5188576.mp3")
-      );
+      // const response = await fetch(
+      //   `https://api-nhom16.herokuapp.com/v1/posts/sounds/${props.id}`,
+      //   {
+      //     method: "GET",
+      //   }
+      // );
+      // const imageBlob = await response.blob();
+      // const reader = new FileReader();
+      // reader.readAsDataURL(imageBlob);
+      // reader.onloadend = async () => {
+      //   const base64data = reader.result;
+
+      // };
+      await sound.loadAsync({
+        uri: `https://api-nhom16.herokuapp.com/v1/posts/sound/${props.id}`,
+      });
       setSound(sound);
     } catch (e) {
       console.log(e);
@@ -80,7 +149,9 @@ const Post = () => {
   };
 
   useEffect(() => {
+    getUserById();
     loadSound();
+    loadThumbnail();
   }, []);
 
   useEffect(() => {
@@ -109,7 +180,9 @@ const Post = () => {
               source={require("../assets/images/274655323_678518986830451_6050520917424346332_n.jpg")}
             />
           </View>
-          <Text style={{ fontSize: 16, fontWeight: "bold" }}>haidang_309</Text>
+          <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+            {user?.username}
+          </Text>
         </View>
         <View style={styles.header__right}>
           <Icon name="ellipsis-horizontal" />
@@ -117,7 +190,7 @@ const Post = () => {
       </View>
 
       <View style={styles.caption}>
-        <Text>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</Text>
+        <Text>{props.caption}</Text>
       </View>
 
       <View style={styles.body}>
@@ -128,7 +201,9 @@ const Post = () => {
             borderRadius: 16,
             marginHorizontal: "auto",
           }}
-          source={require("../assets/images/271987287_1729402474071277_8864390323789019617_n.png")}
+          source={{
+            uri: "https://api-nhom16.herokuapp.com/v1/posts/thumbnail/6256a3b67f501a0021cfca5f",
+          }}
           resizeMode="cover"
         />
         <View

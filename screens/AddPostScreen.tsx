@@ -20,40 +20,12 @@ import {
   Chip,
   Headline,
 } from "react-native-paper";
-import { Icon } from "../components";
+import { Icon, SoundPicker, ThumbnailPicker, DescForm } from "../components";
 import { REQUEST } from "../utils";
 
 import { useAppDispatch, useAppSelector } from "./../app/hook";
 import { IUser } from "./../features/UserSlice";
-
-const labels = [
-  ADDPOST_CONSTANT.PICK_SOUND,
-  ADDPOST_CONSTANT.PICK_THUMBNAIL,
-  ADDPOST_CONSTANT.DESC,
-];
-const customStyles = {
-  stepIndicatorSize: 25,
-  currentStepIndicatorSize: 30,
-  separatorStrokeWidth: 2,
-  currentStepStrokeWidth: 3,
-  stepStrokeCurrentColor: "#00adb5",
-  stepStrokeWidth: 3,
-  stepStrokeFinishedColor: "#00adb5",
-  stepStrokeUnFinishedColor: "#aaaaaa",
-  separatorFinishedColor: "#00adb5",
-  separatorUnFinishedColor: "#aaaaaa",
-  stepIndicatorFinishedColor: "#00adb5",
-  stepIndicatorUnFinishedColor: "#ffffff",
-  stepIndicatorCurrentColor: "#ffffff",
-  stepIndicatorLabelFontSize: 13,
-  currentStepIndicatorLabelFontSize: 13,
-  stepIndicatorLabelCurrentColor: "#00adb5",
-  stepIndicatorLabelFinishedColor: "#ffffff",
-  stepIndicatorLabelUnFinishedColor: "#aaaaaa",
-  labelColor: "#999999",
-  labelSize: 13,
-  currentStepLabelColor: "#00adb5",
-};
+import { ADD_POST } from "./../features/PostSlice";
 
 interface IGenre {
   id: string;
@@ -64,6 +36,7 @@ export default function AddPostScreen({
   navigation,
 }: RootTabScreenProps<"AddPost">) {
   const cUser = useAppSelector<IUser>((state) => state.user);
+  const dispatch = useAppDispatch();
 
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [genres, setGenres] = useState<IGenre[]>([]);
@@ -150,16 +123,6 @@ export default function AddPostScreen({
       dataToSend.append("genre_id", desc?.genre);
       // dataToSend.append("hashtag_id", desc.hashtag);
 
-      // const res = await fetch("https://api-nhom16.herokuapp.com/v1/posts", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "multipart/form-data",
-      //   },
-      //   body: dataToSend,
-      // });
-
-      // console.log(res.json());
-
       setIsLoading(true);
 
       const res = await REQUEST({
@@ -178,7 +141,7 @@ export default function AddPostScreen({
       });
 
       if (res && res.data.result) {
-        console.log(res.data);
+        dispatch(ADD_POST(res.data.data));
       }
     } catch (e) {
       console.log(e);
@@ -204,150 +167,26 @@ export default function AddPostScreen({
     <View style={styles.container}>
       <View>
         <StepIndicator
-          customStyles={customStyles}
+          customStyles={ADDPOST_CONSTANT.STEP_INDICATOR_CUSTOM_STYLES}
           currentPosition={currentStep}
-          labels={labels}
+          labels={ADDPOST_CONSTANT.STEP_INDICATOR_LABELS}
           stepCount={3}
         />
       </View>
 
       {currentStep === 0 && (
-        <View style={{ alignItems: "center" }}>
-          {sound && (
-            <View
-              style={{
-                borderWidth: 1,
-                borderColor: "#e5e5e5",
-                padding: 8,
-                borderRadius: 16,
-                marginBottom: 8,
-
-                alignItems: "center",
-              }}
-            >
-              <Icon
-                name="musical-notes-outline"
-                size={32}
-                style={{ marginBottom: 8 }}
-              />
-              <View style={{ alignItems: "center" }}>
-                <Title>{sound?.name}</Title>
-                <Subheading>
-                  {(sound.size / 1024 ** 2).toFixed(1)} MB
-                </Subheading>
-              </View>
-            </View>
-          )}
-
-          <View style={{ alignItems: "center" }}>
-            <Button
-              mode="outlined"
-              style={{ borderWidth: 1, borderColor: "#00adb5" }}
-              icon="musical-note-outline"
-              onPress={handlePickSound}
-            >
-              {ADDPOST_CONSTANT.UPLOAD}
-            </Button>
-          </View>
-        </View>
+        <SoundPicker sound={sound} handlePickSound={handlePickSound} />
       )}
 
       {currentStep === 1 && (
-        <View>
-          <View>
-            {thumbnail && (
-              <Image
-                source={{ uri: thumbnail?.uri }}
-                style={{
-                  width: "100%",
-                  height: 324,
-                  borderRadius: 16,
-                }}
-                resizeMode="contain"
-              />
-            )}
-          </View>
-          <View style={{ alignItems: "center" }}>
-            <Button
-              mode="outlined"
-              icon="image-outline"
-              style={{ borderWidth: 1, borderColor: "#00adb5" }}
-              onPress={handlePickThumbnail}
-            >
-              {ADDPOST_CONSTANT.UPLOAD}
-            </Button>
-          </View>
-        </View>
+        <ThumbnailPicker
+          thumbnail={thumbnail}
+          handlePickThumbnail={handlePickThumbnail}
+        />
       )}
 
       {currentStep === 2 && (
-        <View>
-          {/* Chu thich */}
-          <View>
-            <Title>Chú thích</Title>
-            <TextInput
-              mode="outlined"
-              multiline
-              numberOfLines={5}
-              autoComplete="off"
-              value={desc?.caption}
-              onChangeText={(v) =>
-                setDesc((prev: any) => ({ ...prev, caption: v }))
-              }
-              style={{
-                backgroundColor: "#fff",
-              }}
-            />
-          </View>
-          {/* The loai */}
-          <View
-            style={{
-              marginVertical: 16,
-            }}
-          >
-            <Title>Thể loại</Title>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                flexWrap: "wrap",
-              }}
-            >
-              {genres.map((item, index) => {
-                return (
-                  <View
-                    key={item.id}
-                    style={{
-                      justifyContent: "center",
-                      height: 56,
-                    }}
-                  >
-                    <Chip
-                      mode={index !== genres.length - 1 ? "outlined" : "flat"}
-                      onPress={() =>
-                        setDesc((prev: any) => ({ ...prev, genre: item.id }))
-                      }
-                      style={{
-                        marginHorizontal: 2,
-                      }}
-                      selected={item.id === desc?.genre}
-                      selectedColor="#00adb5"
-                      ellipsizeMode="clip"
-                      textStyle={{
-                        fontSize: 16,
-                        color: "black",
-                      }}
-                      icon={index === genres.length - 1 ? "add" : ""}
-                    >
-                      {item.name}
-                    </Chip>
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-        </View>
+        <DescForm genres={genres} desc={desc} setDesc={setDesc} />
       )}
 
       <View
@@ -363,7 +202,7 @@ export default function AddPostScreen({
           disabled={currentStep === 0}
           onPress={() => setCurrentStep((prev) => prev - 1)}
         >
-          Quay lại
+          {ADDPOST_CONSTANT.BACK}
         </Button>
         <Button
           mode="contained"
@@ -376,7 +215,7 @@ export default function AddPostScreen({
           onPress={handleNextStep}
           loading={isLoading}
         >
-          {currentStep !== 2 ? "Tiếp theo" : "Xong"}
+          {currentStep !== 2 ? ADDPOST_CONSTANT.NEXT : ADDPOST_CONSTANT.DONE}
         </Button>
       </View>
     </View>

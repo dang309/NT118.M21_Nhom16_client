@@ -22,6 +22,7 @@
     "@react-navigation/native": "^6.0.2",
     "@react-navigation/native-stack": "^6.1.0",
     "@reduxjs/toolkit": "^1.8.0",
+    "aws-amplify": "^4.3.19",
     "axios": "^0.26.1",
     "expo": "~44.0.0",
     "expo-asset": "~8.4.4",

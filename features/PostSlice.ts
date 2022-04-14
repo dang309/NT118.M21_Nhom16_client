@@ -2,12 +2,22 @@ import { createSlice } from "@reduxjs/toolkit";
 
 export interface IPostItem {
   id: string;
-  user_id: string;
-  sound: string;
-  thumbnail: string;
   caption: string;
-  genre: string;
-  hashtag: string;
+  genre_id: string;
+  hashtag_id: null;
+  sound: {
+    bucket: string;
+    key: string;
+  };
+  thumbnail: {
+    bucket: string;
+    key: string;
+  };
+  user_id: string;
+  users_like: string[];
+  users_listening: string[];
+  created_at: string;
+  updated_at: string;
 }
 
 export interface IPost {
@@ -28,7 +38,7 @@ const PostSlice = createSlice({
   name: "User",
   initialState: INITIAL_STATE,
   reducers: {
-    SET_POST: (state, action) => {
+    ADD_POST: (state, action) => {
       Object.assign(state, { list: [...state.list, action.payload] });
     },
     SET_STEP_INDICATOR: (state, action) => {
@@ -37,6 +47,6 @@ const PostSlice = createSlice({
   },
 });
 
-export const { SET_POST, SET_STEP_INDICATOR } = PostSlice.actions;
+export const { ADD_POST, SET_STEP_INDICATOR } = PostSlice.actions;
 
 export default PostSlice.reducer;

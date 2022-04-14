@@ -1,4 +1,5 @@
 import { Image, StyleSheet, Text, TextInput, View } from "react-native";
+import { useState, useEffect } from "react";
 
 import EditScreenInfo from "../components/EditScreenInfo";
 import { RootTabScreenProps } from "../types";
@@ -7,9 +8,34 @@ import { Icon, Post } from "../components";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { IPostItem } from "../features/PostSlice";
+
+import REQUEST from "../utils/request";
+
 export default function NewsFeedScreen({
   navigation,
 }: RootTabScreenProps<"NewsFeed">) {
+  const [posts, setPosts] = useState<IPostItem[]>([]);
+
+  const loadPosts = async () => {
+    try {
+      const res = await REQUEST({
+        method: "GET",
+        url: "/posts",
+      });
+
+      if (res && res.data.result) {
+        setPosts(res.data.data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    loadPosts();
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -42,7 +68,10 @@ export default function NewsFeedScreen({
         </View>
       </View>
 
-      <Post />
+      {posts &&
+        posts.map((post) => {
+          return <Post key={post.id} {...post} />;
+        })}
     </SafeAreaView>
   );
 }
