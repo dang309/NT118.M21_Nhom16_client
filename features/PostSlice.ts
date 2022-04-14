@@ -9,6 +9,7 @@ export interface IPostItem {
     bucket: string;
     key: string;
   };
+  title: string;
   thumbnail: {
     bucket: string;
     key: string;

@@ -1,6 +1,8 @@
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import Icon from "./Icon";
 
+import { Avatar, Caption } from "react-native-paper";
+
 import { useState, useEffect } from "react";
 
 import Slider from "@react-native-community/slider";
@@ -12,6 +14,7 @@ import { REQUEST } from "../utils";
 import { IPostItem } from "../features/PostSlice";
 
 import { Amplify } from "aws-amplify";
+import moment from "moment";
 
 interface IUser {
   avatar: {
@@ -35,6 +38,7 @@ const Post = (props: IPostItem) => {
   const [audioStatus, setAudioStatus] = useState<boolean>(false);
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [thumbnail, setThumbnail] = useState<any>(null);
+  const [avatar, setAvatar] = useState<any>(null);
   const [playbackStatus, setPlaybackStatus] = useState<AVPlaybackStatus | null>(
     null
   );
@@ -55,6 +59,22 @@ const Post = (props: IPostItem) => {
     } catch (e) {
       console.error(e);
     }
+  };
+
+  const loadAvatar = async () => {
+    const response = await fetch(
+      `https://api-nhom16.herokuapp.com/v1/users/avatar/${props.user_id}`,
+      {
+        method: "GET",
+      }
+    );
+    const imageBlob = await response.blob();
+    const reader = new FileReader();
+    reader.readAsDataURL(imageBlob);
+    reader.onloadend = () => {
+      const base64data = reader.result;
+      setAvatar(base64data);
+    };
   };
 
   const loadThumbnail = async () => {
@@ -90,22 +110,25 @@ const Post = (props: IPostItem) => {
     try {
       const sound = new Audio.Sound();
       sound.setOnPlaybackStatusUpdate(onPlaybackStatusUpdate);
-      // const response = await fetch(
-      //   `https://api-nhom16.herokuapp.com/v1/posts/sounds/${props.id}`,
-      //   {
-      //     method: "GET",
-      //   }
-      // );
-      // const imageBlob = await response.blob();
-      // const reader = new FileReader();
-      // reader.readAsDataURL(imageBlob);
-      // reader.onloadend = async () => {
-      //   const base64data = reader.result;
 
-      // };
-      await sound.loadAsync({
-        uri: `https://api-nhom16.herokuapp.com/v1/posts/sound/${props.id}`,
-      });
+      const res = await fetch(
+        `https://api-nhom16.herokuapp.com/v1/posts/sound/${props.id}`,
+        {
+          method: "GET",
+        }
+      );
+
+      const soundBlob = await res.blob();
+      const reader = new FileReader();
+      reader.readAsDataURL(soundBlob);
+      reader.onload = async () => {
+        const base64data = reader.result;
+
+        await sound.loadAsync({
+          uri: base64data.toString(),
+        });
+      };
+
       setSound(sound);
     } catch (e) {
       console.log(e);
@@ -168,21 +191,27 @@ const Post = (props: IPostItem) => {
         <View style={styles.header__left}>
           <View
             style={{
-              width: 32,
-              height: 32,
-              borderRadius: 16,
-              overflow: "hidden",
               marginRight: 8,
             }}
           >
-            <Image
-              style={{ width: "100%", height: "100%" }}
-              source={require("../assets/images/274655323_678518986830451_6050520917424346332_n.jpg")}
-            />
+            {avatar ? (
+              <Avatar.Image size={32} source={{ uri: avatar }} />
+            ) : (
+              <Avatar.Icon size={32} icon="person" />
+            )}
           </View>
-          <Text style={{ fontSize: 16, fontWeight: "bold" }}>
-            {user?.username}
-          </Text>
+          <View
+            style={{
+              marginRight: 8,
+            }}
+          >
+            <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+              {user?.username}
+            </Text>
+          </View>
+          <Caption>
+            {moment(props.created_at).format("MMM DD, YYYY HH:mm")}
+          </Caption>
         </View>
         <View style={styles.header__right}>
           <Icon name="ellipsis-horizontal" />
@@ -215,7 +244,9 @@ const Post = (props: IPostItem) => {
             paddingVertical: 16,
           }}
         >
-          <Text style={{ fontSize: 20, fontWeight: "bold" }}>Recored 1</Text>
+          <Text style={{ fontSize: 20, fontWeight: "bold" }}>
+            {props.title}
+          </Text>
           <View
             style={{
               flexDirection: "row",
@@ -313,7 +344,9 @@ const Post = (props: IPostItem) => {
             <TouchableOpacity>
               <Icon name="heart-outline" size={24} style={{ marginRight: 2 }} />
             </TouchableOpacity>
-            <Text style={{ fontWeight: "bold" }}>20</Text>
+            <Text style={{ fontWeight: "bold" }}>
+              {props.users_like.length}
+            </Text>
           </View>
 
           <View
@@ -330,7 +363,7 @@ const Post = (props: IPostItem) => {
                 style={{ marginRight: 2 }}
               />
             </TouchableOpacity>
-            <Text style={{ fontWeight: "bold" }}>220</Text>
+            <Text style={{ fontWeight: "bold" }}>20</Text>
           </View>
 
           <View
@@ -341,21 +374,16 @@ const Post = (props: IPostItem) => {
             }}
           >
             <Icon name="ear-outline" size={24} style={{ marginRight: 2 }} />
-            <Text style={{ fontWeight: "bold" }}>200</Text>
+            <Text style={{ fontWeight: "bold" }}>
+              {props.users_listening.length}
+            </Text>
           </View>
         </View>
 
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <TouchableOpacity>
             <Icon
-              name="chatbubble-ellipses-outline"
-              size={24}
-              style={{ marginRight: 8 }}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Icon
-              name="share-social-outline"
+              name="download-outline"
               size={24}
               style={{ marginRight: 8 }}
             />
@@ -385,7 +413,7 @@ const styles = StyleSheet.create({
   header__right: {},
   caption: {
     marginBottom: 8,
-    paddingHorizontal: 4,
+    paddingHorizontal: 8,
   },
   body: {
     flexDirection: "row",
