@@ -187,8 +187,7 @@ function MyTabBar({ state, descriptors, navigation }: any) {
           >
             <View
               style={{
-                paddingLeft: index % 2 !== 0 ? 48 : 0,
-                paddingRight: index % 2 !== 0 ? 48 : 0,
+                paddingHorizontal: 24,
               }}
             >
               <Icon

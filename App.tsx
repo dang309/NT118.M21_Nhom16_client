@@ -1,6 +1,6 @@
 import { useEffect } from "react";
+import { StatusBar } from "react-native";
 
-import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { store } from "./app/store";
@@ -13,6 +13,14 @@ import useColorScheme from "./hooks/useColorScheme";
 import Navigation from "./navigation";
 import Icon from "./components/Icon";
 
+import { SocketContext, socket } from "./context/socket";
+
+import { UPDATE_POST } from "./features/PostSlice";
+
+import { useAppDispatch } from "./app/hook";
+
+import _omit from "lodash/omit";
+
 declare global {
   namespace ReactNativePaper {
     interface ThemeColors {}
@@ -21,10 +29,40 @@ declare global {
   }
 }
 
-export default function App() {
+function App() {
   const isLoadingComplete = useCachedResources();
   const colorScheme = useColorScheme();
+  const dispatch = useAppDispatch();
 
+  const getNumLike = (data: any) => {
+    const dataToSend = {
+      postId: data.postId,
+      dataToUpdate: _omit(data, ["postId"]),
+    };
+    dispatch(UPDATE_POST(dataToSend));
+  };
+
+  const getNumListening = (data: any) => {
+    const dataToSend = {
+      postId: data.postId,
+      dataToUpdate: _omit(data, ["postId"]),
+    };
+    dispatch(UPDATE_POST(dataToSend));
+  };
+
+  useEffect(() => {
+    socket.on("post:num_like", getNumLike);
+    socket.on("post:num_listening", getNumListening);
+  }, []);
+
+  if (!isLoadingComplete) {
+    return null;
+  } else {
+    return <Navigation colorScheme={colorScheme} />;
+  }
+}
+
+export default function AppWrapper() {
   const theme = {
     ...DefaultTheme,
     colors: {
@@ -35,22 +73,25 @@ export default function App() {
       surface: "#fff",
     },
   };
+  return (
+    <SafeAreaProvider>
+      <Provider store={store}>
+        <PaperProvider
+          theme={theme}
+          settings={{ icon: (props) => <Icon {...props} /> }}
+        >
+          <SocketContext.Provider value={socket}>
+            <App />
+          </SocketContext.Provider>
+        </PaperProvider>
+      </Provider>
 
-  if (!isLoadingComplete) {
-    return null;
-  } else {
-    return (
-      <SafeAreaProvider>
-        <Provider store={store}>
-          <PaperProvider
-            theme={theme}
-            settings={{ icon: (props) => <Icon {...props} /> }}
-          >
-            <Navigation colorScheme={colorScheme} />
-          </PaperProvider>
-        </Provider>
-        <StatusBar />
-      </SafeAreaProvider>
-    );
-  }
+      <StatusBar
+        animated={true}
+        backgroundColor="#00adb5"
+        barStyle="light-content"
+        showHideTransition="slide"
+      />
+    </SafeAreaProvider>
+  );
 }

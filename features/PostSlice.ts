@@ -36,11 +36,22 @@ const INITIAL_STATE: IPost = {
 };
 
 const PostSlice = createSlice({
-  name: "User",
+  name: "Post",
   initialState: INITIAL_STATE,
   reducers: {
+    SET_POST: (state, action) => {
+      state.list = action.payload;
+    },
     ADD_POST: (state, action) => {
-      Object.assign(state, { list: [...state.list, action.payload] });
+      Object.assign(state, { list: [...state.list, ...action.payload] });
+    },
+    UPDATE_POST: (state, action: any) => {
+      state.list = state.list.map((item) => {
+        if (item.id === action.payload.postId) {
+          return { ...item, ...action.payload.dataToUpdate };
+        }
+        return { ...item };
+      });
     },
     SET_STEP_INDICATOR: (state, action) => {
       Object.assign(state, { stepIndicatorAddPost: action.payload });
@@ -48,6 +59,7 @@ const PostSlice = createSlice({
   },
 });
 
-export const { ADD_POST, SET_STEP_INDICATOR } = PostSlice.actions;
+export const { SET_POST, ADD_POST, UPDATE_POST, SET_STEP_INDICATOR } =
+  PostSlice.actions;
 
 export default PostSlice.reducer;

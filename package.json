@@ -40,6 +40,7 @@
     "expo-web-browser": "~10.1.0",
     "form-data": "^4.0.0",
     "formik": "^2.2.9",
+    "lodash": "^4.17.21",
     "moment": "^2.29.1",
     "react": "17.0.1",
     "react-dom": "17.0.1",
@@ -54,6 +55,7 @@
     "react-native-web": "0.17.1",
     "react-redux": "^7.2.6",
     "redux": "^4.1.2",
+    "socket.io-client": "^4.4.1",
     "yup": "^0.32.11"
   },
   "devDependencies": {

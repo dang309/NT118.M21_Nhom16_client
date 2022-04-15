@@ -1,9 +1,10 @@
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+
+import { useState, useEffect, useContext } from "react";
+
 import Icon from "./Icon";
 
 import { Avatar, Caption } from "react-native-paper";
-
-import { useState, useEffect } from "react";
 
 import Slider from "@react-native-community/slider";
 
@@ -11,10 +12,16 @@ import { Audio, AVPlaybackStatus } from "expo-av";
 
 import { REQUEST } from "../utils";
 
-import { IPostItem } from "../features/PostSlice";
+import { IUser as IUserSlice } from "../features/UserSlice";
+import { IPostItem, IPost } from "../features/PostSlice";
 
-import { Amplify } from "aws-amplify";
+import { useAppSelector } from "../app/hook";
+
 import moment from "moment";
+
+import { SocketContext } from "../context/socket";
+
+import CommentDialog from "./CommentDialog";
 
 interface IUser {
   avatar: {
@@ -35,6 +42,10 @@ interface IUser {
 }
 
 const Post = (props: IPostItem) => {
+  const cUser = useAppSelector<IUserSlice>((state) => state.user);
+
+  const socket = useContext(SocketContext);
+
   const [audioStatus, setAudioStatus] = useState<boolean>(false);
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [thumbnail, setThumbnail] = useState<any>(null);
@@ -45,6 +56,11 @@ const Post = (props: IPostItem) => {
   const [durationMillis, setDurationMillis] = useState<number | undefined>(0);
   const [positionMillis, setPositionMillis] = useState<number | undefined>(0);
   const [user, setUser] = useState<IUser | null>(null);
+
+  const [numLike, setNumLike] = useState<number>(0);
+
+  const [isLiked, setIsLiked] = useState<boolean>(false);
+  const [showCmt, setShowCmt] = useState<boolean>(false);
 
   const getUserById = async () => {
     try {
@@ -99,7 +115,6 @@ const Post = (props: IPostItem) => {
 
   const onPlaybackStatusUpdate = (playbackStatus: AVPlaybackStatus) => {
     if (playbackStatus.isLoaded) {
-      console.log(playbackStatus);
       setPlaybackStatus(playbackStatus);
     } else {
       setPlaybackStatus(null);
@@ -131,7 +146,7 @@ const Post = (props: IPostItem) => {
 
       setSound(sound);
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
   };
 
@@ -171,15 +186,39 @@ const Post = (props: IPostItem) => {
     );
   };
 
+  const initLike = () => {
+    if (props.users_like.some((o) => o === cUser.currentUserInfo.user.id)) {
+      setIsLiked(true);
+    }
+  };
+
+  const handleLikePost = () => {
+    const dataToSend = {
+      postId: props.id,
+      userId: props.user_id,
+    };
+    socket.emit("post:like", dataToSend);
+  };
+
+  const handleListenSound = () => {
+    const dataToSend = {
+      postId: props.id,
+      userId: props.user_id,
+    };
+    socket.emit("post:listen", dataToSend);
+  };
+
   useEffect(() => {
     getUserById();
     loadSound();
     loadThumbnail();
+    initLike();
   }, []);
 
   useEffect(() => {
     if (audioStatus) {
       playSound();
+      handleListenSound();
     } else {
       pauseSound();
     }
@@ -200,18 +239,17 @@ const Post = (props: IPostItem) => {
               <Avatar.Icon size={32} icon="person" />
             )}
           </View>
-          <View
-            style={{
-              marginRight: 8,
-            }}
-          >
-            <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+          <View>
+            <Text
+              style={{ fontSize: 16, fontWeight: "bold", marginBottom: -4 }}
+            >
               {user?.username}
             </Text>
+
+            <Caption>
+              {moment(props.created_at).format("MMM DD, YYYY HH:mm")}
+            </Caption>
           </View>
-          <Caption>
-            {moment(props.created_at).format("MMM DD, YYYY HH:mm")}
-          </Caption>
         </View>
         <View style={styles.header__right}>
           <Icon name="ellipsis-horizontal" />
@@ -286,9 +324,9 @@ const Post = (props: IPostItem) => {
               alignItems: "center",
             }}
           >
-            <View style={{ marginBottom: 2 }}>
+            <View style={{ marginBottom: 2, width: "100%" }}>
               <Slider
-                style={{ width: 200, height: 16 }}
+                style={{ width: 164, height: 16, flex: 1 }}
                 value={
                   playbackStatus?.isLoaded ? playbackStatus.positionMillis : 0
                 }
@@ -341,8 +379,26 @@ const Post = (props: IPostItem) => {
               marginRight: 8,
             }}
           >
-            <TouchableOpacity>
-              <Icon name="heart-outline" size={24} style={{ marginRight: 2 }} />
+            <TouchableOpacity
+              onPress={() => {
+                setIsLiked((prev) => !prev);
+                handleLikePost();
+              }}
+            >
+              {isLiked ? (
+                <Icon
+                  name="heart-sharp"
+                  size={24}
+                  color="#f44336"
+                  style={{ marginRight: 2 }}
+                />
+              ) : (
+                <Icon
+                  name="heart-outline"
+                  size={24}
+                  style={{ marginRight: 2 }}
+                />
+              )}
             </TouchableOpacity>
             <Text style={{ fontWeight: "bold" }}>
               {props.users_like.length}
@@ -356,7 +412,7 @@ const Post = (props: IPostItem) => {
               marginRight: 8,
             }}
           >
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => setShowCmt(true)}>
               <Icon
                 name="chatbubble-ellipses-outline"
                 size={24}
@@ -381,18 +437,28 @@ const Post = (props: IPostItem) => {
         </View>
 
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <TouchableOpacity>
-            <Icon
-              name="download-outline"
-              size={24}
-              style={{ marginRight: 8 }}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity>
-            <Icon name="bookmark-outline" size={24} />
-          </TouchableOpacity>
+          {cUser.currentUserInfo.user.id === props.user_id && (
+            <TouchableOpacity>
+              <Icon
+                name="download-outline"
+                size={24}
+                style={{ marginRight: 8 }}
+              />
+            </TouchableOpacity>
+          )}
+          {cUser.currentUserInfo.user.id === props.user_id && (
+            <TouchableOpacity>
+              <Icon name="bookmark-outline" size={24} />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
+
+      <CommentDialog
+        postId={props.id}
+        showCmt={showCmt}
+        setShowCmt={setShowCmt}
+      />
     </View>
   );
 };

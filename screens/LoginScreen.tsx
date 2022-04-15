@@ -6,6 +6,7 @@ import {
   Text,
   View,
   useColorScheme,
+  ScrollView,
 } from "react-native";
 
 import {
@@ -122,117 +123,134 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
   }, []);
 
   return (
-    <>
-      <View style={styles.container}>
-        <View style={{ justifyContent: "center" }}>
-          <Text style={styles.logo}>N16 - Logo</Text>
-        </View>
-        <View style={{ justifyContent: "center", marginBottom: 16 }}>
-          <View style={{ marginBottom: 8 }}>
-            <TextInput
-              value={values.email}
-              onChangeText={handleChange("email")}
-              onBlur={handleBlur("email")}
-              placeholder="Email"
-              label="Email"
-              mode="outlined"
-              autoComplete="off"
-              outlineColor="#e5e5e5"
-              right={<TextInput.Icon name="at" color="#999" />}
-              error={Boolean(touched.email && errors.email)}
-              style={{ ...styles.input }}
-            />
-            {errors.email?.length && (
-              <HelperText type="error" visible={!!errors.email?.length}>
-                {errors.email}
-              </HelperText>
-            )}
-          </View>
-          <View style={{ marginBottom: 8 }}>
-            <TextInput
-              value={values.password}
-              onChangeText={handleChange("password")}
-              onBlur={handleBlur("password")}
-              placeholder="Mật khẩu"
-              label="Mật khẩu"
-              mode="outlined"
-              autoComplete="off"
-              outlineColor="#e5e5e5"
-              right={
-                showPassword ? (
-                  <TextInput.Icon
-                    name="eye-off"
-                    color="#999"
-                    onPress={handleToggleShowPassword}
-                  />
-                ) : (
-                  <TextInput.Icon
-                    name="eye"
-                    color="#999"
-                    onPress={handleToggleShowPassword}
-                  />
-                )
-              }
-              error={Boolean(touched.password && errors.password)}
-              style={{ ...styles.input }}
-              secureTextEntry={!showPassword}
-            />
-            {errors.password?.length && (
-              <HelperText type="error" visible={!!errors.password}>
-                {errors.password}
-              </HelperText>
-            )}
-          </View>
-          <Text
-            style={{
-              color: PRIMARY_COLOR,
-              textAlign: "right",
-              fontWeight: "bold",
-            }}
-            onPress={() => navigation.navigate("ForgotPassword")}
-          >
-            {AUTH_CONSTANT.FORGOT_PASSWORD}
-          </Text>
-        </View>
-
-        <View style={{ marginBottom: 16 }}>
-          <Button
-            mode="contained"
-            disabled={!values.email.length || !values.password.length}
-            loading={isSubmitting}
-            onPress={handleSubmit}
-            style={{ marginBottom: 8 }}
-          >
-            {AUTH_CONSTANT.SIGN_IN}
-          </Button>
-
-          <Text style={{ textAlign: "center" }}>
-            Chưa có tài khoản?{" "}
-            <Text
-              style={{ fontWeight: "bold", color: PRIMARY_COLOR }}
-              onPress={() => navigation.navigate("Register")}
-            >
-              Đăng ký
-            </Text>
-          </Text>
-        </View>
-
-        <View>
-          <GGButton />
-        </View>
-      </View>
-
-      <Snackbar
-        visible={!!error.length}
-        duration={5000}
-        onDismiss={() => setError("")}
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: "#fff",
+        flexDirection: "row",
+        alignItems: "center",
+      }}
+    >
+      <View
         style={{
-          backgroundColor: "#ff0033",
+          borderStartColor: "#fff",
+          flexDirection: "row",
+          alignItems: "center",
         }}
       >
-        {error}
-      </Snackbar>
-    </>
+        <ScrollView>
+          <View style={styles.container}>
+            <View style={{ justifyContent: "center" }}>
+              <Text style={styles.logo}>N16 - Logo</Text>
+            </View>
+            <View style={{ justifyContent: "center", marginBottom: 16 }}>
+              <View style={{ marginBottom: 8 }}>
+                <TextInput
+                  value={values.email}
+                  onChangeText={handleChange("email")}
+                  onBlur={handleBlur("email")}
+                  placeholder="Email"
+                  label="Email"
+                  mode="outlined"
+                  autoComplete="off"
+                  outlineColor="#e5e5e5"
+                  right={<TextInput.Icon name="at" color="#999" />}
+                  error={Boolean(touched.email && errors.email)}
+                  style={{ ...styles.input }}
+                />
+                {errors.email?.length && (
+                  <HelperText type="error" visible={!!errors.email?.length}>
+                    {errors.email}
+                  </HelperText>
+                )}
+              </View>
+              <View style={{ marginBottom: 8 }}>
+                <TextInput
+                  value={values.password}
+                  onChangeText={handleChange("password")}
+                  onBlur={handleBlur("password")}
+                  placeholder="Mật khẩu"
+                  label="Mật khẩu"
+                  mode="outlined"
+                  autoComplete="off"
+                  outlineColor="#e5e5e5"
+                  right={
+                    showPassword ? (
+                      <TextInput.Icon
+                        name="eye-off"
+                        color="#999"
+                        onPress={handleToggleShowPassword}
+                      />
+                    ) : (
+                      <TextInput.Icon
+                        name="eye"
+                        color="#999"
+                        onPress={handleToggleShowPassword}
+                      />
+                    )
+                  }
+                  error={Boolean(touched.password && errors.password)}
+                  style={{ ...styles.input }}
+                  secureTextEntry={!showPassword}
+                />
+                {errors.password?.length && (
+                  <HelperText type="error" visible={!!errors.password}>
+                    {errors.password}
+                  </HelperText>
+                )}
+              </View>
+              <Text
+                style={{
+                  color: PRIMARY_COLOR,
+                  textAlign: "right",
+                  fontWeight: "bold",
+                }}
+                onPress={() => navigation.navigate("ForgotPassword")}
+              >
+                {AUTH_CONSTANT.FORGOT_PASSWORD}
+              </Text>
+            </View>
+
+            <View style={{ marginBottom: 16 }}>
+              <Button
+                mode="contained"
+                disabled={!values.email.length || !values.password.length}
+                loading={isSubmitting}
+                onPress={handleSubmit}
+                style={{ marginBottom: 8 }}
+              >
+                {AUTH_CONSTANT.SIGN_IN}
+              </Button>
+
+              <Text style={{ textAlign: "center" }}>
+                Chưa có tài khoản?{" "}
+                <Text
+                  style={{ fontWeight: "bold", color: PRIMARY_COLOR }}
+                  onPress={() => navigation.navigate("Register")}
+                >
+                  Đăng ký
+                </Text>
+              </Text>
+            </View>
+
+            <View>
+              <GGButton />
+            </View>
+          </View>
+
+          <Snackbar
+            visible={!!error.length}
+            duration={5000}
+            onDismiss={() => setError("")}
+            style={{
+              backgroundColor: "#ff0033",
+            }}
+          >
+            {error}
+          </Snackbar>
+        </ScrollView>
+      </View>
+    </View>
   );
 }
 
