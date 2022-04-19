@@ -78,7 +78,7 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
             JSON.stringify(res.data.data.tokens)
           );
           dispatch(SET_USER(res.data.data));
-          navigation.navigate("Root");
+          navigation.navigate("BottomNavigation");
         }
       } catch (err) {
         console.log(err);
@@ -113,7 +113,7 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
     if (tokens?.length) {
       const _tokens = JSON.parse(tokens);
       if (new Date().valueOf() < new Date(_tokens.access.expires).valueOf()) {
-        navigation.navigate("Root");
+        navigation.navigate("BottomNavigation");
       }
     }
   };

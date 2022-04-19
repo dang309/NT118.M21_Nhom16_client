@@ -29,7 +29,7 @@ const CommentSlice = createSlice({
       state.list = action.payload;
     },
     ADD_COMMENT: (state, action) => {
-      Object.assign(state, { list: [...state.list, ...action.payload] });
+      Object.assign(state, { list: [...state.list, action.payload] });
     },
     UPDATE_COMMENT: (state, action: any) => {
       state.list = state.list.map((item) => {

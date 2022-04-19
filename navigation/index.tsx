@@ -40,11 +40,7 @@ import * as SCREENS from "../screens";
 import { Icon } from "../components";
 
 // Types
-import {
-  RootStackParamList,
-  RootTabParamList,
-  RootTabScreenProps,
-} from "../types";
+import { RootStackParamList } from "../types";
 
 import * as ADDPOST_CONSTANT from "../constants/AddPost";
 
@@ -54,6 +50,8 @@ import { IUser } from "./../features/UserSlice";
 import { IPost } from "./../features/PostSlice";
 import { useNavigation } from "@react-navigation/native";
 import AddPostScreen from "../screens/AddPostScreen";
+
+import BottomNavigation from "./BottomNavigation";
 
 export default function Navigation({
   colorScheme,
@@ -104,8 +102,8 @@ function RootNavigator() {
         options={{ headerShown: false }}
       />
       <Stack.Screen
-        name="Root"
-        component={BottomTabNavigator}
+        name="BottomNavigation"
+        component={BottomNavigation}
         options={{ headerShown: false }}
       />
       <Stack.Screen
@@ -117,228 +115,141 @@ function RootNavigator() {
   );
 }
 
-function MyTabBar({ state, descriptors, navigation }: any) {
-  return (
-    <View
-      style={{
-        flexDirection: "row",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 16,
-        height: 64,
-        backgroundColor: "#fff",
-        borderTopColor: "#e5e5e5",
-        borderTopWidth: 1,
-      }}
-    >
-      {state.routes.map((route: any, index: any) => {
-        const { options } = descriptors[route.key];
-        const label = route.name;
-
-        const isFocused = state.index === index;
-
-        const onPress = () => {
-          const event = navigation.emit({
-            type: "tabPress",
-            target: route.key,
-          });
-
-          if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
-          }
-        };
-
-        const onLongPress = () => {
-          navigation.emit({
-            type: "tabLongPress",
-            target: route.key,
-          });
-        };
-
-        let icon = "";
-
-        switch (route.name) {
-          case "NewsFeed":
-            icon = "home";
-            break;
-          case "Ranking":
-            icon = "medal";
-            break;
-          case "AddPost":
-            icon = "add-circle-outline";
-            break;
-          case "CryptoMarket":
-            icon = "bar-chart";
-            break;
-          case "Profile":
-            icon = "person";
-            break;
-        }
-
-        return (
-          <TouchableOpacity
-            accessibilityRole="button"
-            accessibilityState={isFocused ? { selected: true } : {}}
-            accessibilityLabel={options.tabBarAccessibilityLabel}
-            testID={options.tabBarTestID}
-            onPress={onPress}
-            onLongPress={onLongPress}
-            key={route.key}
-          >
-            <View
-              style={{
-                paddingHorizontal: 24,
-              }}
-            >
-              <Icon
-                name={icon}
-                color={isFocused ? "#00ADB5" : "#000"}
-                size={index === 2 ? 32 : 24}
-              />
-            </View>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
-  );
-}
-
 /**
  * A bottom tab navigator displays tab buttons on the bottom of the display to switch screens.
  * https://reactnavigation.org/docs/bottom-tab-navigator
  */
-const BottomTab = createBottomTabNavigator<RootTabParamList>();
 
-function BottomTabNavigator() {
-  const colorScheme = useColorScheme();
-  const dispatch = useAppDispatch();
-  const cUser = useAppSelector<IUser>((state) => state.user);
-  const post = useAppSelector<IPost>((state) => state.post);
-  const navigation = useNavigation();
+// function BottomTabNavigator() {
+//   const colorScheme = useColorScheme();
+//   const dispatch = useAppDispatch();
+//   const cUser = useAppSelector<IUser>((state) => state.user);
+//   const post = useAppSelector<IPost>((state) => state.post);
+//   const navigation = useNavigation();
 
-  const handleToggleProfileActionsDialog = () => {
-    dispatch(TOGGLE_PROFILE_ACTIONS_DIALOG());
-  };
+//   const handleToggleProfileActionsDialog = () => {
+//     dispatch(TOGGLE_PROFILE_ACTIONS_DIALOG());
+//   };
 
-  const handleLogout = async () => {
-    try {
-      const tokens = await AsyncStorage.getItem("@tokens");
+//   const handleLogout = async () => {
+//     try {
+//       const tokens = await AsyncStorage.getItem("@tokens");
 
-      await REQUEST({
-        method: "POST",
-        url: "/auth/logout",
-        data: {
-          refreshToken: tokens?.length ? JSON.parse(tokens).refresh.token : "",
-        },
-      });
-      await AsyncStorage.removeItem("@tokens");
-      dispatch(CLEAR_USER());
-      navigation.navigate("Login");
-      handleToggleProfileActionsDialog();
-    } catch (err) {
-      console.log(err);
-    }
-  };
+//       await REQUEST({
+//         method: "POST",
+//         url: "/auth/logout",
+//         data: {
+//           refreshToken: tokens?.length ? JSON.parse(tokens).refresh.token : "",
+//         },
+//       });
+//       await AsyncStorage.removeItem("@tokens");
+//       dispatch(CLEAR_USER());
+//       navigation.navigate("Login");
+//       handleToggleProfileActionsDialog();
+//     } catch (err) {
+//       console.log(err);
+//     }
+//   };
 
-  const getTitleByStepIndicator = (stepIndicator: number): string => {
-    let result = "";
-    switch (stepIndicator) {
-      case 0:
-        result = ADDPOST_CONSTANT.PICK_SOUND;
-        break;
-      case 1:
-        result = ADDPOST_CONSTANT.PICK_THUMBNAIL;
-        break;
-      case 2:
-        result = ADDPOST_CONSTANT.DESC;
-        break;
-    }
-    return result;
-  };
+//   const getTitleByStepIndicator = (stepIndicator: number): string => {
+//     let result = "";
+//     switch (stepIndicator) {
+//       case 0:
+//         result = ADDPOST_CONSTANT.PICK_SOUND;
+//         break;
+//       case 1:
+//         result = ADDPOST_CONSTANT.PICK_THUMBNAIL;
+//         break;
+//       case 2:
+//         result = ADDPOST_CONSTANT.DESC;
+//         break;
+//     }
+//     return result;
+//   };
 
-  return (
-    <BottomTab.Navigator
-      initialRouteName="NewsFeed"
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme].tint,
-        headerShown: false,
-      }}
-      tabBar={(props) => <MyTabBar {...props} />}
-    >
-      <BottomTab.Screen name="NewsFeed" component={SCREENS.NewsFeedScreen} />
+//   return (
+//     <BottomTab.Navigator
+//       initialRouteName="NewsFeed"
+//       screenOptions={{
+//         tabBarActiveTintColor: Colors[colorScheme].tint,
+//         headerShown: false,
+//       }}
+//       tabBar={(props) => <MyTabBar {...props} />}
+//     >
+//       <BottomTab.Screen name="NewsFeed" component={SCREENS.NewsFeedScreen} />
 
-      <BottomTab.Screen name="Ranking" component={SCREENS.RankingScreen} />
+//       <BottomTab.Screen name="Ranking" component={SCREENS.RankingScreen} />
 
-      <BottomTab.Screen
-        name="AddPost"
-        component={SCREENS.AddPostScreen}
-        options={{
-          headerShown: true,
-          title: getTitleByStepIndicator(post.actions.stepIndicatorAddPost),
-          headerLeft: () => (
-            <IconButton
-              icon="arrow-back"
-              size={24}
-              onPress={() => navigation.goBack()}
-            />
-          ),
-        }}
-      />
+//       <BottomTab.Screen
+//         name="AddPost"
+//         component={SCREENS.AddPostScreen}
+//         options={{
+//           headerShown: true,
+//           title: getTitleByStepIndicator(post.actions.stepIndicatorAddPost),
+//           headerLeft: () => (
+//             <IconButton
+//               icon="arrow-back"
+//               size={24}
+//               onPress={() => navigation.goBack()}
+//             />
+//           ),
+//         }}
+//       />
 
-      <BottomTab.Screen
-        name="CryptoMarket"
-        component={SCREENS.NewsFeedScreen}
-      />
+//       <BottomTab.Screen
+//         name="CryptoMarket"
+//         component={SCREENS.NewsFeedScreen}
+//       />
 
-      <BottomTab.Screen
-        name="Profile"
-        component={SCREENS.ProfileScreen}
-        options={{
-          headerShown: true,
-          headerLeft: () => (
-            <IconButton
-              icon="arrow-back"
-              size={24}
-              onPress={() => navigation.goBack()}
-            />
-          ),
-          title: cUser.currentUserInfo.user.username || "Profile",
-          headerRight: () => (
-            <>
-              <Menu
-                visible={
-                  !!cUser?.currentUserInfo?.actions?.showProfileActionsDialog
-                }
-                onDismiss={handleToggleProfileActionsDialog}
-                anchor={
-                  <IconButton
-                    icon="ellipsis-vertical"
-                    size={24}
-                    onPress={handleToggleProfileActionsDialog}
-                  />
-                }
-              >
-                <Menu.Item
-                  onPress={() => {}}
-                  title={PROFILE_CONSTANT.EDIT_PROFILE}
-                  icon="pencil"
-                />
-                <Menu.Item
-                  onPress={() => {}}
-                  title={PROFILE_CONSTANT.BOOKMARK}
-                  icon="bookmark"
-                />
-                <Divider style={{ height: 1 }} />
-                <Menu.Item
-                  onPress={handleLogout}
-                  title={PROFILE_CONSTANT.SIGN_OUT}
-                  icon="log-out-outline"
-                />
-              </Menu>
-            </>
-          ),
-        }}
-      />
-    </BottomTab.Navigator>
-  );
-}
+//       <BottomTab.Screen
+//         name="Profile"
+//         component={SCREENS.ProfileScreen}
+//         options={{
+//           headerShown: true,
+//           headerLeft: () => (
+//             <IconButton
+//               icon="arrow-back"
+//               size={24}
+//               onPress={() => navigation.goBack()}
+//             />
+//           ),
+//           title: cUser.currentUserInfo.user.username || "Profile",
+//           headerRight: () => (
+//             <>
+//               <Menu
+//                 visible={
+//                   !!cUser?.currentUserInfo?.actions?.showProfileActionsDialog
+//                 }
+//                 onDismiss={handleToggleProfileActionsDialog}
+//                 anchor={
+//                   <IconButton
+//                     icon="ellipsis-vertical"
+//                     size={24}
+//                     onPress={handleToggleProfileActionsDialog}
+//                   />
+//                 }
+//               >
+//                 <Menu.Item
+//                   onPress={() => {}}
+//                   title={PROFILE_CONSTANT.EDIT_PROFILE}
+//                   icon="pencil"
+//                 />
+//                 <Menu.Item
+//                   onPress={() => {}}
+//                   title={PROFILE_CONSTANT.BOOKMARK}
+//                   icon="bookmark"
+//                 />
+//                 <Divider style={{ height: 1 }} />
+//                 <Menu.Item
+//                   onPress={handleLogout}
+//                   title={PROFILE_CONSTANT.SIGN_OUT}
+//                   icon="log-out-outline"
+//                 />
+//               </Menu>
+//             </>
+//           ),
+//         }}
+//       />
+//     </BottomTab.Navigator>
+//   );
+// }

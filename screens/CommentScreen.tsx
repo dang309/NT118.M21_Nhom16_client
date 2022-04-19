@@ -1,17 +1,25 @@
-import { View, ScrollView } from "react-native";
+import { View, Text, ScrollView } from "react-native";
 import React, { useState, useEffect } from "react";
 
 import {
+  Button,
+  Paragraph,
   Dialog,
   Portal,
+  Provider,
   TextInput,
+  Avatar,
+  Caption,
+  IconButton,
+  Title,
 } from "react-native-paper";
 
 import { useAppDispatch, useAppSelector } from "../app/hook";
 import { IComment, SET_COMMENT, ADD_COMMENT } from "../features/CommentSlice";
 
 import { REQUEST } from "../utils";
-import CommentItem from "./CommentItem";
+import moment from "moment";
+import { CommentItem } from "../components";
 import { IUser } from "../features/UserSlice";
 
 type Props = {
@@ -20,7 +28,7 @@ type Props = {
   setShowCmt: (value: boolean) => void;
 };
 
-const CommentDialog = ({ postId, showCmt, setShowCmt }: Props) => {
+const CommentScreen = ({ postId, showCmt, setShowCmt }: Props) => {
   const dispatch = useAppDispatch();
 
   const comment = useAppSelector<IComment>((state) => state.comment);
@@ -75,51 +83,43 @@ const CommentDialog = ({ postId, showCmt, setShowCmt }: Props) => {
   }, []);
   return (
     <View>
-      <Portal>
-        <Dialog visible={showCmt} onDismiss={() => setShowCmt(false)}>
-          <Dialog.Title>Bình luận</Dialog.Title>
-          <Dialog.Content>
-            <ScrollView>
-              <View>
-                {comment.list.length > 0 &&
-                  comment.list.map((item) => {
-                    return <CommentItem key={item.id} {...item} />;
-                  })}
-              </View>
-            </ScrollView>
-          </Dialog.Content>
-          <Dialog.Actions>
-            <TextInput
-              mode="outlined"
-              autoComplete="off"
-              value={content}
-              onChangeText={setContent}
-              placeholder="Viết bình luận..."
-              style={{
-                flex: 1,
-                backgroundColor: "#fff",
-              }}
-              left={
-                <TextInput.Icon name="happy-outline" size={24} color="#999" />
-              }
-              right={
-                content.length === 0 ? (
-                  <TextInput.Icon name="send-outline" size={24} color="#999" />
-                ) : (
-                  <TextInput.Icon
-                    name="send-sharp"
-                    size={24}
-                    color="#00adb5"
-                    onPress={handleAddComment}
-                  />
-                )
-              }
-            />
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+      <Title>Bình luận</Title>
+      <ScrollView>
+        <View>
+          {comment.list.length > 0 &&
+            comment.list.map((item) => {
+              return <CommentItem key={item.id} {...item} />;
+            })}
+        </View>
+      </ScrollView>
+      <View>
+        <TextInput
+          mode="outlined"
+          autoComplete="off"
+          value={content}
+          onChangeText={setContent}
+          placeholder="Viết bình luận..."
+          style={{
+            flex: 1,
+            backgroundColor: "#fff",
+          }}
+          left={<TextInput.Icon name="happy-outline" size={24} color="#999" />}
+          right={
+            content.length === 0 ? (
+              <TextInput.Icon name="send-outline" size={24} color="#999" />
+            ) : (
+              <TextInput.Icon
+                name="send-sharp"
+                size={24}
+                color="#00adb5"
+                onPress={handleAddComment}
+              />
+            )
+          }
+        />
+      </View>
     </View>
   );
 };
 
-export default CommentDialog;
+export default CommentScreen;

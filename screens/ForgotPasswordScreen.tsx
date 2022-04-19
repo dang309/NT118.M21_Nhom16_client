@@ -103,20 +103,6 @@ export default function ForgotPasswordScreen({
     console.log("logged in");
   };
 
-  const checkAuth = async () => {
-    let tokens = await AsyncStorage.getItem("@tokens");
-    if (tokens?.length) {
-      const _tokens = JSON.parse(tokens);
-      if (new Date().valueOf() < new Date(_tokens.access.expires).valueOf()) {
-        navigation.navigate("Root");
-      }
-    }
-  };
-
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
   return (
     <>
       <View style={styles.container}>

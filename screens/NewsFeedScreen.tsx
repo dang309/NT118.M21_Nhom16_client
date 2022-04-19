@@ -9,7 +9,7 @@ import {
 import { useState, useEffect } from "react";
 
 import EditScreenInfo from "../components/EditScreenInfo";
-import { RootTabScreenProps } from "../types";
+import { NavigationNewsFeedProps } from "../types";
 
 import { Icon, Post } from "../components";
 
@@ -20,9 +20,7 @@ import { IPostItem, IPost, SET_POST } from "../features/PostSlice";
 import REQUEST from "../utils/request";
 import { useAppDispatch, useAppSelector } from "../app/hook";
 
-export default function NewsFeedScreen({
-  navigation,
-}: RootTabScreenProps<"NewsFeed">) {
+export default function NewsFeedScreen() {
   const dispatch = useAppDispatch();
   const post = useAppSelector<IPost>((state) => state.post);
 

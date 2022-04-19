@@ -1,7 +1,7 @@
 import { StatusBar, StyleSheet, View } from "react-native";
 import { useState } from "react";
 
-import { RootTabScreenProps } from "../types";
+import { NavigationProfileProps } from "../types";
 
 import {
   Avatar,
@@ -35,9 +35,7 @@ const renderStat = (header: string, quantity: number, styles: object) => {
   );
 };
 
-export default function ProfileScreen({
-  navigation,
-}: RootTabScreenProps<"Profile">) {
+export default function ProfileScreen() {
   const dispatch = useAppDispatch();
   const cUser = useAppSelector<IUser>((state) => state.user);
 

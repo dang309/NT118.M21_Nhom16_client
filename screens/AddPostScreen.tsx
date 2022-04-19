@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 
 import EditScreenInfo from "../components/EditScreenInfo";
 import { Text, View } from "../components/Themed";
-import { RootTabScreenProps } from "../types";
+import { NavigationAddPostProps } from "../types";
 
 import * as ADDPOST_CONSTANT from "../constants/AddPost";
 
@@ -32,9 +32,7 @@ interface IGenre {
   name: string;
 }
 
-export default function AddPostScreen({
-  navigation,
-}: RootTabScreenProps<"AddPost">) {
+export default function AddPostScreen() {
   const cUser = useAppSelector<IUser>((state) => state.user);
   const dispatch = useAppDispatch();
 
@@ -229,5 +227,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
 
     padding: StatusBar.currentHeight,
+
+    backgroundColor: "#fff",
   },
 });

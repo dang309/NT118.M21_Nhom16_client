@@ -14,6 +14,7 @@ import { REQUEST } from "../utils";
 
 import { IUser as IUserSlice } from "../features/UserSlice";
 import { IPostItem, IPost } from "../features/PostSlice";
+import { IComment } from "../features/CommentSlice";
 
 import { useAppSelector } from "../app/hook";
 
@@ -43,6 +44,7 @@ interface IUser {
 
 const Post = (props: IPostItem) => {
   const cUser = useAppSelector<IUserSlice>((state) => state.user);
+  const comment = useAppSelector<IComment>((state) => state.comment);
 
   const socket = useContext(SocketContext);
 
@@ -61,6 +63,8 @@ const Post = (props: IPostItem) => {
 
   const [isLiked, setIsLiked] = useState<boolean>(false);
   const [showCmt, setShowCmt] = useState<boolean>(false);
+
+  const [sliderWidth, setSliderWidth] = useState<number>(0);
 
   const getUserById = async () => {
     try {
@@ -107,6 +111,11 @@ const Post = (props: IPostItem) => {
       const base64data = reader.result;
       setThumbnail(base64data);
     };
+  };
+
+  const onLayout = (event: any) => {
+    const { x, y, height, width } = event.nativeEvent.layout;
+    console.log("haidang", x, y, height, width);
   };
 
   const handleChangeAudioStatus = () => {
@@ -324,9 +333,12 @@ const Post = (props: IPostItem) => {
               alignItems: "center",
             }}
           >
-            <View style={{ marginBottom: 2, width: "100%" }}>
+            <View
+              style={{ marginBottom: 2, width: "100%", flex: 1 }}
+              onLayout={onLayout}
+            >
               <Slider
-                style={{ width: 164, height: 16, flex: 1 }}
+                style={{ flex: 1 }}
                 value={
                   playbackStatus?.isLoaded ? playbackStatus.positionMillis : 0
                 }
@@ -419,7 +431,7 @@ const Post = (props: IPostItem) => {
                 style={{ marginRight: 2 }}
               />
             </TouchableOpacity>
-            <Text style={{ fontWeight: "bold" }}>20</Text>
+            <Text style={{ fontWeight: "bold" }}>{comment.list.length}</Text>
           </View>
 
           <View

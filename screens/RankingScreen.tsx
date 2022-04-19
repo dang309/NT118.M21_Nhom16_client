@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 
 import EditScreenInfo from "../components/EditScreenInfo";
 import { Text, View } from "../components/Themed";
-import { RootTabScreenProps } from "../types";
+import { NavigationRankingProps } from "../types";
 
 import { Button, IconButton, DataTable, Title } from "react-native-paper";
 
@@ -26,9 +26,7 @@ const items = [
   },
 ];
 
-export default function RankingScreen({
-  navigation,
-}: RootTabScreenProps<"Ranking">) {
+export default function RankingScreen() {
   const [currentTab, setCurrentTab] = useState<number>(0);
   const [tablePage, setTablePage] = useState(0);
   const [numberOfItemsPerPage, onItemsPerPageChange] = useState(

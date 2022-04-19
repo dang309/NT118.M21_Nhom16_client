@@ -22,26 +22,18 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   ResetPassword: undefined;
   EmailVerification: undefined;
-  Root: NavigatorScreenParams<RootTabParamList> | undefined;
+  NewsFeed: undefined;
+  Ranking: undefined;
+  AddPost: undefined;
+  Chat: undefined;
+  Profile: undefined;
+  Comment: undefined;
+  BottomNavigation: undefined;
   NotFound: undefined;
 };
 
 export type RootStackScreenProps<Screen extends keyof RootStackParamList> =
   NativeStackScreenProps<RootStackParamList, Screen>;
-
-export type RootTabParamList = {
-  NewsFeed: undefined;
-  Ranking: undefined;
-  AddPost: undefined;
-  CryptoMarket: undefined;
-  Profile: undefined;
-};
-
-export type RootTabScreenProps<Screen extends keyof RootTabParamList> =
-  CompositeScreenProps<
-    BottomTabScreenProps<RootTabParamList, Screen>,
-    NativeStackScreenProps<RootStackParamList>
-  >;
 
 export type NavigationLoginProps = NativeStackScreenProps<
   RootStackParamList,
@@ -66,6 +58,31 @@ export type NavigationEmailVerificationProps = NativeStackScreenProps<
 export type NavigationResetPasswordProps = NativeStackScreenProps<
   RootStackParamList,
   "ResetPassword"
+>;
+
+export type NavigationNewsFeedProps = NativeStackScreenProps<
+  RootStackParamList,
+  "NewsFeed"
+>;
+
+export type NavigationRankingProps = NativeStackScreenProps<
+  RootStackParamList,
+  "Ranking"
+>;
+
+export type NavigationAddPostProps = NativeStackScreenProps<
+  RootStackParamList,
+  "AddPost"
+>;
+
+export type NavigationChatProps = NativeStackScreenProps<
+  RootStackParamList,
+  "Chat"
+>;
+
+export type NavigationProfileProps = NativeStackScreenProps<
+  RootStackParamList,
+  "Profile"
 >;
 
 export type User = {

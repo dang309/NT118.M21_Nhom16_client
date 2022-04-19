@@ -43,7 +43,7 @@ const PostSlice = createSlice({
       state.list = action.payload;
     },
     ADD_POST: (state, action) => {
-      Object.assign(state, { list: [...state.list, ...action.payload] });
+      Object.assign(state, { list: [...state.list, action.payload] });
     },
     UPDATE_POST: (state, action: any) => {
       state.list = state.list.map((item) => {
