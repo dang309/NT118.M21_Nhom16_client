@@ -26,8 +26,12 @@ export type RootStackParamList = {
   Ranking: undefined;
   AddPost: undefined;
   Chat: undefined;
-  Profile: undefined;
+  ChatConversation: undefined;
+  Profile: { userId: string };
+  EditProfile: undefined;
+  ProfileViewer: { userId: string };
   Comment: undefined;
+  Search: undefined;
   BottomNavigation: undefined;
   NotFound: undefined;
 };
@@ -80,9 +84,29 @@ export type NavigationChatProps = NativeStackScreenProps<
   "Chat"
 >;
 
+export type NavigationChatConversationProps = NativeStackScreenProps<
+  RootStackParamList,
+  "ChatConversation"
+>;
+
 export type NavigationProfileProps = NativeStackScreenProps<
   RootStackParamList,
   "Profile"
+>;
+
+export type NavigationEditProfileProps = NativeStackScreenProps<
+  RootStackParamList,
+  "EditProfile"
+>;
+
+export type NavigationProfileViewerProps = NativeStackScreenProps<
+  RootStackParamList,
+  "ProfileViewer"
+>;
+
+export type NavigationSearchProps = NativeStackScreenProps<
+  RootStackParamList,
+  "Search"
 >;
 
 export type User = {

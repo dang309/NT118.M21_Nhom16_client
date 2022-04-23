@@ -22,14 +22,22 @@ export interface IPostItem {
 }
 
 export interface IPost {
-  list: IPostItem[] | [];
+  list: {
+    newsfeed: IPostItem[];
+    personal: IPostItem[];
+    bookmark: IPostItem[];
+  };
   actions: {
     stepIndicatorAddPost: number;
   };
 }
 
 const INITIAL_STATE: IPost = {
-  list: [],
+  list: {
+    newsfeed: [],
+    personal: [],
+    bookmark: [],
+  },
   actions: {
     stepIndicatorAddPost: 0,
   },
@@ -39,19 +47,53 @@ const PostSlice = createSlice({
   name: "Post",
   initialState: INITIAL_STATE,
   reducers: {
-    SET_POST: (state, action) => {
-      state.list = action.payload;
+    SET_POST: (
+      state,
+      action: {
+        payload: {
+          des: "newsfeed" | "personal" | "bookmark";
+          data: any;
+        };
+      }
+    ) => {
+      state.list[action.payload.des] = action.payload.data;
     },
-    ADD_POST: (state, action) => {
-      Object.assign(state, { list: [...state.list, action.payload] });
-    },
-    UPDATE_POST: (state, action: any) => {
-      state.list = state.list.map((item) => {
-        if (item.id === action.payload.postId) {
-          return { ...item, ...action.payload.dataToUpdate };
-        }
-        return { ...item };
+    ADD_POST: (
+      state,
+      action: {
+        payload: {
+          des: "newsfeed" | "personal" | "bookmark";
+          data: any;
+        };
+      }
+    ) => {
+      Object.assign(state, {
+        list: {
+          [action.payload.des]: [
+            ...state.list[action.payload.des],
+            ...action.payload.data,
+          ],
+        },
       });
+    },
+    UPDATE_POST: (
+      state,
+      action: {
+        payload: {
+          des: "newsfeed" | "personal" | "bookmark";
+          postId: string;
+          dataToUpdate: any;
+        };
+      }
+    ) => {
+      state.list[action.payload.des] = state.list[action.payload.des].map(
+        (item) => {
+          if (item.id === action.payload.postId) {
+            return { ...item, ...action.payload.dataToUpdate };
+          }
+          return { ...item };
+        }
+      );
     },
     SET_STEP_INDICATOR: (state, action) => {
       Object.assign(state, { stepIndicatorAddPost: action.payload });

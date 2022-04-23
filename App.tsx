@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { StatusBar, } from "react-native";
+import { StatusBar } from "react-native";
 
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -23,9 +23,9 @@ import _omit from "lodash/omit";
 
 declare global {
   namespace ReactNativePaper {
-    interface ThemeColors { }
+    interface ThemeColors {}
 
-    interface Theme { }
+    interface Theme {}
   }
 }
 
@@ -39,7 +39,7 @@ function App() {
       postId: data.postId,
       dataToUpdate: _omit(data, ["postId"]),
     };
-    dispatch(UPDATE_POST(dataToSend));
+    dispatch(UPDATE_POST({ des: "newsfeed", ...dataToSend }));
   };
 
   const getNumListening = (data: any) => {
@@ -47,7 +47,7 @@ function App() {
       postId: data.postId,
       dataToUpdate: _omit(data, ["postId"]),
     };
-    dispatch(UPDATE_POST(dataToSend));
+    dispatch(UPDATE_POST({ des: "newsfeed", ...dataToSend }));
   };
 
   useEffect(() => {

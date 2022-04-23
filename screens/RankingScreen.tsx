@@ -5,7 +5,13 @@ import EditScreenInfo from "../components/EditScreenInfo";
 import { Text, View } from "../components/Themed";
 import { NavigationRankingProps } from "../types";
 
-import { Button, IconButton, DataTable, Title } from "react-native-paper";
+import {
+  Button,
+  IconButton,
+  DataTable,
+  Title,
+  Avatar,
+} from "react-native-paper";
 
 import * as RANKING_CONSTANT from "../constants/Ranking";
 
@@ -52,7 +58,7 @@ export default function RankingScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={{ marginBottom: 16 }}>
+      <View style={{ marginBottom: 16, backgroundColor: "#fff" }}>
         <Title>Bảng xếp hạng</Title>
       </View>
       <View
@@ -64,9 +70,11 @@ export default function RankingScreen() {
           padding: 8,
           borderRadius: 16,
           marginBottom: 16,
+
+          backgroundColor: "#fff",
         }}
       >
-        <View>
+        <View style={{ backgroundColor: "#fff" }}>
           {currentTab === 0 ? (
             <Button
               mode="contained"
@@ -80,7 +88,7 @@ export default function RankingScreen() {
             <IconButton icon="heart-outline" onPress={() => setCurrentTab(0)} />
           )}
         </View>
-        <View style={{ paddingHorizontal: 8 }}>
+        <View style={{ paddingHorizontal: 8, backgroundColor: "#fff" }}>
           {currentTab === 1 ? (
             <Button
               mode="contained"
@@ -97,7 +105,7 @@ export default function RankingScreen() {
             />
           )}
         </View>
-        <View>
+        <View style={{ backgroundColor: "#fff" }}>
           {currentTab === 2 ? (
             <Button
               mode="contained"
@@ -123,7 +131,9 @@ export default function RankingScreen() {
 
         <DataTable.Row>
           <DataTable.Cell>1</DataTable.Cell>
-          <DataTable.Cell>159</DataTable.Cell>
+          <DataTable.Cell>
+            <Avatar.Icon icon="person-outline" size={32} />
+          </DataTable.Cell>
           <DataTable.Cell>6.0</DataTable.Cell>
           <DataTable.Cell>6.0</DataTable.Cell>
           <DataTable.Cell>6.0</DataTable.Cell>
@@ -131,7 +141,9 @@ export default function RankingScreen() {
 
         <DataTable.Row>
           <DataTable.Cell>2</DataTable.Cell>
-          <DataTable.Cell>237</DataTable.Cell>
+          <DataTable.Cell>
+            <Avatar.Icon icon="person-outline" size={32} />
+          </DataTable.Cell>
           <DataTable.Cell>8.0</DataTable.Cell>
           <DataTable.Cell>8.0</DataTable.Cell>
           <DataTable.Cell>8.0</DataTable.Cell>
@@ -158,5 +170,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 4,
     paddingTop: 24,
+
+    backgroundColor: "#fff",
   },
 });

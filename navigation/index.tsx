@@ -8,6 +8,7 @@ import {
   NavigationContainer,
   DefaultTheme,
   DarkTheme,
+  StackRouter,
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import * as React from "react";
@@ -106,6 +107,42 @@ function RootNavigator() {
         component={BottomNavigation}
         options={{ headerShown: false }}
       />
+      <Stack.Screen
+        name="Chat"
+        component={SCREENS.ChatContactScreen}
+        options={{ headerShown: false }}
+      />
+
+      <Stack.Screen
+        name="ChatConversation"
+        component={SCREENS.ChatConversationScreen}
+        options={{ headerShown: false }}
+      />
+
+      <Stack.Screen
+        name="Comment"
+        component={SCREENS.CommentScreen}
+        options={{ headerShown: false }}
+      />
+
+      <Stack.Screen
+        name="EditProfile"
+        component={SCREENS.EditProfileScreen}
+        options={{ headerShown: false }}
+      />
+
+      <Stack.Screen
+        name="ProfileViewer"
+        component={SCREENS.ProfileViewerScreen}
+        options={{ headerShown: false }}
+      />
+
+      <Stack.Screen
+        name="Search"
+        component={SCREENS.SearchScreen}
+        options={{ headerShown: false }}
+      />
+
       <Stack.Screen
         name="NotFound"
         component={SCREENS.NotFoundScreen}

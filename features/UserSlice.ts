@@ -65,6 +65,12 @@ const UserSlice = createSlice({
     SET_USER: (state, action) => {
       Object.assign(state.currentUserInfo, { ...action.payload });
     },
+    UPDATE_USER: (state, action) => {
+      Object.assign(state.currentUserInfo, {
+        ...state.currentUserInfo,
+        user: action.payload,
+      });
+    },
     CLEAR_USER: (state) => {
       Object.assign(state.currentUserInfo, INITIAL_STATE);
     },
@@ -75,7 +81,11 @@ const UserSlice = createSlice({
   },
 });
 
-export const { SET_USER, TOGGLE_PROFILE_ACTIONS_DIALOG, CLEAR_USER } =
-  UserSlice.actions;
+export const {
+  SET_USER,
+  UPDATE_USER,
+  TOGGLE_PROFILE_ACTIONS_DIALOG,
+  CLEAR_USER,
+} = UserSlice.actions;
 
 export default UserSlice.reducer;

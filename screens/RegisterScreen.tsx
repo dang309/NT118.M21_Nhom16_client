@@ -130,8 +130,8 @@ export default function RegisterScreen({
       >
         <ScrollView>
           <View style={styles.container}>
-            <View style={{ justifyContent: "center" }}>
-              <Text style={styles.logo}>N16 - Logo</Text>
+            <View style={{ alignItems: "center" }}>
+              <Image source={require('../assets/images/register.png')} resizeMode="cover"/>
             </View>
             <View style={{ justifyContent: "center", marginBottom: 16 }}>
               <View style={{ marginBottom: 8 }}>

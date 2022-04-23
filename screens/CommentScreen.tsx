@@ -1,4 +1,4 @@
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, StyleSheet } from "react-native";
 import React, { useState, useEffect } from "react";
 
 import {
@@ -18,9 +18,11 @@ import { useAppDispatch, useAppSelector } from "../app/hook";
 import { IComment, SET_COMMENT, ADD_COMMENT } from "../features/CommentSlice";
 
 import { REQUEST } from "../utils";
-import moment from "moment";
 import { CommentItem } from "../components";
 import { IUser } from "../features/UserSlice";
+
+// components
+import { Header } from "../components";
 
 type Props = {
   postId: string;
@@ -82,17 +84,22 @@ const CommentScreen = ({ postId, showCmt, setShowCmt }: Props) => {
     loadComment();
   }, []);
   return (
-    <View>
-      <Title>Bình luận</Title>
-      <ScrollView>
-        <View>
-          {comment.list.length > 0 &&
-            comment.list.map((item) => {
-              return <CommentItem key={item.id} {...item} />;
-            })}
-        </View>
-      </ScrollView>
+    <View style={styles.container}>
       <View>
+        <Header showLeftIcon showRightIcon={false} title="Bình luận" />
+        <View style={{ margin: 8 }}>
+          <ScrollView>
+            <View>
+              {comment.list.length > 0 &&
+                comment.list.map((item) => {
+                  return <CommentItem key={item.id} {...item} />;
+                })}
+            </View>
+          </ScrollView>
+        </View>
+      </View>
+
+      <View style={{ position: "absolute", bottom: 0, width: "100%" }}>
         <TextInput
           mode="outlined"
           autoComplete="off"
@@ -100,26 +107,33 @@ const CommentScreen = ({ postId, showCmt, setShowCmt }: Props) => {
           onChangeText={setContent}
           placeholder="Viết bình luận..."
           style={{
-            flex: 1,
             backgroundColor: "#fff",
           }}
-          left={<TextInput.Icon name="happy-outline" size={24} color="#999" />}
+          left={
+            <TextInput.Icon name="happy-outline" color="#ffd233" size={24} />
+          }
           right={
-            content.length === 0 ? (
-              <TextInput.Icon name="send-outline" size={24} color="#999" />
-            ) : (
-              <TextInput.Icon
-                name="send-sharp"
-                size={24}
-                color="#00adb5"
-                onPress={handleAddComment}
-              />
-            )
+            <TextInput.Icon
+              name="send-sharp"
+              size={24}
+              color="#00adb5"
+              onPress={handleAddComment}
+              disabled={content.length === 0}
+            />
           }
         />
       </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "space-between",
+
+    backgroundColor: "#fff",
+  },
+});
 
 export default CommentScreen;

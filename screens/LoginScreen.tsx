@@ -24,7 +24,7 @@ import { NavigationLoginProps } from "../types";
 import { useFormik, Form, FormikProvider } from "formik";
 
 import { useAppDispatch } from "../app/hook";
-import { SET_USER } from "../features/UserSlice";
+import { SET_USER, UPDATE_USER } from "../features/UserSlice";
 
 import * as Yup from "yup";
 import { REQUEST } from "../utils";
@@ -32,6 +32,8 @@ import { REQUEST } from "../utils";
 import * as AUTH_CONSTANT from "../constants/Auth";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import jwt_decode from "jwt-decode";
 
 const BORDER_RADIUS = 8;
 const BORDER_COLOR = "#e5e5e5";
@@ -108,12 +110,30 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
     console.log("logged in");
   };
 
+  const getUserById = async (userId: string) => {
+    try {
+      const res = await REQUEST({
+        method: "GET",
+        url: `/users/${userId}`,
+      });
+
+      if (res && res.data.result) {
+        dispatch(UPDATE_USER(res.data.data));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const checkAuth = async () => {
     let tokens = await AsyncStorage.getItem("@tokens");
     if (tokens?.length) {
       const _tokens = JSON.parse(tokens);
       if (new Date().valueOf() < new Date(_tokens.access.expires).valueOf()) {
+        const { sub } = jwt_decode(_tokens.access.token);
+        getUserById(sub);
         navigation.navigate("BottomNavigation");
+        return;
       }
     }
   };
@@ -140,10 +160,13 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
       >
         <ScrollView>
           <View style={styles.container}>
-            <View style={{ justifyContent: "center" }}>
-              <Text style={styles.logo}>N16 - Logo</Text>
-            </View>
             <View style={{ justifyContent: "center", marginBottom: 16 }}>
+              <View style={{ alignItems: "center" }}>
+                <Image
+                  source={require("../assets/images/login.png")}
+                  resizeMode="cover"
+                />
+              </View>
               <View style={{ marginBottom: 8 }}>
                 <TextInput
                   value={values.email}

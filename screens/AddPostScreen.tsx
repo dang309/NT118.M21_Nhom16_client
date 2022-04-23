@@ -1,8 +1,14 @@
-import { StyleSheet, StatusBar, Image } from "react-native";
+import {
+  StyleSheet,
+  StatusBar,
+  Image,
+  Text,
+  View,
+  ScrollView,
+} from "react-native";
 import { useState, useEffect } from "react";
 
 import EditScreenInfo from "../components/EditScreenInfo";
-import { Text, View } from "../components/Themed";
 import { NavigationAddPostProps } from "../types";
 
 import * as ADDPOST_CONSTANT from "../constants/AddPost";
@@ -108,6 +114,7 @@ export default function AddPostScreen() {
       const dataToSend = new FormData();
       dataToSend.append("user_id", cUser.currentUserInfo.user.id);
       dataToSend.append("caption", desc?.caption);
+      dataToSend.append("title", desc?.title);
       dataToSend.append("sound", {
         uri: sound?.uri,
         name: sound?.name,
@@ -139,7 +146,7 @@ export default function AddPostScreen() {
       });
 
       if (res && res.data.result) {
-        dispatch(ADD_POST(res.data.data));
+        dispatch(ADD_POST({ des: "newsfeed", data: res.data.data }));
       }
     } catch (e) {
       console.log(e);
@@ -162,60 +169,75 @@ export default function AddPostScreen() {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <View>
-        <StepIndicator
-          customStyles={ADDPOST_CONSTANT.STEP_INDICATOR_CUSTOM_STYLES}
-          currentPosition={currentStep}
-          labels={ADDPOST_CONSTANT.STEP_INDICATOR_LABELS}
-          stepCount={3}
-        />
-      </View>
+    <View
+      style={{
+        flex: 1,
 
-      {currentStep === 0 && (
-        <SoundPicker sound={sound} handlePickSound={handlePickSound} />
-      )}
-
-      {currentStep === 1 && (
-        <ThumbnailPicker
-          thumbnail={thumbnail}
-          handlePickThumbnail={handlePickThumbnail}
-        />
-      )}
-
-      {currentStep === 2 && (
-        <DescForm genres={genres} desc={desc} setDesc={setDesc} />
-      )}
-
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "center",
-          alignItems: "center",
+        backgroundColor: "#fff",
+        padding: StatusBar.currentHeight,
+      }}
+    >
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: "space-between",
+          backgroundColor: "#fff",
         }}
       >
-        <Button
-          mode="contained"
-          style={{ flex: 1, marginHorizontal: 8 }}
-          disabled={currentStep === 0}
-          onPress={() => setCurrentStep((prev) => prev - 1)}
+        <View>
+          <StepIndicator
+            customStyles={ADDPOST_CONSTANT.STEP_INDICATOR_CUSTOM_STYLES}
+            currentPosition={currentStep}
+            labels={ADDPOST_CONSTANT.STEP_INDICATOR_LABELS}
+            stepCount={3}
+          />
+        </View>
+
+        {currentStep === 0 && (
+          <SoundPicker sound={sound} handlePickSound={handlePickSound} />
+        )}
+
+        {currentStep === 1 && (
+          <ThumbnailPicker
+            thumbnail={thumbnail}
+            handlePickThumbnail={handlePickThumbnail}
+          />
+        )}
+
+        {currentStep === 2 && (
+          <DescForm genres={genres} desc={desc} setDesc={setDesc} />
+        )}
+
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
         >
-          {ADDPOST_CONSTANT.BACK}
-        </Button>
-        <Button
-          mode="contained"
-          style={{ flex: 1, marginHorizontal: 8 }}
-          disabled={
-            (currentStep === 0 && sound?.name.length === 0) ||
-            (currentStep === 1 && thumbnail?.uri.length === 0) ||
-            (currentStep === 2 && desc?.genre?.length === 0)
-          }
-          onPress={handleNextStep}
-          loading={isLoading}
-        >
-          {currentStep !== 2 ? ADDPOST_CONSTANT.NEXT : ADDPOST_CONSTANT.DONE}
-        </Button>
-      </View>
+          <Button
+            mode="contained"
+            style={{ flex: 1, marginHorizontal: 8 }}
+            disabled={currentStep === 0}
+            onPress={() => setCurrentStep((prev) => prev - 1)}
+          >
+            {ADDPOST_CONSTANT.BACK}
+          </Button>
+          <Button
+            mode="contained"
+            style={{ flex: 1, marginHorizontal: 8 }}
+            disabled={
+              (currentStep === 0 && sound?.name.length === 0) ||
+              (currentStep === 1 && thumbnail?.uri.length === 0) ||
+              (currentStep === 2 && desc?.genre?.length === 0)
+            }
+            onPress={handleNextStep}
+            loading={isLoading}
+          >
+            {currentStep !== 2 ? ADDPOST_CONSTANT.NEXT : ADDPOST_CONSTANT.DONE}
+          </Button>
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -225,8 +247,6 @@ const styles = StyleSheet.create({
     flex: 1,
 
     justifyContent: "space-between",
-
-    padding: StatusBar.currentHeight,
 
     backgroundColor: "#fff",
   },

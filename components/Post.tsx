@@ -1,6 +1,15 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
 
 import { useState, useEffect, useContext } from "react";
+
+import { useNavigation } from "@react-navigation/native";
 
 import Icon from "./Icon";
 
@@ -13,7 +22,7 @@ import { Audio, AVPlaybackStatus } from "expo-av";
 import { REQUEST } from "../utils";
 
 import { IUser as IUserSlice } from "../features/UserSlice";
-import { IPostItem, IPost } from "../features/PostSlice";
+import { IPostItem } from "../features/PostSlice";
 import { IComment } from "../features/CommentSlice";
 
 import { useAppSelector } from "../app/hook";
@@ -22,7 +31,7 @@ import moment from "moment";
 
 import { SocketContext } from "../context/socket";
 
-import CommentDialog from "./CommentDialog";
+import { Instagram } from "react-content-loader/native";
 
 interface IUser {
   avatar: {
@@ -42,9 +51,13 @@ interface IUser {
   username: string;
 }
 
-const Post = (props: IPostItem) => {
+type Props = IPostItem & { setSelectedProfile?: (value: string) => void };
+
+const Post = (props: Props) => {
   const cUser = useAppSelector<IUserSlice>((state) => state.user);
   const comment = useAppSelector<IComment>((state) => state.comment);
+
+  const navigation = useNavigation();
 
   const socket = useContext(SocketContext);
 
@@ -62,7 +75,6 @@ const Post = (props: IPostItem) => {
   const [numLike, setNumLike] = useState<number>(0);
 
   const [isLiked, setIsLiked] = useState<boolean>(false);
-  const [showCmt, setShowCmt] = useState<boolean>(false);
 
   const [sliderWidth, setSliderWidth] = useState<number>(0);
 
@@ -196,6 +208,7 @@ const Post = (props: IPostItem) => {
   };
 
   const initLike = () => {
+    console.log(cUser);
     if (props.users_like.some((o) => o === cUser.currentUserInfo.user.id)) {
       setIsLiked(true);
     }
@@ -233,244 +246,270 @@ const Post = (props: IPostItem) => {
     }
   }, [audioStatus]);
 
+  const handleGotoProfile = () => {
+    if (props.setSelectedProfile) {
+      props.setSelectedProfile(props.user_id);
+    }
+  };
+
+  const isLoading = Boolean(!user?.username || !thumbnail || !sound);
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.header__left}>
-          <View
-            style={{
-              marginRight: 8,
-            }}
-          >
-            {avatar ? (
-              <Avatar.Image size={32} source={{ uri: avatar }} />
-            ) : (
-              <Avatar.Icon size={32} icon="person" />
-            )}
-          </View>
-          <View>
-            <Text
-              style={{ fontSize: 16, fontWeight: "bold", marginBottom: -4 }}
-            >
-              {user?.username}
-            </Text>
+      {isLoading ? (
+        <Instagram />
+      ) : (
+        <>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={handleGotoProfile}>
+              <View style={styles.header__left}>
+                <View
+                  style={{
+                    marginRight: 8,
+                  }}
+                >
+                  {avatar ? (
+                    <Avatar.Image size={32} source={{ uri: avatar }} />
+                  ) : (
+                    <Avatar.Icon size={32} icon="person" />
+                  )}
+                </View>
+                <View>
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: "bold",
+                      marginBottom: -4,
+                    }}
+                  >
+                    {user?.username}
+                  </Text>
 
-            <Caption>
-              {moment(props.created_at).format("MMM DD, YYYY HH:mm")}
-            </Caption>
-          </View>
-        </View>
-        <View style={styles.header__right}>
-          <Icon name="ellipsis-horizontal" />
-        </View>
-      </View>
-
-      <View style={styles.caption}>
-        <Text>{props.caption}</Text>
-      </View>
-
-      <View style={styles.body}>
-        <Image
-          style={{
-            width: "45%",
-            height: "95%",
-            borderRadius: 16,
-            marginHorizontal: "auto",
-          }}
-          source={{
-            uri: "https://api-nhom16.herokuapp.com/v1/posts/thumbnail/6256a3b67f501a0021cfca5f",
-          }}
-          resizeMode="cover"
-        />
-        <View
-          style={{
-            alignItems: "center",
-            justifyContent: "center",
-            width: "50%",
-
-            paddingVertical: 16,
-          }}
-        >
-          <Text style={{ fontSize: 20, fontWeight: "bold" }}>
-            {props.title}
-          </Text>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              paddingVertical: 16,
-            }}
-          >
-            <TouchableOpacity onPress={handleDecrease10Seconds}>
-              <Icon name="play-back" size={24} />
+                  <Caption>
+                    {moment(props.created_at).format("MMM DD, YYYY HH:mm")}
+                  </Caption>
+                </View>
+              </View>
             </TouchableOpacity>
-
-            <TouchableOpacity onPress={handleChangeAudioStatus}>
-              {!audioStatus ? (
-                <Icon
-                  name="play-circle"
-                  style={{ paddingHorizontal: 16 }}
-                  size={48}
-                />
-              ) : (
-                <Icon
-                  name="pause-circle"
-                  style={{ paddingHorizontal: 16 }}
-                  size={48}
-                />
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={handleIncrease10Seconds}>
-              <Icon name="play-forward" size={24} />
-            </TouchableOpacity>
-          </View>
-
-          <View
-            style={{
-              width: "80%",
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <View
-              style={{ marginBottom: 2, width: "100%", flex: 1 }}
-              onLayout={onLayout}
-            >
-              <Slider
-                style={{ flex: 1 }}
-                value={
-                  playbackStatus?.isLoaded ? playbackStatus.positionMillis : 0
-                }
-                minimumValue={0}
-                maximumValue={
-                  playbackStatus?.isLoaded ? playbackStatus.durationMillis : 0
-                }
-                minimumTrackTintColor="#00ADB5"
-                maximumTrackTintColor="#000"
-                onSlidingComplete={async (value) => {
-                  sound?.setPositionAsync(value);
-                  await sound?.playAsync();
-                  handleChangeAudioStatus();
-                }}
-                onSlidingStart={async () => {
-                  await sound?.pauseAsync();
-                  handleChangeAudioStatus();
-                }}
-              />
+            <View style={styles.header__right}>
+              <Icon name="ellipsis-horizontal" />
             </View>
+          </View>
 
+          <View style={styles.caption}>
+            <Text>{props.caption}</Text>
+          </View>
+
+          <View style={styles.body}>
+            <Image
+              style={{
+                width: "45%",
+                height: "95%",
+                borderRadius: 16,
+                marginHorizontal: "auto",
+              }}
+              source={{
+                uri: thumbnail,
+              }}
+              resizeMode="cover"
+            />
             <View
               style={{
-                width: "100%",
-                flexDirection: "row",
-                justifyContent: "space-between",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "50%",
+
+                paddingVertical: 16,
               }}
             >
-              <Text style={{ fontSize: 12 }}>
-                {millisToMinutesAndSeconds(
-                  playbackStatus?.isLoaded ? playbackStatus.positionMillis : 0
-                )}
+              <Text style={{ fontSize: 20, fontWeight: "bold" }}>
+                {props.title}
               </Text>
-              <Text style={{ fontSize: 12 }}>
-                {millisToMinutesAndSeconds(
-                  playbackStatus?.isLoaded ? playbackStatus.durationMillis : 0
-                )}
-              </Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingVertical: 16,
+                }}
+              >
+                <TouchableOpacity onPress={handleDecrease10Seconds}>
+                  <Icon name="play-back" size={24} />
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={handleChangeAudioStatus}>
+                  {!audioStatus ? (
+                    <Icon
+                      name="play-circle"
+                      style={{ paddingHorizontal: 16 }}
+                      size={48}
+                    />
+                  ) : (
+                    <Icon
+                      name="pause-circle"
+                      style={{ paddingHorizontal: 16 }}
+                      size={48}
+                    />
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={handleIncrease10Seconds}>
+                  <Icon name="play-forward" size={24} />
+                </TouchableOpacity>
+              </View>
+
+              <View
+                style={{
+                  width: "80%",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <View
+                  style={{ marginBottom: 2, width: "100%", flex: 1 }}
+                  onLayout={onLayout}
+                >
+                  <Slider
+                    style={{ flex: 1 }}
+                    value={
+                      playbackStatus?.isLoaded
+                        ? playbackStatus.positionMillis
+                        : 0
+                    }
+                    minimumValue={0}
+                    maximumValue={
+                      playbackStatus?.isLoaded
+                        ? playbackStatus.durationMillis
+                        : 0
+                    }
+                    minimumTrackTintColor="#00ADB5"
+                    maximumTrackTintColor="#000"
+                    onSlidingComplete={async (value) => {
+                      sound?.setPositionAsync(value);
+                      await sound?.playAsync();
+                      handleChangeAudioStatus();
+                    }}
+                    onSlidingStart={async () => {
+                      await sound?.pauseAsync();
+                      handleChangeAudioStatus();
+                    }}
+                  />
+                </View>
+
+                <View
+                  style={{
+                    width: "100%",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Text style={{ fontSize: 12 }}>
+                    {millisToMinutesAndSeconds(
+                      playbackStatus?.isLoaded
+                        ? playbackStatus.positionMillis
+                        : 0
+                    )}
+                  </Text>
+                  <Text style={{ fontSize: 12 }}>
+                    {millisToMinutesAndSeconds(
+                      playbackStatus?.isLoaded
+                        ? playbackStatus.durationMillis
+                        : 0
+                    )}
+                  </Text>
+                </View>
+              </View>
             </View>
           </View>
-        </View>
-      </View>
 
-      <View style={styles.actions}>
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              marginRight: 8,
-            }}
-          >
-            <TouchableOpacity
-              onPress={() => {
-                setIsLiked((prev) => !prev);
-                handleLikePost();
-              }}
-            >
-              {isLiked ? (
-                <Icon
-                  name="heart-sharp"
-                  size={24}
-                  color="#f44336"
-                  style={{ marginRight: 2 }}
-                />
-              ) : (
-                <Icon
-                  name="heart-outline"
-                  size={24}
-                  style={{ marginRight: 2 }}
-                />
+          <View style={styles.actions}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginRight: 8,
+                }}
+              >
+                <TouchableOpacity
+                  onPress={() => {
+                    setIsLiked((prev) => !prev);
+                    handleLikePost();
+                  }}
+                >
+                  {isLiked ? (
+                    <Icon
+                      name="heart-sharp"
+                      size={24}
+                      color="#f44336"
+                      style={{ marginRight: 2 }}
+                    />
+                  ) : (
+                    <Icon
+                      name="heart-outline"
+                      size={24}
+                      style={{ marginRight: 2 }}
+                    />
+                  )}
+                </TouchableOpacity>
+                <Text style={{ fontWeight: "bold" }}>
+                  {props.users_like.length}
+                </Text>
+              </View>
+
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginRight: 8,
+                }}
+              >
+                <TouchableOpacity
+                  onPress={() => navigation.navigate("Comment")}
+                >
+                  <Icon
+                    name="chatbubble-ellipses-outline"
+                    size={24}
+                    style={{ marginRight: 2 }}
+                  />
+                </TouchableOpacity>
+                <Text style={{ fontWeight: "bold" }}>
+                  {comment.list.length}
+                </Text>
+              </View>
+
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginRight: 8,
+                }}
+              >
+                <Icon name="ear-outline" size={24} style={{ marginRight: 2 }} />
+                <Text style={{ fontWeight: "bold" }}>
+                  {props.users_listening.length}
+                </Text>
+              </View>
+            </View>
+
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              {cUser.currentUserInfo.user.id !== props.user_id && (
+                <TouchableOpacity>
+                  <Icon
+                    name="download-outline"
+                    size={24}
+                    style={{ marginRight: 8 }}
+                  />
+                </TouchableOpacity>
               )}
-            </TouchableOpacity>
-            <Text style={{ fontWeight: "bold" }}>
-              {props.users_like.length}
-            </Text>
+              {cUser.currentUserInfo.user.id !== props.user_id && (
+                <TouchableOpacity>
+                  <Icon name="bookmark-outline" size={24} />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
-
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              marginRight: 8,
-            }}
-          >
-            <TouchableOpacity onPress={() => setShowCmt(true)}>
-              <Icon
-                name="chatbubble-ellipses-outline"
-                size={24}
-                style={{ marginRight: 2 }}
-              />
-            </TouchableOpacity>
-            <Text style={{ fontWeight: "bold" }}>{comment.list.length}</Text>
-          </View>
-
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              marginRight: 8,
-            }}
-          >
-            <Icon name="ear-outline" size={24} style={{ marginRight: 2 }} />
-            <Text style={{ fontWeight: "bold" }}>
-              {props.users_listening.length}
-            </Text>
-          </View>
-        </View>
-
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          {cUser.currentUserInfo.user.id === props.user_id && (
-            <TouchableOpacity>
-              <Icon
-                name="download-outline"
-                size={24}
-                style={{ marginRight: 8 }}
-              />
-            </TouchableOpacity>
-          )}
-          {cUser.currentUserInfo.user.id === props.user_id && (
-            <TouchableOpacity>
-              <Icon name="bookmark-outline" size={24} />
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-
-      <CommentDialog
-        postId={props.id}
-        showCmt={showCmt}
-        setShowCmt={setShowCmt}
-      />
+        </>
+      )}
     </View>
   );
 };

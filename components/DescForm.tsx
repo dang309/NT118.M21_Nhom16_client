@@ -18,6 +18,19 @@ type Props = {
 const DescForm = ({ genres, desc, setDesc }: Props) => {
   return (
     <View>
+      {/* Tiêu đề */}
+      <View>
+        <Title>Tiêu đề</Title>
+        <TextInput
+          mode="outlined"
+          autoComplete="off"
+          value={desc?.title}
+          onChangeText={(v) => setDesc((prev: any) => ({ ...prev, title: v }))}
+          style={{
+            backgroundColor: "#fff",
+          }}
+        />
+      </View>
       {/* Chu thich */}
       <View>
         <Title>Chú thích</Title>

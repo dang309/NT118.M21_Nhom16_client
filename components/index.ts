@@ -5,3 +5,5 @@ export { default as SoundPicker } from "./SoundPicker";
 export { default as ThumbnailPicker } from "./ThumbnailPicker";
 export { default as DescForm } from "./DescForm";
 export { default as CommentItem } from "./CommentItem";
+export { default as Header } from "./Header";
+export { default as CryptoTransfer } from "./CryptoTransfer";
