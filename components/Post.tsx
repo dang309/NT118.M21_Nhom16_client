@@ -13,7 +13,16 @@ import { useNavigation } from "@react-navigation/native";
 
 import Icon from "./Icon";
 
-import { Avatar, Caption } from "react-native-paper";
+import {
+  Avatar,
+  Button,
+  Caption,
+  Dialog,
+  Divider,
+  IconButton,
+  Menu,
+  Portal,
+} from "react-native-paper";
 
 import Slider from "@react-native-community/slider";
 
@@ -22,10 +31,10 @@ import { Audio, AVPlaybackStatus } from "expo-av";
 import { REQUEST } from "../utils";
 
 import { IUser as IUserSlice } from "../features/UserSlice";
-import { IPostItem } from "../features/PostSlice";
+import { DELETE_POST, IPostItem } from "../features/PostSlice";
 import { IComment } from "../features/CommentSlice";
 
-import { useAppSelector } from "../app/hook";
+import { useAppDispatch, useAppSelector } from "../app/hook";
 
 import moment from "moment";
 
@@ -54,12 +63,14 @@ interface IUser {
 type Props = IPostItem & { setSelectedProfile?: (value: string) => void };
 
 const Post = (props: Props) => {
-  const cUser = useAppSelector<IUserSlice>((state) => state.user);
-  const comment = useAppSelector<IComment>((state) => state.comment);
+  const dispatch = useAppDispatch();
+
+  const socket = useContext(SocketContext);
 
   const navigation = useNavigation();
 
-  const socket = useContext(SocketContext);
+  const cUser = useAppSelector<IUserSlice>((state) => state.user);
+  const comment = useAppSelector<IComment>((state) => state.comment);
 
   const [audioStatus, setAudioStatus] = useState<boolean>(false);
   const [sound, setSound] = useState<Audio.Sound | null>(null);
@@ -75,6 +86,10 @@ const Post = (props: Props) => {
   const [numLike, setNumLike] = useState<number>(0);
 
   const [isLiked, setIsLiked] = useState<boolean>(false);
+
+  const [toggleMenuOptions, setToggleMenuOptions] = useState<boolean>(false);
+  const [toggleDeletePostConfirm, setToggleDeletePostConfirm] =
+    useState<boolean>(false);
 
   const [sliderWidth, setSliderWidth] = useState<number>(0);
 
@@ -246,9 +261,25 @@ const Post = (props: Props) => {
     }
   }, [audioStatus]);
 
-  const handleGotoProfile = () => {
+  const handleSelectProfile = () => {
     if (props.setSelectedProfile) {
       props.setSelectedProfile(props.user_id);
+    }
+  };
+
+  const handleDeletePost = async () => {
+    try {
+      const postId = props.id;
+      const res = await REQUEST({
+        method: "DELETE",
+        url: `/posts/${props.id}`,
+      });
+
+      if (res && res.data.result) {
+        dispatch(DELETE_POST({ postId }));
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -261,7 +292,7 @@ const Post = (props: Props) => {
       ) : (
         <>
           <View style={styles.header}>
-            <TouchableOpacity onPress={handleGotoProfile}>
+            <TouchableOpacity onPress={handleSelectProfile}>
               <View style={styles.header__left}>
                 <View
                   style={{
@@ -291,9 +322,36 @@ const Post = (props: Props) => {
                 </View>
               </View>
             </TouchableOpacity>
-            <View style={styles.header__right}>
-              <Icon name="ellipsis-horizontal" />
-            </View>
+
+            <Menu
+              visible={toggleMenuOptions}
+              onDismiss={() => setToggleMenuOptions(false)}
+              anchor={
+                <TouchableOpacity onPress={() => setToggleMenuOptions(true)}>
+                  <Icon name="ellipsis-horizontal" size={24} />
+                </TouchableOpacity>
+              }
+            >
+              {cUser.currentUserInfo.user.id !== props.user_id && (
+                <Menu.Item onPress={() => {}} title="Hủy theo dõi" />
+              )}
+              {cUser.currentUserInfo.user.id === props.user_id && (
+                <Menu.Item onPress={() => {}} title="Chỉnh sửa" />
+              )}
+              {cUser.currentUserInfo.user.id === props.user_id && (
+                <>
+                  <Divider style={{ height: 1 }} />
+                  <Menu.Item
+                    onPress={() => {
+                      setToggleDeletePostConfirm(true);
+                      setToggleMenuOptions(false);
+                    }}
+                    title="Xóa"
+                    icon="trash-outline"
+                  />
+                </>
+              )}
+            </Menu>
           </View>
 
           <View style={styles.caption}>
@@ -464,7 +522,9 @@ const Post = (props: Props) => {
                 }}
               >
                 <TouchableOpacity
-                  onPress={() => navigation.navigate("Comment")}
+                  onPress={() =>
+                    navigation.navigate("Comment", { postId: props.id })
+                  }
                 >
                   <Icon
                     name="chatbubble-ellipses-outline"
@@ -510,6 +570,35 @@ const Post = (props: Props) => {
           </View>
         </>
       )}
+
+      <Portal>
+        <Dialog
+          visible={toggleDeletePostConfirm}
+          onDismiss={() => setToggleDeletePostConfirm(false)}
+        >
+          <Dialog.Title>Bạn muốn xóa bài viết này?</Dialog.Title>
+          <Dialog.Content>
+            <Button
+              mode="contained"
+              style={{ marginBottom: 8 }}
+              onPress={() => {
+                handleDeletePost();
+                setToggleDeletePostConfirm(false);
+                setToggleMenuOptions(false);
+              }}
+            >
+              Xóa
+            </Button>
+            <Button
+              mode="outlined"
+              onPress={() => setToggleDeletePostConfirm(false)}
+              style={{ borderWidth: 1, borderColor: "#00adb5" }}
+            >
+              Hủy
+            </Button>
+          </Dialog.Content>
+        </Dialog>
+      </Portal>
     </View>
   );
 };
@@ -522,6 +611,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 4,
     paddingHorizontal: 16,
+    paddingBottom: 0,
   },
   header__left: {
     flexDirection: "row",

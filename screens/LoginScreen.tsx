@@ -79,7 +79,13 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
             "@tokens",
             JSON.stringify(res.data.data.tokens)
           );
-          dispatch(SET_USER(res.data.data));
+          const { id, avatar } = res.data.data;
+          let temp = res.data.data;
+          const _avatar = await loadThumbnail(id, avatar);
+          temp = Object.assign(temp, {
+            avatar: _avatar || "",
+          });
+          dispatch(SET_USER(temp));
           navigation.navigate("BottomNavigation");
         }
       } catch (err) {
@@ -110,6 +116,25 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
     console.log("logged in");
   };
 
+  const loadThumbnail = async (userId: string, avatar: any) => {
+    if (!avatar?.key.length || !avatar?.bucket.length) return;
+    const response = await fetch(
+      `https://api-nhom16.herokuapp.com/v1/users/avatar/${userId}`,
+      {
+        method: "GET",
+      }
+    );
+    let result;
+    const imageBlob = await response.blob();
+    const reader = new FileReader();
+    reader.readAsDataURL(imageBlob);
+    reader.onloadend = () => {
+      const base64data = reader.result;
+      result = base64data;
+    };
+    return result;
+  };
+
   const getUserById = async (userId: string) => {
     try {
       const res = await REQUEST({
@@ -118,7 +143,13 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
       });
 
       if (res && res.data.result) {
-        dispatch(UPDATE_USER(res.data.data));
+        const { id, avatar } = res.data.data;
+        let temp = res.data.data;
+        const _avatar = await loadThumbnail(id, avatar);
+        temp = Object.assign(temp, {
+          avatar: _avatar || "",
+        });
+        dispatch(UPDATE_USER(temp));
       }
     } catch (e) {
       console.error(e);

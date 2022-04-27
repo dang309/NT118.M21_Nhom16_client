@@ -68,7 +68,7 @@ const UserSlice = createSlice({
     UPDATE_USER: (state, action) => {
       Object.assign(state.currentUserInfo, {
         ...state.currentUserInfo,
-        user: action.payload,
+        user: { ...state.currentUserInfo.user, ...action.payload },
       });
     },
     CLEAR_USER: (state) => {

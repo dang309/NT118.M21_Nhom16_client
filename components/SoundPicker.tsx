@@ -1,17 +1,21 @@
 import { View, Text } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 
 import Icon from "./Icon";
 
-import { Title, Subheading, Button } from "react-native-paper";
+import { Title, Subheading, Button, Portal, Dialog } from "react-native-paper";
 import * as ADDPOST_CONSTANT from "../constants/AddPost";
 
 type Props = {
   sound: any;
   handlePickSound: () => void;
+  // handleRecording: () => void;
+  // handleStopRecording: () => void;
 };
 
 const SoundPicker = ({ sound, handlePickSound }: Props) => {
+  const [toggleRecordingDialog, setToggleRecordingDialog] =
+    useState<boolean>(false);
   return (
     <View style={{ alignItems: "center" }}>
       {sound && (
@@ -39,6 +43,17 @@ const SoundPicker = ({ sound, handlePickSound }: Props) => {
       )}
 
       <View style={{ alignItems: "center" }}>
+        {/* <Button
+          mode="outlined"
+          style={{ borderWidth: 1, borderColor: "#00adb5", marginBottom: 8 }}
+          icon="musical-notes-outline"
+          onPress={() => {
+            setToggleRecordingDialog(true);
+            // handleRecording();
+          }}
+        >
+          {ADDPOST_CONSTANT.RECORDING}
+        </Button> */}
         <Button
           mode="outlined"
           style={{ borderWidth: 1, borderColor: "#00adb5" }}
@@ -48,6 +63,28 @@ const SoundPicker = ({ sound, handlePickSound }: Props) => {
           {ADDPOST_CONSTANT.UPLOAD}
         </Button>
       </View>
+
+      {/* <Portal>
+        <Dialog
+          visible={toggleRecordingDialog}
+          onDismiss={() => setToggleRecordingDialog(false)}
+        >
+          <Dialog.Content>
+            <Title>Đang ghi âm</Title>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button
+              mode="contained"
+              onPress={() => {
+                setToggleRecordingDialog(false);
+                // handleStopRecording();
+              }}
+            >
+              Dừng lại
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal> */}
     </View>
   );
 };

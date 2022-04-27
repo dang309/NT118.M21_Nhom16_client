@@ -23,15 +23,12 @@ import { IUser } from "../features/UserSlice";
 
 // components
 import { Header } from "../components";
+import { useRoute } from "@react-navigation/native";
 
-type Props = {
-  postId: string;
-  showCmt: boolean;
-  setShowCmt: (value: boolean) => void;
-};
-
-const CommentScreen = ({ postId, showCmt, setShowCmt }: Props) => {
+const CommentScreen = () => {
   const dispatch = useAppDispatch();
+
+  const route = useRoute();
 
   const comment = useAppSelector<IComment>((state) => state.comment);
   const cUser = useAppSelector<IUser>((state) => state.user);
@@ -40,9 +37,14 @@ const CommentScreen = ({ postId, showCmt, setShowCmt }: Props) => {
 
   const loadComment = async () => {
     try {
+      let filters = [];
+      filters.push({
+        key: "post_id",
+        operator: "=",
+        value: route.params?.postId,
+      });
       const params = {
-        post_id: postId,
-        sort: "created_at:desc",
+        filters: JSON.stringify(filters),
       };
       const res = await REQUEST({
         method: "GET",
@@ -51,6 +53,7 @@ const CommentScreen = ({ postId, showCmt, setShowCmt }: Props) => {
       });
 
       if (res && res.data.result) {
+        console.log(res.data);
         dispatch(SET_COMMENT(res.data.data.results));
       }
     } catch (e) {
@@ -61,7 +64,7 @@ const CommentScreen = ({ postId, showCmt, setShowCmt }: Props) => {
   const handleAddComment = async () => {
     try {
       const dataToSend = {
-        post_id: postId,
+        post_id: route.params?.postId,
         content,
         user_comment_id: cUser.currentUserInfo.user.id,
       };
@@ -88,14 +91,21 @@ const CommentScreen = ({ postId, showCmt, setShowCmt }: Props) => {
       <View>
         <Header showLeftIcon showRightIcon={false} title="Bình luận" />
         <View style={{ margin: 8 }}>
-          <ScrollView>
-            <View>
-              {comment.list.length > 0 &&
-                comment.list.map((item) => {
+          {comment.list.length > 0 && (
+            <ScrollView>
+              <View>
+                {comment.list.map((item) => {
                   return <CommentItem key={item.id} {...item} />;
                 })}
+              </View>
+            </ScrollView>
+          )}
+
+          {comment.list.length === 0 && (
+            <View style={{ flex: 1, alignItems: "center" }}>
+              <Title>Chưa có bình luận nào.</Title>
             </View>
-          </ScrollView>
+          )}
         </View>
       </View>
 

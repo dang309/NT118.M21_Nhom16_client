@@ -30,7 +30,7 @@ export type RootStackParamList = {
   Profile: { userId: string };
   EditProfile: undefined;
   ProfileViewer: { userId: string };
-  Comment: undefined;
+  Comment: { postId: string };
   Search: undefined;
   BottomNavigation: undefined;
   NotFound: undefined;

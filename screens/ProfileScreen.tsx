@@ -53,10 +53,27 @@ export default function ProfileScreen() {
 
   const [showDialogOptions, setShowDialogOptions] = useState<boolean>(false);
   const [btnIndex, setBtnIndex] = useState<string>("posts");
+  const [thumbnail, setThumbnail] = useState<any>(null);
 
   const handleEditProfile = () => {
     navigation.navigate("EditProfile");
     setShowDialogOptions(false);
+  };
+
+  const loadThumbnail = async () => {
+    const response = await fetch(
+      `https://api-nhom16.herokuapp.com/v1/posts/thumbnail/${cUser.currentUserInfo.user.id}`,
+      {
+        method: "GET",
+      }
+    );
+    const imageBlob = await response.blob();
+    const reader = new FileReader();
+    reader.readAsDataURL(imageBlob);
+    reader.onloadend = () => {
+      const base64data = reader.result;
+      setThumbnail(base64data);
+    };
   };
 
   const loadPosts = async () => {
@@ -67,7 +84,7 @@ export default function ProfileScreen() {
       });
 
       if (res && res.data.result) {
-        dispatch(SET_POST({ des: "personal", data: res.data.data }));
+        dispatch(SET_POST({ des: "personal", data: res.data.data.results }));
       }
     } catch (e) {
       console.error(e);
@@ -95,6 +112,7 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     loadPosts();
+    loadThumbnail();
   }, []);
 
   return (
@@ -111,12 +129,16 @@ export default function ProfileScreen() {
               <View
                 style={{ alignItems: "center", marginBottom: 8, padding: 8 }}
               >
-                <Avatar.Image
-                  size={64}
-                  source={{
-                    uri: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MXx8YXZhdGFyfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=600&q=60",
-                  }}
-                />
+                {!thumbnail ? (
+                  <Avatar.Icon size={64} icon="person-outline" />
+                ) : (
+                  <Avatar.Image
+                    size={64}
+                    source={{
+                      uri: thumbnail,
+                    }}
+                  />
+                )}
 
                 <Title>{cUser.currentUserInfo.user.username}</Title>
                 {cUser.currentUserInfo.user.bio.length > 0 && (
@@ -144,9 +166,13 @@ export default function ProfileScreen() {
                     marginBottom: 8,
                   }}
                 >
-                  {renderStat(PROFILE_CONSTANT.SOUNDS, 1, {
-                    alignItems: "center",
-                  })}
+                  {renderStat(
+                    PROFILE_CONSTANT.SOUNDS,
+                    post.list.personal.length,
+                    {
+                      alignItems: "center",
+                    }
+                  )}
                   {renderStat(
                     PROFILE_CONSTANT.FOLLOWERS,
                     cUser.currentUserInfo.user.followers.length,

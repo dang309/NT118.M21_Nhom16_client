@@ -22,7 +22,7 @@ import REQUEST from "../utils/request";
 import { useAppDispatch, useAppSelector } from "../app/hook";
 
 import { useNavigation } from "@react-navigation/core";
-import { IconButton } from "react-native-paper";
+import { IconButton, Title } from "react-native-paper";
 
 import { CryptoTransfer } from "../components";
 
@@ -43,7 +43,7 @@ export default function NewsFeedScreen() {
       });
 
       if (res && res.data.result) {
-        dispatch(SET_POST({ des: "newsfeed", data: res.data.data }));
+        dispatch(SET_POST({ des: "newsfeed", data: res.data.data.results }));
       }
     } catch (e) {
       console.error(e);
@@ -119,6 +119,11 @@ export default function NewsFeedScreen() {
                 />
               );
             })}
+          {post.list.newsfeed.length === 0 && (
+            <View style={{ flex: 1, alignItems: "center" }}>
+              <Title style={{ color: "#999" }}>Chưa có bài viết nào.</Title>
+            </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>

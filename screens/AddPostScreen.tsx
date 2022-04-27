@@ -14,6 +14,7 @@ import { NavigationAddPostProps } from "../types";
 import * as ADDPOST_CONSTANT from "../constants/AddPost";
 
 import * as DocumentPicker from "expo-document-picker";
+import { Audio } from "expo-av";
 
 import FormData from "form-data";
 
@@ -45,6 +46,7 @@ export default function AddPostScreen() {
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [genres, setGenres] = useState<IGenre[]>([]);
   const [sound, setSound] = useState<any>(null);
+  const [recording, setRecording] = useState<any>(null);
   const [thumbnail, setThumbnail] = useState<any>(null);
   const [desc, setDesc] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -77,6 +79,33 @@ export default function AddPostScreen() {
       console.log(e);
     }
   };
+
+  // const handleRecording = async () => {
+  //   try {
+  //     await Audio.requestPermissionsAsync();
+  //     await Audio.setAudioModeAsync({
+  //       allowsRecordingIOS: true,
+  //       playsInSilentModeIOS: true,
+  //     });
+  //     const { recording } = await Audio.Recording.createAsync(
+  //       Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY
+  //     );
+  //     setRecording(recording);
+  //   } catch (err) {
+  //     console.error(err);
+  //   }
+  // };
+
+  // const handleStopRecording = async () => {
+  //   try {
+  //     console.log(recording);
+  //     await recording.stopAndUnloadAsync();
+  //     const uri = recording.getURI();
+  //     setRecording(undefined);
+  //   } catch (err) {
+  //     console.error(err);
+  //   }
+  // };
 
   const handlePickThumbnail = async () => {
     try {
@@ -194,7 +223,12 @@ export default function AddPostScreen() {
         </View>
 
         {currentStep === 0 && (
-          <SoundPicker sound={sound} handlePickSound={handlePickSound} />
+          <SoundPicker
+            sound={sound}
+            handlePickSound={handlePickSound}
+            // handleRecording={handleRecording}
+            // handleStopRecording={handleStopRecording}
+          />
         )}
 
         {currentStep === 1 && (

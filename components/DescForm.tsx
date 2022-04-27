@@ -1,8 +1,17 @@
 import { View, Text } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 
-import { Title, Subheading, Button, Chip, TextInput } from "react-native-paper";
+import {
+  Title,
+  Subheading,
+  Button,
+  Chip,
+  TextInput,
+  Portal,
+  Dialog,
+} from "react-native-paper";
 import * as ADDPOST_CONSTANT from "../constants/AddPost";
+import { REQUEST } from "../utils";
 
 interface IGenre {
   id: string;
@@ -16,6 +25,29 @@ type Props = {
 };
 
 const DescForm = ({ genres, desc, setDesc }: Props) => {
+  const [customGenre, setCustomGenre] = useState<string>("");
+  const [toggleCustomGenreForm, setToggleCustomGenreForm] =
+    useState<boolean>(false);
+
+  const handleAddGenre = async () => {
+    try {
+      const dataToSend = {
+        name: customGenre,
+      };
+      const res = await REQUEST({
+        method: "POST",
+        url: "/genres",
+        data: dataToSend,
+      });
+
+      if (res && res.data.result) {
+        setToggleCustomGenreForm(false);
+        setCustomGenre("");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
   return (
     <View>
       {/* Tiêu đề */}
@@ -73,21 +105,25 @@ const DescForm = ({ genres, desc, setDesc }: Props) => {
                 }}
               >
                 <Chip
-                  mode={index !== genres.length - 1 ? "outlined" : "flat"}
+                  mode="outlined"
                   onPress={() =>
                     setDesc((prev: any) => ({ ...prev, genre: item.id }))
                   }
                   style={{
                     marginHorizontal: 2,
+
+                    borderColor: "#00adb5",
+
+                    backgroundColor:
+                      item.id === desc?.genre ? "#00adb5" : "#fff",
                   }}
                   selected={item.id === desc?.genre}
-                  selectedColor="#00adb5"
+                  selectedColor="#fff"
                   ellipsizeMode="clip"
                   textStyle={{
                     fontSize: 16,
-                    color: "black",
+                    color: item.id === desc?.genre ? "#fff" : "#000",
                   }}
-                  icon={index === genres.length - 1 ? "add" : ""}
                 >
                   {item.name}
                 </Chip>
@@ -95,7 +131,48 @@ const DescForm = ({ genres, desc, setDesc }: Props) => {
             );
           })}
         </View>
+        <Button
+          mode="contained"
+          icon="add-outline"
+          style={{ marginLeft: 8 }}
+          onPress={() => setToggleCustomGenreForm(true)}
+        >
+          Thêm
+        </Button>
       </View>
+
+      <Portal>
+        <Dialog
+          visible={toggleCustomGenreForm}
+          onDismiss={() => setToggleCustomGenreForm(false)}
+        >
+          <Dialog.Content>
+            <TextInput
+              mode="outlined"
+              autoComplete="off"
+              placeholder="Thêm thể loại..."
+              value={customGenre}
+              onChangeText={setCustomGenre}
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button
+              mode="contained"
+              style={{ marginRight: 8 }}
+              onPress={handleAddGenre}
+            >
+              Thêm
+            </Button>
+            <Button
+              mode="outlined"
+              style={{ borderWidth: 1, borderColor: "#00adb5" }}
+              onPress={() => setToggleCustomGenreForm(false)}
+            >
+              Hủy
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </View>
   );
 };

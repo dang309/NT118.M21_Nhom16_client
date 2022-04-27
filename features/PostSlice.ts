@@ -95,13 +95,41 @@ const PostSlice = createSlice({
         }
       );
     },
+    DELETE_POST: (state, action) => {
+      let idx;
+      idx = state.list.newsfeed.findIndex(
+        (o) => o.id === action.payload.postId
+      );
+      if (idx > -1) {
+        state.list.newsfeed.splice(idx, 1);
+      }
+
+      idx = state.list.personal.findIndex(
+        (o) => o.id === action.payload.postId
+      );
+      if (idx > -1) {
+        state.list.personal.splice(idx, 1);
+      }
+
+      idx = state.list.bookmark.findIndex(
+        (o) => o.id === action.payload.postId
+      );
+      if (idx > -1) {
+        state.list.bookmark.splice(idx, 1);
+      }
+    },
     SET_STEP_INDICATOR: (state, action) => {
       Object.assign(state, { stepIndicatorAddPost: action.payload });
     },
   },
 });
 
-export const { SET_POST, ADD_POST, UPDATE_POST, SET_STEP_INDICATOR } =
-  PostSlice.actions;
+export const {
+  SET_POST,
+  ADD_POST,
+  UPDATE_POST,
+  DELETE_POST,
+  SET_STEP_INDICATOR,
+} = PostSlice.actions;
 
 export default PostSlice.reducer;
