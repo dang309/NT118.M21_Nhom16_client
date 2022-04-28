@@ -27,7 +27,7 @@ const MessengerSlice = createSlice({
   initialState: INITIAL_STATE,
   reducers: {
     SET_MESSAGES: (state, action) => {
-      state.messages = action.payload;
+      state.messages = [...action.payload];
     },
     ADD_CONVERSATION: (state, action) => {
       Object.assign(state, {
@@ -35,9 +35,7 @@ const MessengerSlice = createSlice({
       });
     },
     ADD_MESSAGE: (state, action) => {
-      Object.assign(state, {
-        messages: [...state.messages, action.payload],
-      });
+      state.messages.push(action.payload);
     },
   },
 });

@@ -156,21 +156,28 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
     }
   };
 
-  const checkAuth = async () => {
-    let tokens = await AsyncStorage.getItem("@tokens");
-    if (tokens?.length) {
-      const _tokens = JSON.parse(tokens);
-      if (new Date().valueOf() < new Date(_tokens.access.expires).valueOf()) {
-        const { sub } = jwt_decode(_tokens.access.token);
-        getUserById(sub);
-        navigation.navigate("BottomNavigation");
-        return;
+  const checkAuth = async (isMounted: boolean) => {
+    if (isMounted) {
+      let tokens = await AsyncStorage.getItem("@tokens");
+      if (tokens?.length) {
+        const _tokens = JSON.parse(tokens);
+        if (new Date().valueOf() < new Date(_tokens.access.expires).valueOf()) {
+          const { sub } = jwt_decode(_tokens.access.token);
+          getUserById(sub);
+          navigation.navigate("BottomNavigation");
+          return;
+        }
       }
     }
   };
 
   useEffect(() => {
-    checkAuth();
+    let isMounted = true;
+    checkAuth(isMounted);
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (

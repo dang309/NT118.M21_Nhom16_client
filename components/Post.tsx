@@ -223,7 +223,6 @@ const Post = (props: Props) => {
   };
 
   const initLike = () => {
-    console.log(cUser);
     if (props.users_like.some((o) => o === cUser.currentUserInfo.user.id)) {
       setIsLiked(true);
     }
@@ -232,7 +231,7 @@ const Post = (props: Props) => {
   const handleLikePost = () => {
     const dataToSend = {
       postId: props.id,
-      userId: props.user_id,
+      userId: cUser.currentUserInfo.user.id,
     };
     socket.emit("post:like", dataToSend);
   };
@@ -240,7 +239,7 @@ const Post = (props: Props) => {
   const handleListenSound = () => {
     const dataToSend = {
       postId: props.id,
-      userId: props.user_id,
+      userId: cUser.currentUserInfo.user.id,
     };
     socket.emit("post:listen", dataToSend);
   };
@@ -262,6 +261,7 @@ const Post = (props: Props) => {
   }, [audioStatus]);
 
   const handleSelectProfile = () => {
+    if (props.user_id === cUser.currentUserInfo.user.id) return;
     if (props.setSelectedProfile) {
       props.setSelectedProfile(props.user_id);
     }
@@ -358,214 +358,231 @@ const Post = (props: Props) => {
             <Text>{props.caption}</Text>
           </View>
 
-          <View style={styles.body}>
-            <Image
-              style={{
-                width: "45%",
-                height: "95%",
-                borderRadius: 16,
-                marginHorizontal: "auto",
-              }}
-              source={{
-                uri: thumbnail,
-              }}
-              resizeMode="cover"
-            />
-            <View
-              style={{
-                alignItems: "center",
-                justifyContent: "center",
-                width: "50%",
+          <View
+            style={{
+              borderTopColor: "#e5e5e5",
+              borderBottomColor: "#e5e5e5",
+              borderTopWidth: 1,
+              borderBottomWidth: 1,
 
-                paddingVertical: 16,
-              }}
-            >
-              <Text style={{ fontSize: 20, fontWeight: "bold" }}>
-                {props.title}
-              </Text>
+              padding: 8,
+            }}
+          >
+            <View style={styles.body}>
+              <Image
+                style={{
+                  width: "45%",
+                  height: "95%",
+                  borderRadius: 16,
+                  marginHorizontal: "auto",
+                }}
+                source={{
+                  uri: thumbnail,
+                }}
+                resizeMode="cover"
+              />
+              <View
+                style={{
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "50%",
+                }}
+              >
+                <Text style={{ fontSize: 20, fontWeight: "bold" }}>
+                  {props.title}
+                </Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    paddingVertical: 16,
+                  }}
+                >
+                  <TouchableOpacity onPress={handleDecrease10Seconds}>
+                    <Icon name="play-back" size={24} />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity onPress={handleChangeAudioStatus}>
+                    {!audioStatus ? (
+                      <Icon
+                        name="play-circle"
+                        style={{ paddingHorizontal: 16 }}
+                        size={48}
+                      />
+                    ) : (
+                      <Icon
+                        name="pause-circle"
+                        style={{ paddingHorizontal: 16 }}
+                        size={48}
+                      />
+                    )}
+                  </TouchableOpacity>
+
+                  <TouchableOpacity onPress={handleIncrease10Seconds}>
+                    <Icon name="play-forward" size={24} />
+                  </TouchableOpacity>
+                </View>
+
+                <View
+                  style={{
+                    width: "80%",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <View
+                    style={{ marginBottom: 2, width: "100%", flex: 1 }}
+                    onLayout={onLayout}
+                  >
+                    <Slider
+                      style={{ flex: 1 }}
+                      value={
+                        playbackStatus?.isLoaded
+                          ? playbackStatus.positionMillis
+                          : 0
+                      }
+                      minimumValue={0}
+                      maximumValue={
+                        playbackStatus?.isLoaded
+                          ? playbackStatus.durationMillis
+                          : 0
+                      }
+                      minimumTrackTintColor="#00ADB5"
+                      maximumTrackTintColor="#000"
+                      onSlidingComplete={async (value) => {
+                        sound?.setPositionAsync(value);
+                        await sound?.playAsync();
+                        handleChangeAudioStatus();
+                      }}
+                      onSlidingStart={async () => {
+                        await sound?.pauseAsync();
+                        handleChangeAudioStatus();
+                      }}
+                    />
+                  </View>
+
+                  <View
+                    style={{
+                      width: "100%",
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Text style={{ fontSize: 12 }}>
+                      {millisToMinutesAndSeconds(
+                        playbackStatus?.isLoaded
+                          ? playbackStatus.positionMillis
+                          : 0
+                      )}
+                    </Text>
+                    <Text style={{ fontSize: 12 }}>
+                      {millisToMinutesAndSeconds(
+                        playbackStatus?.isLoaded
+                          ? playbackStatus.durationMillis
+                          : 0
+                      )}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.actions}>
               <View
                 style={{
                   flexDirection: "row",
-                  alignItems: "center",
-                  paddingVertical: 16,
-                }}
-              >
-                <TouchableOpacity onPress={handleDecrease10Seconds}>
-                  <Icon name="play-back" size={24} />
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={handleChangeAudioStatus}>
-                  {!audioStatus ? (
-                    <Icon
-                      name="play-circle"
-                      style={{ paddingHorizontal: 16 }}
-                      size={48}
-                    />
-                  ) : (
-                    <Icon
-                      name="pause-circle"
-                      style={{ paddingHorizontal: 16 }}
-                      size={48}
-                    />
-                  )}
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={handleIncrease10Seconds}>
-                  <Icon name="play-forward" size={24} />
-                </TouchableOpacity>
-              </View>
-
-              <View
-                style={{
-                  width: "80%",
                   justifyContent: "center",
                   alignItems: "center",
                 }}
               >
                 <View
-                  style={{ marginBottom: 2, width: "100%", flex: 1 }}
-                  onLayout={onLayout}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginRight: 8,
+                  }}
                 >
-                  <Slider
-                    style={{ flex: 1 }}
-                    value={
-                      playbackStatus?.isLoaded
-                        ? playbackStatus.positionMillis
-                        : 0
-                    }
-                    minimumValue={0}
-                    maximumValue={
-                      playbackStatus?.isLoaded
-                        ? playbackStatus.durationMillis
-                        : 0
-                    }
-                    minimumTrackTintColor="#00ADB5"
-                    maximumTrackTintColor="#000"
-                    onSlidingComplete={async (value) => {
-                      sound?.setPositionAsync(value);
-                      await sound?.playAsync();
-                      handleChangeAudioStatus();
+                  <TouchableOpacity
+                    onPress={() => {
+                      setIsLiked((prev) => !prev);
+                      handleLikePost();
                     }}
-                    onSlidingStart={async () => {
-                      await sound?.pauseAsync();
-                      handleChangeAudioStatus();
-                    }}
-                  />
+                  >
+                    {isLiked ? (
+                      <Icon
+                        name="heart-sharp"
+                        size={24}
+                        color="#f44336"
+                        style={{ marginRight: 2 }}
+                      />
+                    ) : (
+                      <Icon
+                        name="heart-outline"
+                        size={24}
+                        style={{ marginRight: 2 }}
+                      />
+                    )}
+                  </TouchableOpacity>
+                  <Text style={{ fontWeight: "bold" }}>
+                    {props.users_like.length}
+                  </Text>
                 </View>
 
                 <View
                   style={{
-                    width: "100%",
                     flexDirection: "row",
-                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginRight: 8,
                   }}
                 >
-                  <Text style={{ fontSize: 12 }}>
-                    {millisToMinutesAndSeconds(
-                      playbackStatus?.isLoaded
-                        ? playbackStatus.positionMillis
-                        : 0
-                    )}
-                  </Text>
-                  <Text style={{ fontSize: 12 }}>
-                    {millisToMinutesAndSeconds(
-                      playbackStatus?.isLoaded
-                        ? playbackStatus.durationMillis
-                        : 0
-                    )}
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigation.navigate("Comment", { postId: props.id })
+                    }
+                  >
+                    <Icon
+                      name="chatbubble-ellipses-outline"
+                      size={24}
+                      style={{ marginRight: 2 }}
+                    />
+                  </TouchableOpacity>
+                  <Text style={{ fontWeight: "bold" }}>
+                    {comment.list.length}
                   </Text>
                 </View>
-              </View>
-            </View>
-          </View>
 
-          <View style={styles.actions}>
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  marginRight: 8,
-                }}
-              >
-                <TouchableOpacity
-                  onPress={() => {
-                    setIsLiked((prev) => !prev);
-                    handleLikePost();
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginRight: 8,
                   }}
                 >
-                  {isLiked ? (
-                    <Icon
-                      name="heart-sharp"
-                      size={24}
-                      color="#f44336"
-                      style={{ marginRight: 2 }}
-                    />
-                  ) : (
-                    <Icon
-                      name="heart-outline"
-                      size={24}
-                      style={{ marginRight: 2 }}
-                    />
-                  )}
-                </TouchableOpacity>
-                <Text style={{ fontWeight: "bold" }}>
-                  {props.users_like.length}
-                </Text>
-              </View>
-
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  marginRight: 8,
-                }}
-              >
-                <TouchableOpacity
-                  onPress={() =>
-                    navigation.navigate("Comment", { postId: props.id })
-                  }
-                >
                   <Icon
-                    name="chatbubble-ellipses-outline"
+                    name="ear-outline"
                     size={24}
                     style={{ marginRight: 2 }}
                   />
-                </TouchableOpacity>
-                <Text style={{ fontWeight: "bold" }}>
-                  {comment.list.length}
-                </Text>
-              </View>
+                  <Text style={{ fontWeight: "bold" }}>
+                    {props.users_listening.length}
+                  </Text>
+                </View>
 
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  marginRight: 8,
-                }}
-              >
-                <Icon name="ear-outline" size={24} style={{ marginRight: 2 }} />
-                <Text style={{ fontWeight: "bold" }}>
-                  {props.users_listening.length}
-                </Text>
+                {cUser.currentUserInfo.user.id !== props.user_id && (
+                  <TouchableOpacity>
+                    <Icon
+                      name="download-outline"
+                      size={24}
+                      style={{ marginRight: 8 }}
+                    />
+                  </TouchableOpacity>
+                )}
+                {cUser.currentUserInfo.user.id !== props.user_id && (
+                  <TouchableOpacity>
+                    <Icon name="bookmark-outline" size={24} />
+                  </TouchableOpacity>
+                )}
               </View>
-            </View>
-
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              {cUser.currentUserInfo.user.id !== props.user_id && (
-                <TouchableOpacity>
-                  <Icon
-                    name="download-outline"
-                    size={24}
-                    style={{ marginRight: 8 }}
-                  />
-                </TouchableOpacity>
-              )}
-              {cUser.currentUserInfo.user.id !== props.user_id && (
-                <TouchableOpacity>
-                  <Icon name="bookmark-outline" size={24} />
-                </TouchableOpacity>
-              )}
             </View>
           </View>
         </>
@@ -626,19 +643,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-evenly",
     alignItems: "center",
-
-    borderTopColor: "#e5e5e5",
-    borderBottomColor: "#e5e5e5",
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-
-    marginBottom: 8,
   },
   actions: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
     paddingHorizontal: 8,
+    marginTop: 8,
   },
 });
 

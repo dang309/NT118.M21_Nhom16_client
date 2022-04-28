@@ -37,9 +37,13 @@ export default function NewsFeedScreen() {
 
   const loadPosts = async () => {
     try {
+      const params = {
+        sort: "created_at:desc",
+      };
       const res = await REQUEST({
         method: "GET",
         url: "/posts",
+        params,
       });
 
       if (res && res.data.result) {
@@ -109,7 +113,7 @@ export default function NewsFeedScreen() {
             />
           </View>
 
-          {post.list.newsfeed.length > 0 &&
+          {post.list.newsfeed.length > 0 ? (
             post.list.newsfeed.map((post) => {
               return (
                 <Post
@@ -118,8 +122,8 @@ export default function NewsFeedScreen() {
                   setSelectedProfile={setSelectedProfile}
                 />
               );
-            })}
-          {post.list.newsfeed.length === 0 && (
+            })
+          ) : (
             <View style={{ flex: 1, alignItems: "center" }}>
               <Title style={{ color: "#999" }}>Chưa có bài viết nào.</Title>
             </View>

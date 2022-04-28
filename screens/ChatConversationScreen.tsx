@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, FlatList, TextInput } from "react-native";
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { Avatar, IconButton, Title } from "react-native-paper";
 
 import EmojiPicker from "rn-emoji-keyboard";
@@ -19,6 +19,9 @@ const ChatConversation = () => {
   const navigation = useNavigation();
   const route = useRoute();
 
+  const flatListRef = useRef<any>(null);
+  const layoutRef = useRef<any>(null);
+
   const socket = useContext(SocketContext);
 
   const dispatch = useAppDispatch();
@@ -26,7 +29,6 @@ const ChatConversation = () => {
   const cUser = useAppSelector<IUser>((state) => state.user);
   const messenger = useAppSelector<IMessenger>((state) => state.messenger);
 
-  const [messages, setMessages] = useState<IMessage[]>([]);
   const [content, setContent] = useState<string>("");
   const [toggleEmojiPicker, setToggleEmojiPicker] = useState<boolean>(false);
 
@@ -74,6 +76,7 @@ const ChatConversation = () => {
       });
       const params = {
         filters: JSON.stringify(filters),
+        limit: 999,
       };
       const res = await REQUEST({
         method: "GET",
@@ -91,7 +94,7 @@ const ChatConversation = () => {
 
   const handleSendPrivateMessage = () => {
     const dataToSend = {
-      conversation_id: route.params?.conversationId,
+      conversationId: route.params?.conversationId,
       content,
       from: cUser.currentUserInfo.user.id,
       to: route.params?.userId,
@@ -101,14 +104,12 @@ const ChatConversation = () => {
   };
 
   const handleReceivePrivateMessage = (payload: any) => {
-    const { _id, conversationId, content, from, to } = payload;
-
-    console.log(payload);
+    const { id, conversation_id, content, from, to } = payload;
 
     const data = {
-      id: _id,
+      id,
       content,
-      conversation_id: conversationId,
+      conversation_id,
       from,
       to,
     };
@@ -125,6 +126,14 @@ const ChatConversation = () => {
   useEffect(() => {
     socket.on("messenger:send_private_message", handleReceivePrivateMessage);
   }, []);
+
+  useEffect(() => {
+    if (flatListRef.current) {
+      flatListRef.current.scrollToEnd({
+        animated: true,
+      });
+    }
+  }, [messenger.messages]);
 
   return (
     <View style={styles.container}>
@@ -169,19 +178,21 @@ const ChatConversation = () => {
           flexDirection: "row",
           alignItems: "flex-end",
           marginHorizontal: 16,
+
+          paddingVertical: 8,
         }}
       >
         <FlatList
-          data={messenger.messages.filter(
-            (o) => o.conversation_id === route.params?.conversationId
-          )}
+          ref={(ref) => (flatListRef.current = ref)}
+          data={messenger.messages}
+          keyExtractor={(item, index) => {
+            return item.id.toString();
+          }}
           renderItem={({ item }) => {
-            const isFromMe = Boolean(
-              item.from === cUser.currentUserInfo.user.id
-            );
+            let isFromMe = Boolean(item.from === cUser.currentUserInfo.user.id);
             return (
               <View
-                key={item.id}
+                key={item.id.toString()}
                 style={{
                   alignItems: isFromMe ? "flex-end" : "flex-start",
                 }}
@@ -193,7 +204,7 @@ const ChatConversation = () => {
                       color: isFromMe ? "#fff" : "#000",
 
                       padding: 8,
-                      marginBottom: 4,
+                      marginVertical: 2,
 
                       borderRadius: 16,
 
@@ -207,7 +218,7 @@ const ChatConversation = () => {
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
-                      marginBottom: 4,
+                      marginVertical: 2,
                     }}
                   >
                     <Avatar.Icon
@@ -237,7 +248,6 @@ const ChatConversation = () => {
               </View>
             );
           }}
-          keyExtractor={(item) => item.id}
         />
       </View>
 
@@ -265,6 +275,13 @@ const ChatConversation = () => {
           placeholder="Viết tin nhắn..."
           value={content}
           onChangeText={setContent}
+          onFocus={() => {
+            if (flatListRef.current) {
+              flatListRef.current.scrollToEnd({
+                animated: true,
+              });
+            }
+          }}
           style={{
             flex: 1,
 

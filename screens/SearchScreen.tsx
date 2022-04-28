@@ -5,6 +5,7 @@ import {
   TextInput,
   FlatList,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { useState, useRef, useEffect, useCallback } from "react";
 
@@ -23,6 +24,7 @@ const SearchScreen = () => {
 
   const [searchValue, setSearchValue] = useState<string>("");
   const [result, setResult] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const loadThumbnail = async (userId: string, avatar: any) => {
     if (!avatar?.key.length || !avatar?.bucket.length) return;
@@ -73,6 +75,8 @@ const SearchScreen = () => {
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -83,6 +87,8 @@ const SearchScreen = () => {
 
   const handleChangeSearchValue = (v: string) => {
     setSearchValue(v);
+
+    setIsLoading(true);
 
     handleDebounce(v);
   };
@@ -131,8 +137,8 @@ const SearchScreen = () => {
         </View>
       </View>
 
-      <View style={{ padding: 8 }}>
-        {result && result.length > 0 && (
+      <View style={{ padding: 8, alignItems: "center" }}>
+        {result && result.length > 0 ? (
           <FlatList
             data={result}
             renderItem={({ item }) => {
@@ -145,9 +151,9 @@ const SearchScreen = () => {
                 >
                   <View style={{ flexDirection: "row", alignItems: "center" }}>
                     {item.avatar.length > 0 ? (
-                      <Avatar.Image source={{ uri: item.avatar }} size={32} />
+                      <Avatar.Image source={{ uri: item.avatar }} size={64} />
                     ) : (
-                      <Avatar.Icon icon="person-outline" size={32} />
+                      <Avatar.Icon icon="person-outline" size={64} />
                     )}
                     <Text style={{ marginLeft: 8, fontWeight: "bold" }}>
                       {item.username}
@@ -157,6 +163,8 @@ const SearchScreen = () => {
               );
             }}
           />
+        ) : (
+          <ActivityIndicator color="#00adb5" animating={isLoading} />
         )}
       </View>
     </View>
