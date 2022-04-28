@@ -128,8 +128,11 @@ export default function ResetPasswordScreen({
       >
         <ScrollView>
           <View style={styles.container}>
-            <View style={{ justifyContent: "center" }}>
-              <Text style={styles.logo}>N16 - Logo</Text>
+            <View style={{ alignItems: "center" }}>
+              <Image
+                source={require("../assets/images/reset-password.png")}
+                resizeMode="cover"
+              />
             </View>
             <View style={{ justifyContent: "center", marginBottom: 16 }}>
               <Title>{AUTH_CONSTANT.SET_NEW_PASSWORD}</Title>

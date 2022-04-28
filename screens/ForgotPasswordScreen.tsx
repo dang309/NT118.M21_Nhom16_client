@@ -43,7 +43,6 @@ export default function ForgotPasswordScreen({
   const dispatch = useAppDispatch();
   const theme = useColorScheme();
 
-  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState("");
 
   const ForgotPasswordSchema = Yup.object().shape({
@@ -95,10 +94,6 @@ export default function ForgotPasswordScreen({
     getFieldProps,
   } = formik;
 
-  const handleToggleShowPassword = () => {
-    setShowPassword((prev) => !prev);
-  };
-
   const handleSignInWithGG = async () => {
     console.log("logged in");
   };
@@ -106,8 +101,11 @@ export default function ForgotPasswordScreen({
   return (
     <>
       <View style={styles.container}>
-        <View style={{ justifyContent: "center" }}>
-          <Text style={styles.logo}>N16 - Logo</Text>
+        <View style={{ alignItems: "center" }}>
+          <Image
+            source={require("../assets/images/forgot-password.png")}
+            resizeMode="cover"
+          />
         </View>
         <View style={{ justifyContent: "center", marginBottom: 16 }}>
           <Title>{AUTH_CONSTANT.RETRIEVE_PASSWORD}</Title>

@@ -44,8 +44,6 @@ export default function EmailVerificationScreen({
   const theme = useColorScheme();
 
   const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState("");
 
   const EmailVerificationSchema = Yup.object().shape({
@@ -102,8 +100,11 @@ export default function EmailVerificationScreen({
   return (
     <>
       <View style={styles.container}>
-        <View style={{ justifyContent: "center" }}>
-          <Text style={styles.logo}>N16 - Logo</Text>
+        <View style={{ alignItems: "center" }}>
+          <Image
+            source={require("../assets/images/verification.png")}
+            resizeMode="cover"
+          />
         </View>
         <View style={{ justifyContent: "center", marginBottom: 16 }}>
           <Title>{AUTH_CONSTANT.EMAIL_VERIFICATION}</Title>

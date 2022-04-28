@@ -157,6 +157,27 @@ export default function ProfileViewerScreen() {
     setUser((prev: any) => ({ ...prev, followers: num_followers }));
   };
 
+  const initConversation = async () => {
+    try {
+      const dataToSend = {
+        firstUserId: cUser.currentUserInfo.user.id,
+        secondUserId: route.params?.userId,
+      };
+      socket.emit("messenger:create_room", dataToSend);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const goToChatConversation = (payload: any) => {
+    const { conversationId } = payload;
+
+    navigation.navigate("ChatConversation", {
+      conversationId,
+      userId: route.params?.userId,
+    });
+  };
+
   useEffect(() => {
     loadPosts();
     getUserById();
@@ -165,6 +186,7 @@ export default function ProfileViewerScreen() {
   useEffect(() => {
     socket.on("user:num_following", getNumFollowing);
     socket.on("user:num_followers", getNumFollowers);
+    socket.on("messenger:room_id", goToChatConversation);
   }, []);
 
   return (
@@ -287,6 +309,7 @@ export default function ProfileViewerScreen() {
                     mode="outlined"
                     uppercase
                     icon="chatbubble-outline"
+                    onPress={initConversation}
                     style={{
                       borderWidth: 1,
                       borderColor: "#00ADB5",

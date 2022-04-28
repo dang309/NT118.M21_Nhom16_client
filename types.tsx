@@ -26,7 +26,7 @@ export type RootStackParamList = {
   Ranking: undefined;
   AddPost: undefined;
   Chat: undefined;
-  ChatConversation: undefined;
+  ChatConversation: { conversationId: string; userId: string };
   Profile: { userId: string };
   EditProfile: undefined;
   ProfileViewer: { userId: string };
