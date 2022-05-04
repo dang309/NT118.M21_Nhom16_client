@@ -7,65 +7,71 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useState, useEffect } from "react";
-
-import EditScreenInfo from "../components/EditScreenInfo";
-import { NavigationNewsFeedProps } from "../types";
+import { useState, useEffect, useCallback } from "react";
 
 import { Icon, Post } from "../components";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { IPostItem, IPost, SET_POST } from "../features/PostSlice";
+import { useAppSelector } from "../app/hook";
 
-import REQUEST from "../utils/request";
-import { useAppDispatch, useAppSelector } from "../app/hook";
+import { useNavigation, useIsFocused } from "@react-navigation/core";
+import {
+  ActivityIndicator,
+  Badge,
+  IconButton,
+  Title,
+} from "react-native-paper";
 
-import { useNavigation } from "@react-navigation/core";
-import { IconButton, Title } from "react-native-paper";
-
-import { CryptoTransfer } from "../components";
+import { CryptoTransfer, NotificationsDialog } from "../components";
+import { useFocusEffect } from "@react-navigation/native";
+import { createDraftSafeSelector } from "@reduxjs/toolkit";
+import { RootState } from "../app/store";
+import moment from "moment";
+import { INotification } from "../features/NotificationSlice";
 
 export default function NewsFeedScreen() {
-  const dispatch = useAppDispatch();
-  const post = useAppSelector<IPost>((state) => state.post);
-
   const navigation = useNavigation();
 
+  const state = useAppSelector<RootState>((state) => state);
+  const noti = useAppSelector<INotification>((state) => state.notification);
+  const isLoading = useAppSelector<boolean>((state) => state.common.loading);
+
   const [toggleCryptoDialog, setToggleCryptoDialog] = useState<boolean>(false);
+  const [toggleNotiDialog, setToggleNotiDialog] = useState<boolean>(false);
   const [selectedProfile, setSelectedProfile] = useState<string>("");
-
-  const loadPosts = async () => {
-    try {
-      const params = {
-        sort: "created_at:desc",
-      };
-      const res = await REQUEST({
-        method: "GET",
-        url: "/posts",
-        params,
-      });
-
-      if (res && res.data.result) {
-        dispatch(SET_POST({ des: "newsfeed", data: res.data.data.results }));
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  useEffect(() => {
-    loadPosts();
-  }, []);
 
   const handleGotoProfile = () => {
     if (selectedProfile.length === 0) return;
     navigation.navigate("ProfileViewer", { userId: selectedProfile });
   };
 
-  useEffect(() => {
-    handleGotoProfile();
-  }, [selectedProfile]);
+  const getNewsfeedPosts = createDraftSafeSelector(
+    (state: RootState) => state.post,
+    (post) => {
+      return post.list;
+    }
+  );
+
+  const countNewsfeedPosts = createDraftSafeSelector(
+    (state: RootState) => state.post,
+    (post) => {
+      return post.list.length;
+    }
+  );
+
+  const countUnreadNotis = createDraftSafeSelector(
+    (state: RootState) => state.notification,
+    (noti) => {
+      return noti.list.filter((o) => o.isUnread).length;
+    }
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      handleGotoProfile();
+    }, [selectedProfile])
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -102,19 +108,35 @@ export default function NewsFeedScreen() {
                 size={24}
                 color="#FFA800"
                 onPress={() => setToggleCryptoDialog(true)}
-                style={{ paddingRight: 16 }}
               />
-              <Icon name="notifications" size={24} color="#000" />
+              <TouchableOpacity onPress={() => setToggleNotiDialog(true)}>
+                <View>
+                  <IconButton icon="notifications" size={24} color="#000" />
+                  <Badge
+                    size={20}
+                    style={{ position: "absolute", top: "10%", right: "15%" }}
+                  >
+                    {countUnreadNotis(state)}
+                  </Badge>
+                </View>
+              </TouchableOpacity>
             </View>
 
             <CryptoTransfer
               toggleCryptoDialog={toggleCryptoDialog}
               setToggleCryptoDialog={setToggleCryptoDialog}
             />
+
+            <NotificationsDialog
+              toggleNotiDialog={toggleNotiDialog}
+              setToggleNotiDialog={setToggleNotiDialog}
+              navigation={navigation}
+            />
           </View>
 
-          {post.list.newsfeed.length > 0 ? (
-            post.list.newsfeed.map((post) => {
+          {countNewsfeedPosts(state) > 0 &&
+            !isLoading &&
+            getNewsfeedPosts(state).map((post) => {
               return (
                 <Post
                   key={post.id}
@@ -122,12 +144,19 @@ export default function NewsFeedScreen() {
                   setSelectedProfile={setSelectedProfile}
                 />
               );
-            })
-          ) : (
+            })}
+
+          {isLoading && (
+            <View style={{ margin: 8 }}>
+              <ActivityIndicator color="#00adb5" size={32} />
+            </View>
+          )}
+
+          {/* {getNewsfeedPosts(state) && countNewsfeedPosts(state) === 0 && (
             <View style={{ flex: 1, alignItems: "center" }}>
               <Title style={{ color: "#999" }}>Chưa có bài viết nào.</Title>
             </View>
-          )}
+          )} */}
         </View>
       </ScrollView>
     </SafeAreaView>

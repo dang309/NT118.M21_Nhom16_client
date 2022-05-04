@@ -1,11 +1,7 @@
 import { View, ScrollView } from "react-native";
 import React, { useState, useEffect } from "react";
 
-import {
-  Dialog,
-  Portal,
-  TextInput,
-} from "react-native-paper";
+import { Dialog, Portal, TextInput } from "react-native-paper";
 
 import { useAppDispatch, useAppSelector } from "../app/hook";
 import { IComment, SET_COMMENT, ADD_COMMENT } from "../features/CommentSlice";
@@ -24,7 +20,7 @@ const CommentDialog = ({ postId, showCmt, setShowCmt }: Props) => {
   const dispatch = useAppDispatch();
 
   const comment = useAppSelector<IComment>((state) => state.comment);
-  const cUser = useAppSelector<IUser>((state) => state.user);
+  const USER = useAppSelector<IUser>((state) => state.user);
 
   const [content, setContent] = useState<string>("");
 
@@ -53,7 +49,7 @@ const CommentDialog = ({ postId, showCmt, setShowCmt }: Props) => {
       const dataToSend = {
         post_id: postId,
         content,
-        user_comment_id: cUser.currentUserInfo.user.id,
+        user_comment_id: USER.loggedInUser.id,
       };
       const res = await REQUEST({
         method: "POST",

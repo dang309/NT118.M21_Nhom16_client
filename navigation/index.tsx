@@ -9,17 +9,11 @@ import {
   DefaultTheme,
   DarkTheme,
   StackRouter,
+  useFocusEffect,
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import * as React from "react";
-import {
-  ColorSchemeName,
-  Pressable,
-  TouchableOpacity,
-  View,
-  Text,
-  Button,
-} from "react-native";
+import { useState, useEffect, useCallback, useContext } from "react";
+import { ColorSchemeName } from "react-native";
 
 import { IconButton, Menu, Divider } from "react-native-paper";
 
@@ -30,7 +24,7 @@ import PROFILE_CONSTANT from "./../constants/Profile";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { CLEAR_USER, SET_USER } from "../features/UserSlice";
+import { ISingleUser, SET_USER } from "../features/UserSlice";
 
 import { REQUEST } from "../utils";
 
@@ -46,19 +40,24 @@ import { RootStackParamList } from "../types";
 import * as ADDPOST_CONSTANT from "../constants/AddPost";
 
 import { useAppDispatch, useAppSelector } from "./../app/hook";
-import { TOGGLE_PROFILE_ACTIONS_DIALOG } from "../features/UserSlice";
 import { IUser } from "./../features/UserSlice";
-import { IPost } from "./../features/PostSlice";
+import { ADD_POST, IPost, IPostItem, SET_POST } from "./../features/PostSlice";
 import { useNavigation } from "@react-navigation/native";
-import AddPostScreen from "../screens/AddPostScreen";
 
-import BottomNavigation from "./BottomNavigation";
+import { COMMON } from "../utils";
+import { START_LOADING, STOP_LOADING } from "../features/CommonSlice";
+import { DBContext } from "../context/db";
+
+import * as FileSystem from "expo-file-system";
+import { FOLDERS } from "../context/files";
 
 export default function Navigation({
   colorScheme,
 }: {
   colorScheme: ColorSchemeName;
 }) {
+  const dispatch = useAppDispatch();
+
   return (
     <NavigationContainer
       theme={colorScheme === "dark" ? DarkTheme : DefaultTheme}
@@ -103,13 +102,8 @@ function RootNavigator() {
         options={{ headerShown: false }}
       />
       <Stack.Screen
-        name="BottomNavigation"
-        component={BottomNavigation}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Chat"
-        component={SCREENS.ChatContactScreen}
+        name="Root"
+        component={BottomTabNavigator}
         options={{ headerShown: false }}
       />
 
@@ -152,141 +146,320 @@ function RootNavigator() {
   );
 }
 
+// function MyTabBar({ state, descriptors, navigation }) {
+//   return (
+//     <View style={{ flexDirection: "row" }}>
+//       {state.routes.map((route, index) => {
+//         const { options } = descriptors[route.key];
+//         const label =
+//           options.tabBarLabel !== undefined
+//             ? options.tabBarLabel
+//             : options.title !== undefined
+//             ? options.title
+//             : route.name;
+
+//         const isFocused = state.index === index;
+
+//         const onPress = () => {
+//           const event = navigation.emit({
+//             type: "tabPress",
+//             target: route.key,
+//             canPreventDefault: true,
+//           });
+
+//           if (!isFocused && !event.defaultPrevented) {
+//             // The `merge: true` option makes sure that the params inside the tab screen are preserved
+//             navigation.navigate({ name: route.name, merge: true });
+//           }
+//         };
+
+//         const onLongPress = () => {
+//           navigation.emit({
+//             type: "tabLongPress",
+//             target: route.key,
+//           });
+//         };
+
+//         return (
+//           <TouchableOpacity
+//             accessibilityRole="button"
+//             accessibilityState={isFocused ? { selected: true } : {}}
+//             accessibilityLabel={options.tabBarAccessibilityLabel}
+//             testID={options.tabBarTestID}
+//             onPress={onPress}
+//             onLongPress={onLongPress}
+//             style={{ flex: 1 }}
+//           >
+//             <Text style={{ color: isFocused ? "#673ab7" : "#222" }}>
+//               {label}
+//             </Text>
+//           </TouchableOpacity>
+//         );
+//       })}
+//     </View>
+//   );
+// }
+
 /**
  * A bottom tab navigator displays tab buttons on the bottom of the display to switch screens.
  * https://reactnavigation.org/docs/bottom-tab-navigator
  */
 
-// function BottomTabNavigator() {
-//   const colorScheme = useColorScheme();
-//   const dispatch = useAppDispatch();
-//   const cUser = useAppSelector<IUser>((state) => state.user);
-//   const post = useAppSelector<IPost>((state) => state.post);
-//   const navigation = useNavigation();
+const BottomTab = createBottomTabNavigator();
 
-//   const handleToggleProfileActionsDialog = () => {
-//     dispatch(TOGGLE_PROFILE_ACTIONS_DIALOG());
-//   };
+function BottomTabNavigator() {
+  const colorScheme = useColorScheme();
 
-//   const handleLogout = async () => {
-//     try {
-//       const tokens = await AsyncStorage.getItem("@tokens");
+  const dispatch = useAppDispatch();
 
-//       await REQUEST({
-//         method: "POST",
-//         url: "/auth/logout",
-//         data: {
-//           refreshToken: tokens?.length ? JSON.parse(tokens).refresh.token : "",
-//         },
-//       });
-//       await AsyncStorage.removeItem("@tokens");
-//       dispatch(CLEAR_USER());
-//       navigation.navigate("Login");
-//       handleToggleProfileActionsDialog();
-//     } catch (err) {
-//       console.log(err);
-//     }
-//   };
+  const USER = useAppSelector<IUser>((state) => state.user);
 
-//   const getTitleByStepIndicator = (stepIndicator: number): string => {
-//     let result = "";
-//     switch (stepIndicator) {
-//       case 0:
-//         result = ADDPOST_CONSTANT.PICK_SOUND;
-//         break;
-//       case 1:
-//         result = ADDPOST_CONSTANT.PICK_THUMBNAIL;
-//         break;
-//       case 2:
-//         result = ADDPOST_CONSTANT.DESC;
-//         break;
-//     }
-//     return result;
-//   };
+  const loadSound = async (post: IPostItem) => {
+    try {
+      const URL = `https://api-nhom16.herokuapp.com/v1/posts/sound/${post.id}`;
+      const fileToSave =
+        FOLDERS.POST.SOUNDS +
+        post.sound.key.split("/")[1].replace(/[(\s+)-]/gi, "_");
+      const fileInfo = await FileSystem.getInfoAsync(fileToSave);
+      if (fileInfo.exists) {
+        return fileToSave;
+      }
+      const { uri } = await FileSystem.downloadAsync(URL, fileToSave);
+      return uri;
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-//   return (
-//     <BottomTab.Navigator
-//       initialRouteName="NewsFeed"
-//       screenOptions={{
-//         tabBarActiveTintColor: Colors[colorScheme].tint,
-//         headerShown: false,
-//       }}
-//       tabBar={(props) => <MyTabBar {...props} />}
-//     >
-//       <BottomTab.Screen name="NewsFeed" component={SCREENS.NewsFeedScreen} />
+  const loadThumbnail = async (post: IPostItem) => {
+    try {
+      const URL = `https://api-nhom16.herokuapp.com/v1/posts/thumbnail/${post.id}`;
+      const fileToSave =
+        FOLDERS.POST.THUMBNAILS +
+        post.thumbnail.key.split("/")[1].replace(/[(\s+)-]/gi, "_");
+      const fileInfo = await FileSystem.getInfoAsync(fileToSave);
+      if (fileInfo.exists) {
+        return fileToSave;
+      }
+      const { uri } = await FileSystem.downloadAsync(URL, fileToSave);
+      return uri;
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-//       <BottomTab.Screen name="Ranking" component={SCREENS.RankingScreen} />
+  const loadAvatar = async (user: ISingleUser) => {
+    try {
+      if (!user.avatar.key.length) return;
+      const URL = `https://api-nhom16.herokuapp.com/v1/users/avatar/${user.id}`;
+      const fileToSave =
+        FOLDERS.POST.AVATARS +
+        user.avatar.key.split("/")[1].replace(/[(\s+)-]/gi, "_");
+      const fileInfo = await FileSystem.getInfoAsync(fileToSave);
+      if (fileInfo.exists) {
+        return fileToSave;
+      }
+      const { uri } = await FileSystem.downloadAsync(URL, fileToSave);
+      return uri;
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-//       <BottomTab.Screen
-//         name="AddPost"
-//         component={SCREENS.AddPostScreen}
-//         options={{
-//           headerShown: true,
-//           title: getTitleByStepIndicator(post.actions.stepIndicatorAddPost),
-//           headerLeft: () => (
-//             <IconButton
-//               icon="arrow-back"
-//               size={24}
-//               onPress={() => navigation.goBack()}
-//             />
-//           ),
-//         }}
-//       />
+  const loadPosts = async () => {
+    try {
+      dispatch(START_LOADING());
+      const params = {
+        sortBy: "created_at:desc",
+        limit: 5,
+      };
+      const res = await REQUEST({
+        method: "GET",
+        url: "/posts",
+        params,
+      });
 
-//       <BottomTab.Screen
-//         name="CryptoMarket"
-//         component={SCREENS.NewsFeedScreen}
-//       />
+      if (res && res.data.result) {
+        let _sound;
+        let _thumbnail;
+        let _user;
+        let _avatar;
+        let result = [];
+        let temp = res.data.data.results;
+        for (let i = 0; i < temp.length; i++) {
+          _sound = await loadSound(temp[i]);
+          _thumbnail = await loadThumbnail(temp[i]);
+          _user = await COMMON.getUserById(temp[i].user_id);
+          _avatar = await loadAvatar(_user);
+          if (
+            temp[i].users_like.some((o: any) => o === USER.loggedInUser.id) &&
+            temp[i].users_listening.some((o: any) => o === USER.loggedInUser.id)
+          ) {
+            result.push({
+              ...temp[i],
+              sound: {
+                ...temp[i].sound,
+                uri: _sound,
+              },
+              thumbnail: {
+                ...temp[i].thumbnail,
+                uri: _thumbnail,
+              },
+              posting_user: {
+                ..._user,
+                avatar: {
+                  ..._user.avatar,
+                  uri: _avatar,
+                },
+              },
+              is_like_from_me: true,
+              is_hear_from_me: true,
+            });
+          } else if (
+            temp[i].users_like.some((o: any) => o === USER.loggedInUser.id)
+          ) {
+            result.push({
+              ...temp[i],
+              sound: {
+                ...temp[i].sound,
+                uri: _sound,
+              },
+              thumbnail: {
+                ...temp[i].thumbnail,
+                uri: _thumbnail,
+              },
+              posting_user: {
+                ..._user,
+                avatar: {
+                  ..._user.avatar,
+                  uri: _avatar,
+                },
+              },
+              is_like_from_me: true,
+            });
+          } else if (
+            temp[i].users_listening.some((o: any) => o === USER.loggedInUser.id)
+          ) {
+            result.push({
+              ...temp[i],
+              sound: {
+                ...temp[i].sound,
+                uri: _sound,
+              },
+              thumbnail: {
+                ...temp[i].thumbnail,
+                uri: _thumbnail,
+              },
+              posting_user: {
+                ..._user,
+                avatar: {
+                  ..._user.avatar,
+                  uri: _avatar,
+                },
+              },
+              is_hear_from_me: true,
+            });
+          } else {
+            result.push({
+              ...temp[i],
+              sound: {
+                ...temp[i].sound,
+                uri: _sound,
+              },
+              thumbnail: {
+                ...temp[i].thumbnail,
+                uri: _thumbnail,
+              },
+              posting_user: {
+                ..._user,
+                avatar: {
+                  ..._user.avatar,
+                  uri: _avatar,
+                },
+              },
+            });
+          }
+        }
+        dispatch(SET_POST(result));
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      dispatch(STOP_LOADING());
+    }
+  };
 
-//       <BottomTab.Screen
-//         name="Profile"
-//         component={SCREENS.ProfileScreen}
-//         options={{
-//           headerShown: true,
-//           headerLeft: () => (
-//             <IconButton
-//               icon="arrow-back"
-//               size={24}
-//               onPress={() => navigation.goBack()}
-//             />
-//           ),
-//           title: cUser.currentUserInfo.user.username || "Profile",
-//           headerRight: () => (
-//             <>
-//               <Menu
-//                 visible={
-//                   !!cUser?.currentUserInfo?.actions?.showProfileActionsDialog
-//                 }
-//                 onDismiss={handleToggleProfileActionsDialog}
-//                 anchor={
-//                   <IconButton
-//                     icon="ellipsis-vertical"
-//                     size={24}
-//                     onPress={handleToggleProfileActionsDialog}
-//                   />
-//                 }
-//               >
-//                 <Menu.Item
-//                   onPress={() => {}}
-//                   title={PROFILE_CONSTANT.EDIT_PROFILE}
-//                   icon="pencil"
-//                 />
-//                 <Menu.Item
-//                   onPress={() => {}}
-//                   title={PROFILE_CONSTANT.BOOKMARK}
-//                   icon="bookmark"
-//                 />
-//                 <Divider style={{ height: 1 }} />
-//                 <Menu.Item
-//                   onPress={handleLogout}
-//                   title={PROFILE_CONSTANT.SIGN_OUT}
-//                   icon="log-out-outline"
-//                 />
-//               </Menu>
-//             </>
-//           ),
-//         }}
-//       />
-//     </BottomTab.Navigator>
-//   );
-// }
+  useFocusEffect(
+    useCallback(() => {
+      console.log("focused");
+      if (!USER.loggedInUser.id.length) return;
+      loadPosts();
+
+      return () => {
+        console.log("unfocused");
+      };
+    }, [USER.loggedInUser.id])
+  );
+
+  return (
+    <BottomTab.Navigator
+      initialRouteName="NewsFeed"
+      screenOptions={{
+        tabBarActiveTintColor: "#00adb5",
+        tabBarShowLabel: false,
+        headerShown: false,
+        unmountOnBlur: true,
+      }}
+    >
+      <BottomTab.Screen
+        name="NewsFeed"
+        component={SCREENS.NewsFeedScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="home-sharp" color={color} size={size} />
+          ),
+        }}
+      />
+
+      <BottomTab.Screen
+        name="Ranking"
+        component={SCREENS.RankingScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="medal-sharp" color={color} size={size} />
+          ),
+        }}
+      />
+
+      <BottomTab.Screen
+        name="AddPost"
+        component={SCREENS.AddPostScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="add-circle-sharp" color={color} size={size} />
+          ),
+        }}
+      />
+
+      <BottomTab.Screen
+        name="Chat"
+        component={SCREENS.ChatContactScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="chatbubble-sharp" color={color} size={size} />
+          ),
+        }}
+      />
+
+      <BottomTab.Screen
+        name="Profile"
+        component={SCREENS.ProfileScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="person-sharp" color={color} size={size} />
+          ),
+        }}
+      />
+    </BottomTab.Navigator>
+  );
+}

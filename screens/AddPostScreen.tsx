@@ -8,9 +8,6 @@ import {
 } from "react-native";
 import { useState, useEffect } from "react";
 
-import EditScreenInfo from "../components/EditScreenInfo";
-import { NavigationAddPostProps } from "../types";
-
 import * as ADDPOST_CONSTANT from "../constants/AddPost";
 
 import * as DocumentPicker from "expo-document-picker";
@@ -28,11 +25,12 @@ import {
   Headline,
 } from "react-native-paper";
 import { Icon, SoundPicker, ThumbnailPicker, DescForm } from "../components";
-import { REQUEST } from "../utils";
+import { COMMON, REQUEST } from "../utils";
 
 import { useAppDispatch, useAppSelector } from "./../app/hook";
 import { IUser } from "./../features/UserSlice";
 import { ADD_POST } from "./../features/PostSlice";
+import { useNavigation } from "@react-navigation/core";
 
 interface IGenre {
   id: string;
@@ -40,9 +38,12 @@ interface IGenre {
 }
 
 export default function AddPostScreen() {
-  const cUser = useAppSelector<IUser>((state) => state.user);
+  const USER = useAppSelector<IUser>((state) => state.user);
   const dispatch = useAppDispatch();
 
+  const navigation = useNavigation();
+
+  const [mounted, setMounted] = useState<boolean>(false);
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [genres, setGenres] = useState<IGenre[]>([]);
   const [sound, setSound] = useState<any>(null);
@@ -141,7 +142,7 @@ export default function AddPostScreen() {
   const handleFinishAddingPost = async () => {
     try {
       const dataToSend = new FormData();
-      dataToSend.append("user_id", cUser.currentUserInfo.user.id);
+      dataToSend.append("user_id", USER.loggedInUser.id);
       dataToSend.append("caption", desc?.caption);
       dataToSend.append("title", desc?.title);
       dataToSend.append("sound", {
@@ -168,14 +169,18 @@ export default function AddPostScreen() {
           "Content-Type": "multipart/form-data",
         },
         transformRequest: (data, headers) => {
-          // !!! override data to return formData
-          // since axios converts that to string
           return dataToSend;
         },
       });
 
       if (res && res.data.result) {
-        dispatch(ADD_POST({ des: "newsfeed", data: res.data.data }));
+        let temp = res.data.data;
+        let _user = await COMMON.getUserById(res.data.data.user_id);
+        temp = Object.assign(temp, {
+          posting_user: _user,
+        });
+        dispatch(ADD_POST(temp));
+        navigation.navigate("Root", { screen: "NewsFeed" });
       }
     } catch (e) {
       console.log(e);
@@ -194,7 +199,16 @@ export default function AddPostScreen() {
   };
 
   useEffect(() => {
+    if (!mounted) return;
     loadGenres();
+  }, [mounted]);
+
+  useEffect(() => {
+    setMounted(true);
+
+    return () => {
+      setMounted(false);
+    };
   }, []);
 
   return (

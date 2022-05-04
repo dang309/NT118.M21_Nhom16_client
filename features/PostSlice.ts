@@ -5,131 +5,81 @@ export interface IPostItem {
   caption: string;
   genre_id: string;
   hashtag_id: null;
-  sound: {
-    bucket: string;
-    key: string;
-  };
   title: string;
-  thumbnail: {
-    bucket: string;
+  sound: {
     key: string;
+    bucket: string;
+    uri: any;
   };
-  user_id: string;
+  thumbnail: {
+    key: string;
+    bucket: string;
+    uri: any;
+  };
+  posting_user: {
+    id: string;
+    email: string;
+    username: string;
+    bio: string;
+    avatar: {
+      key: string;
+      bucket: string;
+      uri: any;
+    };
+    following: [string];
+    followers: [string];
+    balance_dcoin: number;
+    hobbies: [string];
+  };
   users_like: string[];
   users_listening: string[];
   created_at: string;
   updated_at: string;
+
+  is_like_from_me: boolean;
+  is_hear_from_me: boolean;
 }
 
 export interface IPost {
-  list: {
-    newsfeed: IPostItem[];
-    personal: IPostItem[];
-    bookmark: IPostItem[];
-  };
-  actions: {
-    stepIndicatorAddPost: number;
-  };
+  list: IPostItem[];
 }
 
 const INITIAL_STATE: IPost = {
-  list: {
-    newsfeed: [],
-    personal: [],
-    bookmark: [],
-  },
-  actions: {
-    stepIndicatorAddPost: 0,
-  },
+  list: [],
 };
 
 const PostSlice = createSlice({
   name: "Post",
   initialState: INITIAL_STATE,
   reducers: {
-    SET_POST: (
-      state,
-      action: {
-        payload: {
-          des: "newsfeed" | "personal" | "bookmark";
-          data: any;
-        };
-      }
-    ) => {
-      state.list[action.payload.des] = action.payload.data;
+    SET_POST: (state, action) => {
+      state.list = [...action.payload];
     },
-    ADD_POST: (
-      state,
-      action: {
-        payload: {
-          des: "newsfeed" | "personal" | "bookmark";
-          data: any;
-        };
-      }
-    ) => {
-      Object.assign(state, {
-        list: {
-          [action.payload.des]: [
-            ...state.list[action.payload.des],
-            ...action.payload.data,
-          ],
-        },
-      });
+    ADD_POST: (state, action) => {
+      state.list.unshift(action.payload);
     },
-    UPDATE_POST: (
-      state,
-      action: {
-        payload: {
-          des: "newsfeed" | "personal" | "bookmark";
-          postId: string;
-          dataToUpdate: any;
-        };
-      }
-    ) => {
-      state.list[action.payload.des] = state.list[action.payload.des].map(
-        (item) => {
-          if (item.id === action.payload.postId) {
-            return { ...item, ...action.payload.dataToUpdate };
-          }
-          return { ...item };
+    UPDATE_POST: (state, action) => {
+      const { postId, dataToUpdate } = action.payload;
+      let temp = state.list;
+      temp = temp.map((item) => {
+        if (item.id === postId) {
+          return { ...item, ...dataToUpdate };
         }
-      );
+        return { ...item };
+      });
+      state.list = temp;
     },
     DELETE_POST: (state, action) => {
-      let idx;
-      idx = state.list.newsfeed.findIndex(
-        (o) => o.id === action.payload.postId
-      );
+      const { postId } = action.payload;
+      const idx = state.list.findIndex((o) => o.id === postId);
       if (idx > -1) {
-        state.list.newsfeed.splice(idx, 1);
+        state.list.splice(idx, 1);
       }
-
-      idx = state.list.personal.findIndex(
-        (o) => o.id === action.payload.postId
-      );
-      if (idx > -1) {
-        state.list.personal.splice(idx, 1);
-      }
-
-      idx = state.list.bookmark.findIndex(
-        (o) => o.id === action.payload.postId
-      );
-      if (idx > -1) {
-        state.list.bookmark.splice(idx, 1);
-      }
-    },
-    SET_STEP_INDICATOR: (state, action) => {
-      Object.assign(state, { stepIndicatorAddPost: action.payload });
     },
   },
 });
 
-export const {
-  SET_POST,
-  ADD_POST,
-  UPDATE_POST,
-  DELETE_POST,
-  SET_STEP_INDICATOR,
-} = PostSlice.actions;
+export const { SET_POST, ADD_POST, UPDATE_POST, DELETE_POST } =
+  PostSlice.actions;
 
 export default PostSlice.reducer;

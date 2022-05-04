@@ -1,18 +1,7 @@
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import React, { useState, useEffect } from "react";
 
-import {
-  Button,
-  Paragraph,
-  Dialog,
-  Portal,
-  Provider,
-  TextInput,
-  Avatar,
-  Caption,
-  IconButton,
-  Title,
-} from "react-native-paper";
+import { TextInput, Title } from "react-native-paper";
 
 import { useAppDispatch, useAppSelector } from "../app/hook";
 import { IComment, SET_COMMENT, ADD_COMMENT } from "../features/CommentSlice";
@@ -31,11 +20,12 @@ const CommentScreen = () => {
   const route = useRoute();
 
   const comment = useAppSelector<IComment>((state) => state.comment);
-  const cUser = useAppSelector<IUser>((state) => state.user);
+  const USER = useAppSelector<IUser>((state) => state.user);
 
   const [content, setContent] = useState<string>("");
 
   const loadComment = async () => {
+    console.log(route.params?.postId);
     try {
       let filters = [];
       filters.push({
@@ -66,7 +56,7 @@ const CommentScreen = () => {
       const dataToSend = {
         post_id: route.params?.postId,
         content,
-        user_comment_id: cUser.currentUserInfo.user.id,
+        user_comment_id: USER.loggedInUser.id,
       };
       const res = await REQUEST({
         method: "POST",

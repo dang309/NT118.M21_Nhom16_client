@@ -22,18 +22,31 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   ResetPassword: undefined;
   EmailVerification: undefined;
-  NewsFeed: undefined;
-  Ranking: undefined;
-  AddPost: undefined;
-  Chat: undefined;
-  ChatConversation: { conversationId: string; userId: string };
-  Profile: { userId: string };
+  Root:
+    | NavigatorScreenParams<RootTabParamList>
+    | {
+        params: any;
+      }
+    | undefined;
+  ChatConversation: { userId: string };
   EditProfile: undefined;
   ProfileViewer: { userId: string };
   Comment: { postId: string };
   Search: undefined;
   BottomNavigation: undefined;
   NotFound: undefined;
+};
+
+export type RootTabParamList = {
+  NewsFeed: undefined;
+  Ranking: undefined;
+  AddPost: undefined;
+  Chat: undefined;
+  Profile: {
+    params: {
+      postId: string;
+    };
+  };
 };
 
 export type RootStackScreenProps<Screen extends keyof RootStackParamList> =
@@ -64,34 +77,9 @@ export type NavigationResetPasswordProps = NativeStackScreenProps<
   "ResetPassword"
 >;
 
-export type NavigationNewsFeedProps = NativeStackScreenProps<
-  RootStackParamList,
-  "NewsFeed"
->;
-
-export type NavigationRankingProps = NativeStackScreenProps<
-  RootStackParamList,
-  "Ranking"
->;
-
-export type NavigationAddPostProps = NativeStackScreenProps<
-  RootStackParamList,
-  "AddPost"
->;
-
-export type NavigationChatProps = NativeStackScreenProps<
-  RootStackParamList,
-  "Chat"
->;
-
 export type NavigationChatConversationProps = NativeStackScreenProps<
   RootStackParamList,
   "ChatConversation"
->;
-
-export type NavigationProfileProps = NativeStackScreenProps<
-  RootStackParamList,
-  "Profile"
 >;
 
 export type NavigationEditProfileProps = NativeStackScreenProps<

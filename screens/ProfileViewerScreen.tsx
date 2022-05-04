@@ -48,7 +48,7 @@ const renderStat = (header: string, quantity: number, styles: object) => {
 
 export default function ProfileViewerScreen() {
   const dispatch = useAppDispatch();
-  const cUser = useAppSelector<IUser>((state) => state.user);
+  const USER = useAppSelector<IUser>((state) => state.user);
 
   const navigation = useNavigation();
   const route = useRoute();
@@ -126,7 +126,7 @@ export default function ProfileViewerScreen() {
       temp = Object.assign(temp, {
         avatar: _avatar || "",
       });
-      if (temp.followers.some((o) => o === cUser.currentUserInfo.user.id)) {
+      if (temp.followers.some((o) => o === USER.loggedInUser.id)) {
         setToggleFollow(true);
       }
       setUser(temp);
@@ -138,7 +138,7 @@ export default function ProfileViewerScreen() {
   const handleFollow = async () => {
     try {
       const dataToSend = {
-        userIdSource: cUser.currentUserInfo.user.id,
+        userIdSource: USER.loggedInUser.id,
         userIdDestination: route.params?.userId,
       };
       socket.emit("user:toggle_follow", dataToSend);
@@ -157,23 +157,8 @@ export default function ProfileViewerScreen() {
     setUser((prev: any) => ({ ...prev, followers: num_followers }));
   };
 
-  const initConversation = async () => {
-    try {
-      const dataToSend = {
-        firstUserId: cUser.currentUserInfo.user.id,
-        secondUserId: route.params?.userId,
-      };
-      socket.emit("messenger:create_room", dataToSend);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const goToChatConversation = (payload: any) => {
-    const { conversationId } = payload;
-
+  const initConversation = () => {
     navigation.navigate("ChatConversation", {
-      conversationId,
       userId: route.params?.userId,
     });
   };
@@ -186,7 +171,6 @@ export default function ProfileViewerScreen() {
   useEffect(() => {
     socket.on("user:num_following", getNumFollowing);
     socket.on("user:num_followers", getNumFollowers);
-    socket.on("messenger:room_id", goToChatConversation);
   }, []);
 
   return (

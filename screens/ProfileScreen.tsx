@@ -1,9 +1,14 @@
-import { ScrollView, StatusBar, StyleSheet, View, Text } from "react-native";
-import { useState, useEffect } from "react";
+import {
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  View,
+  Text,
+  FlatList,
+} from "react-native";
+import { useState, useEffect, useCallback, useContext, useRef } from "react";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-import { NavigationProfileProps } from "../types";
 
 import {
   Avatar,
@@ -24,14 +29,17 @@ import {
 import PROFILE_CONSTANT from "./../constants/Profile";
 import { REQUEST } from "../utils";
 import { useAppDispatch, useAppSelector } from "./../app/hook";
-import { CLEAR_USER, SET_USER } from "../features/UserSlice";
+import { SET_USER } from "../features/UserSlice";
 import { IPost, SET_POST } from "../features/PostSlice";
 
 import { User } from "../types";
 import { IUser } from "./../features/UserSlice";
 
-import { useNavigation } from "@react-navigation/native";
+import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { Post } from "../components";
+import { createDraftSafeSelector } from "@reduxjs/toolkit";
+import { RootState } from "../app/store";
+import { DBContext } from "../context/db";
 
 const renderStat = (header: string, quantity: number, styles: object) => {
   return (
@@ -46,49 +54,22 @@ const renderStat = (header: string, quantity: number, styles: object) => {
 
 export default function ProfileScreen() {
   const dispatch = useAppDispatch();
-  const cUser = useAppSelector<IUser>((state) => state.user);
+
+  const flatListRef = useRef<any>(null);
+
+  const state = useAppSelector<RootState>((state) => state);
+  const USER = useAppSelector<IUser>((state) => state.user);
   const post = useAppSelector<IPost>((state) => state.post);
 
-  const navigation = useNavigation();
+  const db = useContext(DBContext);
 
-  const [showDialogOptions, setShowDialogOptions] = useState<boolean>(false);
+  const navigation = useNavigation();
+  const route: RouteProp<{ params: { postId: string } }, "params"> = useRoute();
+
   const [btnIndex, setBtnIndex] = useState<string>("posts");
-  const [thumbnail, setThumbnail] = useState<any>(null);
 
   const handleEditProfile = () => {
     navigation.navigate("EditProfile");
-    setShowDialogOptions(false);
-  };
-
-  const loadThumbnail = async () => {
-    const response = await fetch(
-      `https://api-nhom16.herokuapp.com/v1/posts/thumbnail/${cUser.currentUserInfo.user.id}`,
-      {
-        method: "GET",
-      }
-    );
-    const imageBlob = await response.blob();
-    const reader = new FileReader();
-    reader.readAsDataURL(imageBlob);
-    reader.onloadend = () => {
-      const base64data = reader.result;
-      setThumbnail(base64data);
-    };
-  };
-
-  const loadPosts = async () => {
-    try {
-      const res = await REQUEST({
-        method: "GET",
-        url: "/posts",
-      });
-
-      if (res && res.data.result) {
-        dispatch(SET_POST({ des: "personal", data: res.data.data.results }));
-      }
-    } catch (e) {
-      console.error(e);
-    }
   };
 
   const handleLogout = async () => {
@@ -102,165 +83,238 @@ export default function ProfileScreen() {
           refreshToken: tokens?.length ? JSON.parse(tokens).refresh.token : "",
         },
       });
-      await AsyncStorage.removeItem("@tokens");
-      dispatch(CLEAR_USER());
+      await AsyncStorage.clear();
+      db.transaction((tx) => {
+        tx.executeSql("DELETE FROM posts WHERE 1=1", undefined, (_) =>
+          console.log("Deleted posts")
+        );
+
+        tx.executeSql("DELETE FROM users WHERE 1=1", undefined, (_) =>
+          console.log("Deleted user")
+        );
+      });
       navigation.navigate("Login");
     } catch (err) {
       console.log(err);
     }
   };
 
+  const getPersonalPost = createDraftSafeSelector(
+    (state: RootState) => state,
+    (state) => {
+      return state.post.list.filter(
+        (o) => o.posting_user.id === USER.loggedInUser.id
+      );
+    }
+  );
+
+  const countPersonalPost = createDraftSafeSelector(
+    (state: RootState) => state,
+    (state) => {
+      return state.post.list.filter(
+        (o) => o.posting_user.id === USER.loggedInUser.id
+      ).length;
+    }
+  );
+
+  const getBookmarkedPost = createDraftSafeSelector(
+    (state: RootState) => state,
+    (state) => {
+      return state.post.list.filter(
+        (o) => o.posting_user.id === USER.loggedInUser.id
+      );
+    }
+  );
+
   useEffect(() => {
-    loadPosts();
-    loadThumbnail();
-  }, []);
+    if (!route.params?.postId.length) return;
+    if (flatListRef.current) {
+      let itemToScroll = getPersonalPost(state).findIndex(
+        (o) => o.id === route.params?.postId
+      );
+      if (itemToScroll < 0) return;
+      flatListRef.current.scrollToIndex({
+        animated: true,
+        index: itemToScroll,
+      });
+    }
+  }, [route.params?.postId]);
 
   return (
     <View style={styles.container}>
       <View>
-        <ScrollView>
-          <View style={{ marginBottom: 8, flex: 1 }}>
-            <View
-              style={{
-                paddingTop: 8,
-                marginBottom: 16,
+        {btnIndex === "posts" && (
+          <View>
+            <FlatList
+              ref={flatListRef}
+              data={getPersonalPost(state)}
+              renderItem={({ item }) => <Post key={item.id} {...item} />}
+              keyExtractor={(item) => {
+                return item.id;
               }}
-            >
-              <View
-                style={{ alignItems: "center", marginBottom: 8, padding: 8 }}
-              >
-                {!thumbnail ? (
-                  <Avatar.Icon size={64} icon="person-outline" />
-                ) : (
-                  <Avatar.Image
-                    size={64}
-                    source={{
-                      uri: thumbnail,
-                    }}
-                  />
-                )}
-
-                <Title>{cUser.currentUserInfo.user.username}</Title>
-                {cUser.currentUserInfo.user.bio.length > 0 && (
-                  <Text style={{ fontSize: 14 }}>
-                    {cUser.currentUserInfo.user.bio}
-                  </Text>
-                )}
-              </View>
-
-              <View
-                style={{
-                  flex: 1,
-                  paddingVertical: 8,
-                  borderTopWidth: 1,
-                  borderTopColor: "#e5e5e5",
-                  borderBottomWidth: 1,
-                  borderBottomColor: "#e5e5e5",
-                }}
-              >
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "space-around",
-                    alignItems: "center",
-                    marginBottom: 8,
-                  }}
-                >
-                  {renderStat(
-                    PROFILE_CONSTANT.SOUNDS,
-                    post.list.personal.length,
-                    {
-                      alignItems: "center",
-                    }
-                  )}
-                  {renderStat(
-                    PROFILE_CONSTANT.FOLLOWERS,
-                    cUser.currentUserInfo.user.followers.length,
-                    {
-                      alignItems: "center",
-                    }
-                  )}
-
-                  {renderStat(
-                    PROFILE_CONSTANT.FOLLOWING,
-                    cUser.currentUserInfo.user.following.length,
-                    {
-                      alignItems: "center",
-                    }
-                  )}
-                </View>
-              </View>
-            </View>
-
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
+              getItemLayout={(data, index) => ({
+                length: data?.length || 0,
+                offset: (data?.length || 0) * index,
+                index,
+              })}
+              onScrollToIndexFailed={(info) => {
+                const wait = new Promise((resolve) => setTimeout(resolve, 500));
+                wait.then(() => {
+                  flatListRef.current?.scrollToIndex({
+                    index: info.index,
+                    animated: true,
+                  });
+                });
               }}
-            >
-              <View style={{ flex: 1, marginHorizontal: 8 }}>
-                <Button
-                  mode="outlined"
-                  uppercase
-                  icon="pencil-outline"
-                  onPress={handleEditProfile}
-                  style={{
-                    borderWidth: 1,
-                    borderColor: "#00ADB5",
-                    width: "100%",
-                  }}
-                >
-                  Chỉnh sửa thông tin
-                </Button>
-              </View>
+              ListHeaderComponent={
+                <>
+                  <View style={{ marginBottom: 8, flex: 1 }}>
+                    <View
+                      style={{
+                        paddingTop: 8,
+                        marginBottom: 16,
+                      }}
+                    >
+                      <View
+                        style={{
+                          alignItems: "center",
+                          marginBottom: 8,
+                          padding: 8,
+                        }}
+                      >
+                        {!USER.loggedInUser.avatar.uri.length ? (
+                          <Avatar.Icon size={64} icon="person-outline" />
+                        ) : (
+                          <Avatar.Image
+                            size={64}
+                            source={{
+                              uri: USER.loggedInUser.avatar.uri,
+                            }}
+                          />
+                        )}
 
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "center",
-                }}
-              >
-                <IconButton onPress={handleLogout} icon="log-out-outline" />
-              </View>
-            </View>
+                        <Title>{USER.loggedInUser.username}</Title>
+                        {USER.loggedInUser.bio.length > 0 && (
+                          <Text style={{ fontSize: 14 }}>
+                            {USER.loggedInUser.bio}
+                          </Text>
+                        )}
+                      </View>
+
+                      <View
+                        style={{
+                          flex: 1,
+                          paddingVertical: 8,
+                          borderTopWidth: 1,
+                          borderTopColor: "#e5e5e5",
+                          borderBottomWidth: 1,
+                          borderBottomColor: "#e5e5e5",
+                        }}
+                      >
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            justifyContent: "space-around",
+                            alignItems: "center",
+                            marginBottom: 8,
+                          }}
+                        >
+                          {renderStat(
+                            PROFILE_CONSTANT.SOUNDS,
+                            countPersonalPost(state),
+                            {
+                              alignItems: "center",
+                            }
+                          )}
+                          {renderStat(
+                            PROFILE_CONSTANT.FOLLOWERS,
+                            USER.loggedInUser.followers.length,
+                            {
+                              alignItems: "center",
+                            }
+                          )}
+
+                          {renderStat(
+                            PROFILE_CONSTANT.FOLLOWING,
+                            USER.loggedInUser.following.length,
+                            {
+                              alignItems: "center",
+                            }
+                          )}
+                        </View>
+                      </View>
+                    </View>
+
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <View style={{ flex: 1, marginHorizontal: 8 }}>
+                        <Button
+                          mode="outlined"
+                          uppercase
+                          icon="pencil-outline"
+                          onPress={handleEditProfile}
+                          style={{
+                            borderWidth: 1,
+                            borderColor: "#00ADB5",
+                            width: "100%",
+                          }}
+                        >
+                          Chỉnh sửa thông tin
+                        </Button>
+                      </View>
+
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <IconButton
+                          onPress={handleLogout}
+                          icon="log-out-outline"
+                        />
+                      </View>
+                    </View>
+                  </View>
+
+                  <View style={{ alignItems: "center" }}>
+                    <ToggleButton.Row
+                      onValueChange={setBtnIndex}
+                      value={btnIndex}
+                    >
+                      <ToggleButton
+                        icon="grid-outline"
+                        value="posts"
+                        style={{ borderBottomWidth: 0, width: "50%" }}
+                      />
+                      <ToggleButton
+                        icon="bookmark"
+                        value="bookmarks"
+                        style={{ borderBottomWidth: 0, width: "50%" }}
+                      />
+                    </ToggleButton.Row>
+                  </View>
+
+                  <Divider style={{ height: 1 }} />
+                </>
+              }
+            />
           </View>
+        )}
 
-          <View style={{ alignItems: "center" }}>
-            <ToggleButton.Row onValueChange={setBtnIndex} value={btnIndex}>
-              <ToggleButton
-                icon="grid-outline"
-                value="posts"
-                style={{ borderBottomWidth: 0, width: "50%" }}
-              />
-              <ToggleButton
-                icon="bookmark"
-                value="bookmarks"
-                style={{ borderBottomWidth: 0, width: "50%" }}
-              />
-            </ToggleButton.Row>
-          </View>
-
-          <Divider style={{ height: 1 }} />
-
-          {btnIndex === "posts" && (
+        {/* {btnIndex === "bookmarks" && (
             <View>
-              {post.list.personal.length > 0 &&
-                post.list.personal.map((item) => {
+              {post.list.length > 0 &&
+                post.list.map((item) => {
                   return <Post key={item.id} {...item} />;
                 })}
             </View>
-          )}
-
-          {btnIndex === "bookmarks" && (
-            <View>
-              {post.list.bookmark.length > 0 &&
-                post.list.bookmark.map((item) => {
-                  return <Post key={item.id} {...item} />;
-                })}
-            </View>
-          )}
-        </ScrollView>
+          )} */}
       </View>
     </View>
   );

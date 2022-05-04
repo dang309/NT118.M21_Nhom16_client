@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { StatusBar } from "react-native";
 
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -17,9 +17,15 @@ import { SocketContext, socket } from "./context/socket";
 
 import { UPDATE_POST } from "./features/PostSlice";
 
-import { useAppDispatch } from "./app/hook";
+import { useAppDispatch, useAppSelector } from "./app/hook";
 
 import _omit from "lodash/omit";
+import { IUser } from "./features/UserSlice";
+import { ADD_NOTIFICATION } from "./features/NotificationSlice";
+import { DBContext, db } from "./context/db";
+import { FOLDERS } from "./context/files";
+
+import * as FileSystem from "expo-file-system";
 
 declare global {
   namespace ReactNativePaper {
@@ -34,12 +40,21 @@ function App() {
   const colorScheme = useColorScheme();
   const dispatch = useAppDispatch();
 
+  const USER = useAppSelector<IUser>((state) => state.user);
+
+  const createRoom = () => {
+    const dataToSend = {
+      userId: USER.loggedInUser.id,
+    };
+    socket.emit("create_room", dataToSend);
+  };
+
   const getNumLike = (data: any) => {
     const dataToSend = {
       postId: data.postId,
       dataToUpdate: _omit(data, ["postId"]),
     };
-    dispatch(UPDATE_POST({ des: "newsfeed", ...dataToSend }));
+    dispatch(UPDATE_POST(dataToSend));
   };
 
   const getNumListening = (data: any) => {
@@ -47,10 +62,66 @@ function App() {
       postId: data.postId,
       dataToUpdate: _omit(data, ["postId"]),
     };
-    dispatch(UPDATE_POST({ des: "newsfeed", ...dataToSend }));
+    dispatch(UPDATE_POST(dataToSend));
+  };
+
+  const handleReceiveNoti = (payload: any) => {
+    const { id, user_id, opponent_id, source_post_id, action, is_unread } =
+      payload;
+    dispatch(
+      ADD_NOTIFICATION({
+        id,
+        userId: user_id,
+        opponentId: opponent_id,
+        sourcePostId: source_post_id,
+        action,
+        isUnread: is_unread,
+      })
+    );
+  };
+
+  const createPostFolders = async () => {
+    const postSoundInfo = await FileSystem.getInfoAsync(FOLDERS.POST.SOUNDS);
+
+    if (!postSoundInfo.exists) {
+      await FileSystem.makeDirectoryAsync(FOLDERS.POST.SOUNDS, {
+        intermediates: true,
+      });
+    }
+
+    const postThumbnailInfo = await FileSystem.getInfoAsync(
+      FOLDERS.POST.THUMBNAILS
+    );
+
+    if (!postThumbnailInfo.exists) {
+      await FileSystem.makeDirectoryAsync(FOLDERS.POST.THUMBNAILS, {
+        intermediates: true,
+      });
+    }
+
+    const postAvatarInfo = await FileSystem.getInfoAsync(FOLDERS.POST.AVATARS);
+
+    if (!postAvatarInfo.exists) {
+      await FileSystem.makeDirectoryAsync(FOLDERS.POST.AVATARS, {
+        intermediates: true,
+      });
+    }
+
+    const userAvatarInfo = await FileSystem.getInfoAsync(FOLDERS.USER.AVATARS);
+
+    if (!userAvatarInfo.exists) {
+      await FileSystem.makeDirectoryAsync(FOLDERS.USER.AVATARS, {
+        intermediates: true,
+      });
+    }
   };
 
   useEffect(() => {
+    createRoom();
+    createPostFolders();
+
+    socket.on("notification:send_notification", handleReceiveNoti);
+
     socket.on("post:num_like", getNumLike);
     socket.on("post:num_listening", getNumListening);
   }, []);
@@ -81,7 +152,9 @@ export default function AppWrapper() {
           settings={{ icon: (props) => <Icon {...props} /> }}
         >
           <SocketContext.Provider value={socket}>
-            <App />
+            <DBContext.Provider value={db}>
+              <App />
+            </DBContext.Provider>
           </SocketContext.Provider>
         </PaperProvider>
       </Provider>

@@ -3,21 +3,27 @@ import React, { useState, useEffect, useContext, useRef } from "react";
 import { Avatar, IconButton, Title } from "react-native-paper";
 
 import EmojiPicker from "rn-emoji-keyboard";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { REQUEST } from "../utils";
 import { SocketContext } from "../context/socket";
 import { useAppDispatch, useAppSelector } from "../app/hook";
 import { IUser } from "../features/UserSlice";
 import {
   ADD_MESSAGE,
-  IMessage,
+  CLEAR_MESSAGES,
   IMessenger,
   SET_MESSAGES,
 } from "../features/MessengerSlice";
 
+import uuid from "react-native-uuid";
+import { USER_SERVICES } from "../services";
+
 const ChatConversation = () => {
   const navigation = useNavigation();
-  const route = useRoute();
+  const route: RouteProp<
+    { params: { partnerId: string; contactId: string } },
+    "params"
+  > = useRoute();
 
   const flatListRef = useRef<any>(null);
   const layoutRef = useRef<any>(null);
@@ -26,7 +32,7 @@ const ChatConversation = () => {
 
   const dispatch = useAppDispatch();
 
-  const cUser = useAppSelector<IUser>((state) => state.user);
+  const USER = useAppSelector<IUser>((state) => state.user);
   const messenger = useAppSelector<IMessenger>((state) => state.messenger);
 
   const [content, setContent] = useState<string>("");
@@ -35,48 +41,71 @@ const ChatConversation = () => {
   const [user, setUser] = useState<any>(null);
   const [avatar, setAvatar] = useState<any>(null);
 
-  const getUserById = async () => {
+  const loadUser = async () => {
+    const _user = await USER_SERVICES.getUserById(route.params?.partnerId);
+    const _avatar = await USER_SERVICES.loadAvatar(_user);
+    setUser(_user);
+    setAvatar(_avatar);
+  };
+
+  const handleSendPrivateMessage = async () => {
     try {
-      const res = await REQUEST({
-        method: "GET",
-        url: `/users/${route.params?.userId}`,
-      });
-
-      if (res && !res.data.result) return;
-
-      setUser(res.data.data);
-    } catch (e) {
-      console.error(e);
+      if (messenger.messages.length === 0) {
+        let _contactIds = [];
+        _contactIds.push(USER.loggedInUser.id);
+        _contactIds.push(route.params?.partnerId);
+        const data = {
+          contact_id: _contactIds.sort().join("_"),
+          user_id: USER.loggedInUser.id,
+          partner_id: route.params?.partnerId,
+        };
+        await REQUEST({
+          method: "POST",
+          url: "/contacts",
+          data,
+        });
+      }
+      const dataToSend = {
+        messageId: uuid.v4(),
+        content,
+        from: USER.loggedInUser.id,
+        to: route.params?.partnerId,
+        isUnread: false,
+      };
+      socket.emit("messenger:send_private_message", dataToSend);
+      dispatch(ADD_MESSAGE(dataToSend));
+      setContent("");
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  const loadAvatar = async () => {
-    const response = await fetch(
-      `https://api-nhom16.herokuapp.com/v1/users/avatar/${route.params?.userId}`,
-      {
-        method: "GET",
-      }
-    );
-    const imageBlob = await response.blob();
-    const reader = new FileReader();
-    reader.readAsDataURL(imageBlob);
-    reader.onloadend = () => {
-      const base64data = reader.result;
-      setAvatar(base64data);
+  const handleReceivePrivateMessage = (payload: any) => {
+    const { message_id, content, from, to, is_unread } = payload;
+
+    const data = {
+      messageId: message_id,
+      content,
+      from,
+      to,
+      isUnread: is_unread,
     };
+
+    dispatch(ADD_MESSAGE(data));
   };
 
   const loadMessages = async () => {
     try {
+      // dispatch(CLEAR_MESSAGES());
       let filters = [];
       filters.push({
-        key: "conversation_id",
+        key: "contact_id",
         operator: "=",
-        value: route.params?.conversationId,
+        value: route.params?.contactId,
       });
       const params = {
         filters: JSON.stringify(filters),
-        limit: 999,
+        limit: 20,
       };
       const res = await REQUEST({
         method: "GET",
@@ -85,42 +114,32 @@ const ChatConversation = () => {
       });
 
       if (res && res.data.result) {
-        dispatch(SET_MESSAGES(res.data.data.results));
+        let temp = res.data.data.results;
+        temp = temp.map((item: any) => {
+          return {
+            ...item,
+            messageId: item.message_id,
+            isUnread: item.is_unread,
+          };
+        });
+        dispatch(SET_MESSAGES(temp));
       }
     } catch (err) {
       console.error(err);
     }
   };
 
-  const handleSendPrivateMessage = () => {
-    const dataToSend = {
-      conversationId: route.params?.conversationId,
-      content,
-      from: cUser.currentUserInfo.user.id,
-      to: route.params?.userId,
-    };
-    socket.emit("messenger:send_private_message", dataToSend);
-    setContent("");
-  };
-
-  const handleReceivePrivateMessage = (payload: any) => {
-    const { id, conversation_id, content, from, to } = payload;
-
-    const data = {
-      id,
-      content,
-      conversation_id,
-      from,
-      to,
-    };
-
-    dispatch(ADD_MESSAGE(data));
-  };
-
   useEffect(() => {
-    getUserById();
-    loadAvatar();
-    loadMessages();
+    let isMounted = true;
+    if (isMounted) {
+      loadUser();
+      loadMessages();
+    }
+
+    return () => {
+      isMounted = false;
+      dispatch(CLEAR_MESSAGES());
+    };
   }, []);
 
   useEffect(() => {
@@ -186,13 +205,13 @@ const ChatConversation = () => {
           ref={(ref) => (flatListRef.current = ref)}
           data={messenger.messages}
           keyExtractor={(item, index) => {
-            return item.id.toString();
+            return item.messageId;
           }}
           renderItem={({ item }) => {
-            let isFromMe = Boolean(item.from === cUser.currentUserInfo.user.id);
+            let isFromMe = Boolean(item.from === USER.loggedInUser.id);
             return (
               <View
-                key={item.id.toString()}
+                key={item.messageId}
                 style={{
                   alignItems: isFromMe ? "flex-end" : "flex-start",
                 }}

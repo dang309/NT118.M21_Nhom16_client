@@ -141,6 +141,9 @@ const SearchScreen = () => {
         {result && result.length > 0 ? (
           <FlatList
             data={result}
+            keyExtractor={(item, index) => {
+              return item.id;
+            }}
             renderItem={({ item }) => {
               return (
                 <TouchableOpacity

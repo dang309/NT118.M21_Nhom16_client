@@ -7,9 +7,9 @@ import {
   TouchableOpacity,
 } from "react-native";
 
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useCallback, useRef } from "react";
 
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 
 import Icon from "./Icon";
 
@@ -30,8 +30,8 @@ import { Audio, AVPlaybackStatus } from "expo-av";
 
 import { REQUEST } from "../utils";
 
-import { IUser as IUserSlice } from "../features/UserSlice";
-import { DELETE_POST, IPostItem } from "../features/PostSlice";
+import { IUser } from "../features/UserSlice";
+import { DELETE_POST, IPostItem, UPDATE_POST } from "../features/PostSlice";
 import { IComment } from "../features/CommentSlice";
 
 import { useAppDispatch, useAppSelector } from "../app/hook";
@@ -41,109 +41,50 @@ import moment from "moment";
 import { SocketContext } from "../context/socket";
 
 import { Instagram } from "react-content-loader/native";
+import { ADD_NOTIFICATION } from "../features/NotificationSlice";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { DBContext } from "../context/db";
+import useSWR from "swr";
 
-interface IUser {
-  avatar: {
-    bucket: string;
-    key: string;
-  };
-  balance_dcoin: number;
-  bio: string;
-  created_at: string;
-  email: string;
-  followers: string[];
-  following: string[];
-  hobbies: string[];
-  id: string;
-  is_email_verified: false;
-  updated_at: string;
-  username: string;
-}
+import * as FileSystem from "expo-file-system";
 
 type Props = IPostItem & { setSelectedProfile?: (value: string) => void };
 
 const Post = (props: Props) => {
   const dispatch = useAppDispatch();
 
+  const db = useContext(DBContext);
+
   const socket = useContext(SocketContext);
 
   const navigation = useNavigation();
 
-  const cUser = useAppSelector<IUserSlice>((state) => state.user);
-  const comment = useAppSelector<IComment>((state) => state.comment);
+  const fetcher = (url: string) => fetch(url).then((res) => res.blob());
 
-  const [audioStatus, setAudioStatus] = useState<boolean>(false);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const [thumbnail, setThumbnail] = useState<any>(null);
-  const [avatar, setAvatar] = useState<any>(null);
+  const cache = new Map();
+
+  const USER = useAppSelector<IUser>((state) => state.user);
+  const comment = useAppSelector<IComment>((state) => state.comment);
+  const isLoading = useAppSelector<boolean>((state) => state.common.loading);
+
+  const [mounted, setMounted] = useState<boolean>(false);
+  const [sound, setSound] = useState<any>(null);
   const [playbackStatus, setPlaybackStatus] = useState<AVPlaybackStatus | null>(
     null
   );
+  const [thumbnail, setThumbnail] = useState<any>(null);
+  const [avatar, setAvatar] = useState<any>(null);
+
+  const [audioStatus, setAudioStatus] = useState<boolean>(false);
+
   const [durationMillis, setDurationMillis] = useState<number | undefined>(0);
   const [positionMillis, setPositionMillis] = useState<number | undefined>(0);
-  const [user, setUser] = useState<IUser | null>(null);
-
-  const [numLike, setNumLike] = useState<number>(0);
-
-  const [isLiked, setIsLiked] = useState<boolean>(false);
 
   const [toggleMenuOptions, setToggleMenuOptions] = useState<boolean>(false);
   const [toggleDeletePostConfirm, setToggleDeletePostConfirm] =
     useState<boolean>(false);
 
   const [sliderWidth, setSliderWidth] = useState<number>(0);
-
-  const getUserById = async () => {
-    try {
-      const res = await REQUEST({
-        method: "GET",
-        url: `/users/${props.user_id}`,
-      });
-
-      if (res && res.data.result) {
-        setUser(res.data.data);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const loadAvatar = async () => {
-    const response = await fetch(
-      `https://api-nhom16.herokuapp.com/v1/users/avatar/${props.user_id}`,
-      {
-        method: "GET",
-      }
-    );
-    const imageBlob = await response.blob();
-    const reader = new FileReader();
-    reader.readAsDataURL(imageBlob);
-    reader.onloadend = () => {
-      const base64data = reader.result;
-      setAvatar(base64data);
-    };
-  };
-
-  const loadThumbnail = async () => {
-    const response = await fetch(
-      `https://api-nhom16.herokuapp.com/v1/posts/thumbnail/${props.id}`,
-      {
-        method: "GET",
-      }
-    );
-    const imageBlob = await response.blob();
-    const reader = new FileReader();
-    reader.readAsDataURL(imageBlob);
-    reader.onloadend = () => {
-      const base64data = reader.result;
-      setThumbnail(base64data);
-    };
-  };
-
-  const onLayout = (event: any) => {
-    const { x, y, height, width } = event.nativeEvent.layout;
-    console.log("haidang", x, y, height, width);
-  };
 
   const handleChangeAudioStatus = () => {
     setAudioStatus((prev) => !prev);
@@ -158,33 +99,142 @@ const Post = (props: Props) => {
   };
 
   const loadSound = async () => {
-    try {
-      const sound = new Audio.Sound();
-      sound.setOnPlaybackStatusUpdate(onPlaybackStatusUpdate);
+    const sound = new Audio.Sound();
+    sound.setOnPlaybackStatusUpdate(onPlaybackStatusUpdate);
 
-      const res = await fetch(
-        `https://api-nhom16.herokuapp.com/v1/posts/sound/${props.id}`,
-        {
-          method: "GET",
-        }
-      );
+    await sound.loadAsync({
+      uri: props.sound.uri,
+    });
 
-      const soundBlob = await res.blob();
-      const reader = new FileReader();
-      reader.readAsDataURL(soundBlob);
-      reader.onload = async () => {
-        const base64data = reader.result;
-
-        await sound.loadAsync({
-          uri: base64data.toString(),
-        });
-      };
-
-      setSound(sound);
-    } catch (e) {
-      console.error(e);
-    }
+    setSound(sound);
   };
+
+  // const loadSound = useCallback(
+  //   async (postId: string) => {
+  //     try {
+  //       const sound = new Audio.Sound();
+  //       sound.setOnPlaybackStatusUpdate(onPlaybackStatusUpdate);
+
+  //       const URL = `https://api-nhom16.herokuapp.com/v1/posts/sound/${postId}`;
+
+  //       if (props.sound) {
+  //         await sound.loadAsync({
+  //           uri: props.sound.uri,
+  //         });
+
+  //         setSound(sound);
+
+  //         return;
+  //       }
+
+  //       const res = await fetch(URL);
+
+  //       const soundBlob = await res.blob();
+
+  //       const reader = new FileReader();
+  //       reader.readAsDataURL(soundBlob);
+  //       reader.onload = async () => {
+  //         const base64data = reader.result;
+
+  //         await sound.loadAsync({
+  //           uri: base64data.toString(),
+  //         });
+
+  //         dispatch(
+  //           UPDATE_POST({
+  //             postId: props.id,
+  //             dataToUpdate: {
+  //               sound: base64data.toString(),
+  //             },
+  //           })
+  //         );
+  //       };
+
+  //       setSound(sound);
+  //     } catch (err) {
+  //       console.error(err);
+  //     }
+  //   },
+  //   [props.id]
+  // );
+
+  // const loadThumbnail = useCallback(
+  //   async (postId: string) => {
+  //     try {
+  //       const URL = `https://api-nhom16.herokuapp.com/v1/posts/thumbnail/${postId}`;
+
+  //       if (props.thumbnail) {
+  //         if (mounted) {
+  //           setThumbnail(props.thumbnail);
+  //         }
+  //         return;
+  //       }
+
+  //       const res = await fetch(URL);
+
+  //       const thumbnailBlob = await res.blob();
+  //       const reader = new FileReader();
+  //       reader.readAsDataURL(thumbnailBlob);
+  //       reader.onloadend = () => {
+  //         const base64data = reader.result;
+  //         dispatch(
+  //           UPDATE_POST({
+  //             postId: props.id,
+  //             dataToUpdate: {
+  //               thumbnail: base64data,
+  //             },
+  //           })
+  //         );
+  //         if (mounted) {
+  //           setThumbnail(base64data);
+  //         }
+  //       };
+  //     } catch (err) {
+  //       console.error(err);
+  //     }
+  //   },
+  //   [props.id]
+  // );
+
+  // const loadAvatar = useCallback(
+  //   async (userId: string) => {
+  //     try {
+  //       const URL = `https://api-nhom16.herokuapp.com/v1/users/avatar/${userId}`;
+
+  //       if (props.posting_user.avatar) {
+  //         if (mounted) {
+  //           setAvatar(props.posting_user.avatar);
+  //         }
+  //         return;
+  //       }
+  //       const res = await fetch(URL);
+
+  //       const avatarBlob = await res.blob();
+  //       const reader = new FileReader();
+  //       reader.readAsDataURL(avatarBlob);
+  //       reader.onloadend = () => {
+  //         const base64data = reader.result;
+  //         dispatch(
+  //           UPDATE_POST({
+  //             postId: props.id,
+  //             dataToUpdate: {
+  //               posting_user: {
+  //                 ...props.posting_user,
+  //                 avatar: base64data,
+  //               },
+  //             },
+  //           })
+  //         );
+  //         if (mounted) {
+  //           setAvatar(base64data);
+  //         }
+  //       };
+  //     } catch (err) {
+  //       console.error(err);
+  //     }
+  //   },
+  //   [props.posting_user.id]
+  // );
 
   const playSound = async () => {
     await sound?.playAsync();
@@ -222,48 +272,34 @@ const Post = (props: Props) => {
     );
   };
 
-  const initLike = () => {
-    if (props.users_like.some((o) => o === cUser.currentUserInfo.user.id)) {
-      setIsLiked(true);
-    }
-  };
-
   const handleLikePost = () => {
     const dataToSend = {
       postId: props.id,
-      userId: cUser.currentUserInfo.user.id,
+      userId: USER.loggedInUser.id,
     };
+    dispatch(
+      UPDATE_POST({
+        postId: props.id,
+        dataToUpdate: {
+          is_like_from_me: !props.is_like_from_me,
+        },
+      })
+    );
     socket.emit("post:like", dataToSend);
   };
 
   const handleListenSound = () => {
     const dataToSend = {
       postId: props.id,
-      userId: cUser.currentUserInfo.user.id,
+      userId: USER.loggedInUser.id,
     };
     socket.emit("post:listen", dataToSend);
   };
 
-  useEffect(() => {
-    getUserById();
-    loadSound();
-    loadThumbnail();
-    initLike();
-  }, []);
-
-  useEffect(() => {
-    if (audioStatus) {
-      playSound();
-      handleListenSound();
-    } else {
-      pauseSound();
-    }
-  }, [audioStatus]);
-
   const handleSelectProfile = () => {
-    if (props.user_id === cUser.currentUserInfo.user.id) return;
+    if (props.posting_user.id === USER.loggedInUser.id) return;
     if (props.setSelectedProfile) {
-      props.setSelectedProfile(props.user_id);
+      props.setSelectedProfile(props.posting_user.id);
     }
   };
 
@@ -283,12 +319,40 @@ const Post = (props: Props) => {
     }
   };
 
-  const isLoading = Boolean(!user?.username || !thumbnail || !sound);
+  useEffect(() => {
+    if (!mounted) return;
+    loadSound();
+  }, [mounted]);
+
+  useFocusEffect(
+    useCallback(() => {
+      setMounted(true);
+      return () => {
+        setMounted(false);
+        // if (sound) {
+        //   sound.unloadAsync();
+        // }
+      };
+    }, [])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      if (audioStatus) {
+        playSound();
+        handleListenSound();
+      } else {
+        pauseSound();
+      }
+    }, [audioStatus])
+  );
 
   return (
     <View style={styles.container}>
-      {isLoading ? (
-        <Instagram />
+      {!props.id.length ? (
+        <View style={{ marginVertical: 8 }}>
+          <Instagram />
+        </View>
       ) : (
         <>
           <View style={styles.header}>
@@ -299,8 +363,11 @@ const Post = (props: Props) => {
                     marginRight: 8,
                   }}
                 >
-                  {avatar ? (
-                    <Avatar.Image size={32} source={{ uri: avatar }} />
+                  {props.posting_user.avatar.uri ? (
+                    <Avatar.Image
+                      size={32}
+                      source={{ uri: props.posting_user.avatar.uri }}
+                    />
                   ) : (
                     <Avatar.Icon size={32} icon="person" />
                   )}
@@ -313,7 +380,7 @@ const Post = (props: Props) => {
                       marginBottom: -4,
                     }}
                   >
-                    {user?.username}
+                    {props.posting_user.username}
                   </Text>
 
                   <Caption>
@@ -332,13 +399,13 @@ const Post = (props: Props) => {
                 </TouchableOpacity>
               }
             >
-              {cUser.currentUserInfo.user.id !== props.user_id && (
+              {USER.loggedInUser.id !== props.posting_user.id && (
                 <Menu.Item onPress={() => {}} title="Hủy theo dõi" />
               )}
-              {cUser.currentUserInfo.user.id === props.user_id && (
+              {USER.loggedInUser.id === props.posting_user.id && (
                 <Menu.Item onPress={() => {}} title="Chỉnh sửa" />
               )}
-              {cUser.currentUserInfo.user.id === props.user_id && (
+              {USER.loggedInUser.id === props.posting_user.id && (
                 <>
                   <Divider style={{ height: 1 }} />
                   <Menu.Item
@@ -360,32 +427,51 @@ const Post = (props: Props) => {
 
           <View
             style={{
-              borderTopColor: "#e5e5e5",
-              borderBottomColor: "#e5e5e5",
-              borderTopWidth: 1,
               borderBottomWidth: 1,
-
+              borderBottomColor: "#e5e5e5",
               padding: 8,
+              paddingTop: 2,
             }}
           >
             <View style={styles.body}>
-              <Image
-                style={{
-                  width: "45%",
-                  height: "95%",
-                  borderRadius: 16,
-                  marginHorizontal: "auto",
-                }}
-                source={{
-                  uri: thumbnail,
-                }}
-                resizeMode="cover"
-              />
+              {props.thumbnail.uri ? (
+                <Image
+                  style={{
+                    width: "50%",
+                    height: "100%",
+                    borderRadius: 16,
+                    borderTopRightRadius: 0,
+                    borderBottomRightRadius: 0,
+                    marginHorizontal: "auto",
+                  }}
+                  source={{
+                    uri: props.thumbnail.uri,
+                  }}
+                  resizeMode="cover"
+                />
+              ) : (
+                <ActivityIndicator
+                  color="#00adb5"
+                  style={{
+                    width: "45%",
+                    marginHorizontal: "auto",
+                  }}
+                />
+              )}
               <View
                 style={{
                   alignItems: "center",
                   justifyContent: "center",
                   width: "50%",
+
+                  borderWidth: 1,
+                  borderColor: "#e5e5e5",
+                  borderRadius: 16,
+                  borderLeftWidth: 0,
+                  borderTopLeftRadius: 0,
+                  borderBottomLeftRadius: 0,
+
+                  padding: 4,
                 }}
               >
                 <Text style={{ fontSize: 20, fontWeight: "bold" }}>
@@ -402,21 +488,28 @@ const Post = (props: Props) => {
                     <Icon name="play-back" size={24} />
                   </TouchableOpacity>
 
-                  <TouchableOpacity onPress={handleChangeAudioStatus}>
-                    {!audioStatus ? (
-                      <Icon
-                        name="play-circle"
-                        style={{ paddingHorizontal: 16 }}
-                        size={48}
-                      />
-                    ) : (
-                      <Icon
-                        name="pause-circle"
-                        style={{ paddingHorizontal: 16 }}
-                        size={48}
-                      />
-                    )}
-                  </TouchableOpacity>
+                  {sound ? (
+                    <TouchableOpacity onPress={handleChangeAudioStatus}>
+                      {!audioStatus ? (
+                        <Icon
+                          name="play-circle"
+                          style={{ paddingHorizontal: 16 }}
+                          size={48}
+                        />
+                      ) : (
+                        <Icon
+                          name="pause-circle"
+                          style={{ paddingHorizontal: 16 }}
+                          size={48}
+                        />
+                      )}
+                    </TouchableOpacity>
+                  ) : (
+                    <ActivityIndicator
+                      color="#00adb5"
+                      style={{ paddingHorizontal: 16 }}
+                    />
+                  )}
 
                   <TouchableOpacity onPress={handleIncrease10Seconds}>
                     <Icon name="play-forward" size={24} />
@@ -430,10 +523,7 @@ const Post = (props: Props) => {
                     alignItems: "center",
                   }}
                 >
-                  <View
-                    style={{ marginBottom: 2, width: "100%", flex: 1 }}
-                    onLayout={onLayout}
-                  >
+                  <View style={{ marginBottom: 2, width: "100%", flex: 1 }}>
                     <Slider
                       style={{ flex: 1 }}
                       value={
@@ -502,13 +592,8 @@ const Post = (props: Props) => {
                     marginRight: 8,
                   }}
                 >
-                  <TouchableOpacity
-                    onPress={() => {
-                      setIsLiked((prev) => !prev);
-                      handleLikePost();
-                    }}
-                  >
-                    {isLiked ? (
+                  <TouchableOpacity onPress={handleLikePost}>
+                    {props.is_like_from_me ? (
                       <Icon
                         name="heart-sharp"
                         size={24}
@@ -558,17 +643,26 @@ const Post = (props: Props) => {
                     marginRight: 8,
                   }}
                 >
-                  <Icon
-                    name="ear-outline"
-                    size={24}
-                    style={{ marginRight: 2 }}
-                  />
+                  {props.is_hear_from_me ? (
+                    <Icon
+                      name="ear-sharp"
+                      size={24}
+                      color="#F9D923"
+                      style={{ marginRight: 2 }}
+                    />
+                  ) : (
+                    <Icon
+                      name="ear-outline"
+                      size={24}
+                      style={{ marginRight: 2 }}
+                    />
+                  )}
                   <Text style={{ fontWeight: "bold" }}>
                     {props.users_listening.length}
                   </Text>
                 </View>
 
-                {cUser.currentUserInfo.user.id !== props.user_id && (
+                {USER.loggedInUser.id !== props.posting_user.id && (
                   <TouchableOpacity>
                     <Icon
                       name="download-outline"
@@ -577,7 +671,7 @@ const Post = (props: Props) => {
                     />
                   </TouchableOpacity>
                 )}
-                {cUser.currentUserInfo.user.id !== props.user_id && (
+                {USER.loggedInUser.id !== props.posting_user.id && (
                   <TouchableOpacity>
                     <Icon name="bookmark-outline" size={24} />
                   </TouchableOpacity>

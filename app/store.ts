@@ -4,6 +4,8 @@ import UserSlice from "../features/UserSlice";
 import PostSlice from "../features/PostSlice";
 import CommentSlice from "../features/CommentSlice";
 import MessengerSlice from "../features/MessengerSlice";
+import NotificationSlice from "../features/NotificationSlice";
+import CommonSlice from "../features/CommonSlice";
 
 export const store = configureStore({
   reducer: {
@@ -11,6 +13,8 @@ export const store = configureStore({
     post: PostSlice,
     comment: CommentSlice,
     messenger: MessengerSlice,
+    notification: NotificationSlice,
+    common: CommonSlice,
   },
 });
 

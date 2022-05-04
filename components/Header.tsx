@@ -9,9 +9,15 @@ type Props = {
   showLeftIcon: boolean;
   showRightIcon: boolean;
   title: string;
+  handleUpdateProfile: () => void;
 };
 
-const Header = ({ showLeftIcon, showRightIcon, title }: Props) => {
+const Header = ({
+  showLeftIcon,
+  showRightIcon,
+  title,
+  handleUpdateProfile,
+}: Props) => {
   const navigation = useNavigation();
   return (
     <View style={{ backgroundColor: "#fff" }}>
@@ -41,7 +47,10 @@ const Header = ({ showLeftIcon, showRightIcon, title }: Props) => {
             icon="checkmark"
             color="green"
             size={24}
-            onPress={() => navigation.goBack()}
+            onPress={() => {
+              handleUpdateProfile();
+              navigation.goBack();
+            }}
           />
         )}
       </View>

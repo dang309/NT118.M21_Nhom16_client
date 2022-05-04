@@ -1,11 +1,11 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 export interface IMessage {
-  id: string;
-  conversation_id: string;
+  messageId: string;
   content: string;
   from: string;
   to: string;
+  isUnread: boolean;
 }
 
 export interface IConversation {
@@ -37,10 +37,13 @@ const MessengerSlice = createSlice({
     ADD_MESSAGE: (state, action) => {
       state.messages.push(action.payload);
     },
+    CLEAR_MESSAGES: (state) => {
+      state.messages = [];
+    },
   },
 });
 
-export const { SET_MESSAGES, ADD_CONVERSATION, ADD_MESSAGE } =
+export const { SET_MESSAGES, ADD_CONVERSATION, ADD_MESSAGE, CLEAR_MESSAGES } =
   MessengerSlice.actions;
 
 export default MessengerSlice.reducer;

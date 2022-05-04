@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useContext } from "react";
 import {
   StyleSheet,
   Image,
@@ -9,13 +9,7 @@ import {
   ScrollView,
 } from "react-native";
 
-import {
-  TextInput,
-  Button,
-  Divider,
-  HelperText,
-  Snackbar,
-} from "react-native-paper";
+import { TextInput, Button, HelperText, Snackbar } from "react-native-paper";
 
 import { Icon, GGButton } from "../components";
 
@@ -24,16 +18,26 @@ import { NavigationLoginProps } from "../types";
 import { useFormik, Form, FormikProvider } from "formik";
 
 import { useAppDispatch } from "../app/hook";
-import { SET_USER, UPDATE_USER } from "../features/UserSlice";
+import {
+  ISingleUser,
+  IUser,
+  SET_USER,
+  UPDATE_USER,
+} from "../features/UserSlice";
 
 import * as Yup from "yup";
 import { REQUEST } from "../utils";
 
 import * as AUTH_CONSTANT from "../constants/Auth";
 
+import * as FileSystem from "expo-file-system";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import jwt_decode from "jwt-decode";
+import { useFocusEffect } from "@react-navigation/native";
+import { FOLDERS } from "../context/files";
+import { IToken, SET_TOKEN } from "../features/TokenSlice";
 
 const BORDER_RADIUS = 8;
 const BORDER_COLOR = "#e5e5e5";
@@ -79,14 +83,18 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
             "@tokens",
             JSON.stringify(res.data.data.tokens)
           );
-          const { id, avatar } = res.data.data;
-          let temp = res.data.data;
-          const _avatar = await loadThumbnail(id, avatar);
+          const { tokens } = res.data.data;
+          let temp: ISingleUser & IToken = res.data.data;
+          const _avatar = await loadAvatar(temp);
           temp = Object.assign(temp, {
-            avatar: _avatar || "",
+            avatar: {
+              ...temp.avatar,
+              uri: _avatar,
+            },
           });
           dispatch(SET_USER(temp));
-          navigation.navigate("BottomNavigation");
+          dispatch(SET_TOKEN(tokens));
+          navigation.navigate("Root");
         }
       } catch (err) {
         console.log(err);
@@ -116,23 +124,22 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
     console.log("logged in");
   };
 
-  const loadThumbnail = async (userId: string, avatar: any) => {
-    if (!avatar?.key.length || !avatar?.bucket.length) return;
-    const response = await fetch(
-      `https://api-nhom16.herokuapp.com/v1/users/avatar/${userId}`,
-      {
-        method: "GET",
+  const loadAvatar = async (user: ISingleUser) => {
+    try {
+      if (!user.avatar.key.length) return;
+      const URL = `https://api-nhom16.herokuapp.com/v1/users/avatar/${user.id}`;
+      const fileToSave =
+        FOLDERS.USER.AVATARS +
+        user.avatar.key.split("/")[1].replace(/[(\s+)-]/gi, "_");
+      const fileInfo = await FileSystem.getInfoAsync(fileToSave);
+      if (fileInfo.exists) {
+        return fileToSave;
       }
-    );
-    let result;
-    const imageBlob = await response.blob();
-    const reader = new FileReader();
-    reader.readAsDataURL(imageBlob);
-    reader.onloadend = () => {
-      const base64data = reader.result;
-      result = base64data;
-    };
-    return result;
+      const { uri } = await FileSystem.downloadAsync(URL, fileToSave);
+      return uri;
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const getUserById = async (userId: string) => {
@@ -143,11 +150,13 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
       });
 
       if (res && res.data.result) {
-        const { id, avatar } = res.data.data;
-        let temp = res.data.data;
-        const _avatar = await loadThumbnail(id, avatar);
+        let temp: ISingleUser = res.data.data;
+        const _avatar = await loadAvatar(temp);
         temp = Object.assign(temp, {
-          avatar: _avatar || "",
+          avatar: {
+            ...temp.avatar,
+            uri: _avatar,
+          },
         });
         dispatch(UPDATE_USER(temp));
       }
@@ -156,28 +165,21 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
     }
   };
 
-  const checkAuth = async (isMounted: boolean) => {
-    if (isMounted) {
-      let tokens = await AsyncStorage.getItem("@tokens");
-      if (tokens?.length) {
-        const _tokens = JSON.parse(tokens);
-        if (new Date().valueOf() < new Date(_tokens.access.expires).valueOf()) {
-          const { sub } = jwt_decode(_tokens.access.token);
-          getUserById(sub);
-          navigation.navigate("BottomNavigation");
-          return;
-        }
+  const checkAuth = async () => {
+    let tokens = await AsyncStorage.getItem("@tokens");
+    if (tokens?.length) {
+      const _tokens = JSON.parse(tokens);
+      if (new Date().valueOf() < new Date(_tokens.access.expires).valueOf()) {
+        const decodedJwt: any = jwt_decode(_tokens.access.token);
+        getUserById(decodedJwt.sub);
+        navigation.navigate("Root");
+        return;
       }
     }
   };
 
   useEffect(() => {
-    let isMounted = true;
-    checkAuth(isMounted);
-
-    return () => {
-      isMounted = false;
-    };
+    checkAuth();
   }, []);
 
   return (

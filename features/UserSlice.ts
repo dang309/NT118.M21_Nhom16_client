@@ -1,60 +1,50 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-export interface IUser {
-  currentUserInfo: {
-    user: {
-      id: string;
-      email: string;
-      username: string;
-      bio: string;
-      avatar: string;
-      following: [string];
-      followers: [string];
-      balance_dcoin: number;
-      hobbies: [string];
-    };
-    tokens: {
-      access: {
-        token: string;
-        expires: string;
-      };
-      refresh: {
-        token: string;
-        expires: string;
-      };
-    };
-    actions: {
-      showProfileActionsDialog: boolean;
-    };
+export interface ISingleUser {
+  id: string;
+  username: string;
+  bio: string;
+  bookmarked_posts: string[];
+  email: string;
+  followers: string[];
+  following: string[];
+  hobbies: string[];
+  is_email_verified: boolean;
+  is_online: boolean;
+  avatar: {
+    key: string;
+    bucket: string;
+    uri: string;
   };
+  balance_dcoin: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IUser {
+  loggedInUser: ISingleUser;
 }
 
 const INITIAL_STATE: IUser = {
-  currentUserInfo: {
-    user: {
-      id: "",
-      email: "",
-      username: "",
-      bio: "",
-      avatar: "",
-      following: [""],
-      followers: [""],
-      balance_dcoin: 0,
-      hobbies: [""],
+  loggedInUser: {
+    id: "",
+    username: "",
+    bio: "",
+    bookmarked_posts: [],
+    email: "",
+    followers: [],
+    following: [],
+    hobbies: [],
+    is_email_verified: false,
+    is_online: false,
+    avatar: {
+      key: "",
+      bucket: "",
+      uri: "",
     },
-    tokens: {
-      access: {
-        token: "",
-        expires: "",
-      },
-      refresh: {
-        token: "",
-        expires: "",
-      },
-    },
-    actions: {
-      showProfileActionsDialog: false,
-    },
+    balance_dcoin: 0,
+    created_at: "",
+    updated_at: "",
   },
 };
 
@@ -63,29 +53,17 @@ const UserSlice = createSlice({
   initialState: INITIAL_STATE,
   reducers: {
     SET_USER: (state, action) => {
-      Object.assign(state.currentUserInfo, { ...action.payload });
+      state.loggedInUser = action.payload;
     },
     UPDATE_USER: (state, action) => {
-      Object.assign(state.currentUserInfo, {
-        ...state.currentUserInfo,
-        user: { ...state.currentUserInfo.user, ...action.payload },
+      Object.assign(state.loggedInUser, {
+        ...state.loggedInUser,
+        ...action.payload,
       });
-    },
-    CLEAR_USER: (state) => {
-      Object.assign(state.currentUserInfo, INITIAL_STATE);
-    },
-    TOGGLE_PROFILE_ACTIONS_DIALOG: (state) => {
-      state.currentUserInfo.actions.showProfileActionsDialog =
-        !state.currentUserInfo.actions.showProfileActionsDialog;
     },
   },
 });
 
-export const {
-  SET_USER,
-  UPDATE_USER,
-  TOGGLE_PROFILE_ACTIONS_DIALOG,
-  CLEAR_USER,
-} = UserSlice.actions;
+export const { SET_USER, UPDATE_USER } = UserSlice.actions;
 
 export default UserSlice.reducer;
