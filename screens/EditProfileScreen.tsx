@@ -116,7 +116,8 @@ export default function EditProfileScreen() {
 
   const getAvatar = async () => {
     const _avatar = await USER_SERVICES.loadAvatar(USER.loggedInUser);
-    setAvatar(_avatar);
+    let temp = Object.assign({}, { uri: _avatar });
+    setAvatar(temp);
   };
 
   const handleChangeAvatar = async () => {
@@ -150,7 +151,7 @@ export default function EditProfileScreen() {
         <View style={{ alignItems: "center" }}>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             {avatar ? (
-              <Avatar.Image source={{ uri: avatar }} size={64} />
+              <Avatar.Image source={{ uri: avatar.uri }} size={64} />
             ) : (
               <Avatar.Icon icon="person-outline" size={64} />
             )}

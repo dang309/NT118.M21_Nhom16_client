@@ -112,7 +112,6 @@ const NotiItem = (props: PropsNotiItem) => {
       <TouchableOpacity onPress={handleGoToPost}>
         <View
           style={{
-            flexWrap: "wrap",
             flexDirection: "row",
             alignItems: "center",
           }}
@@ -136,6 +135,8 @@ const NotiItem = (props: PropsNotiItem) => {
                 flexDirection: "row",
                 alignItems: "center",
                 marginBottom: -4,
+
+                flexWrap: "wrap",
               }}
             >
               <Text style={{ fontWeight: "bold", marginHorizontal: 2 }}>
