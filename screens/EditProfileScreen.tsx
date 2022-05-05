@@ -20,6 +20,7 @@ import { IUser, SET_USER } from "../features/UserSlice";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import * as AUTH_CONSTANT from "../constants/Auth";
+import { USER_SERVICES } from "../services";
 
 export default function EditProfileScreen() {
   const dispatch = useAppDispatch();
@@ -111,23 +112,11 @@ export default function EditProfileScreen() {
     handleSubmit,
     handleBlur,
     handleChange,
-    getFieldProps,
   } = formik;
 
-  const loadAvatar = async () => {
-    const response = await fetch(
-      `https://api-nhom16.herokuapp.com/v1/users/avatar/${USER.loggedInUser.id}`,
-      {
-        method: "GET",
-      }
-    );
-    const imageBlob = await response.blob();
-    const reader = new FileReader();
-    reader.readAsDataURL(imageBlob);
-    reader.onloadend = () => {
-      const base64data = reader.result;
-      setAvatar(base64data);
-    };
+  const getAvatar = async () => {
+    const _avatar = await USER_SERVICES.loadAvatar(USER.loggedInUser);
+    setAvatar(_avatar);
   };
 
   const handleChangeAvatar = async () => {
@@ -137,7 +126,7 @@ export default function EditProfileScreen() {
       });
 
       if (avatar.type !== "cancel") {
-        setAvatar(avatar);
+        setAvatar(avatar.uri);
       }
     } catch (e) {
       console.log(e);
@@ -145,7 +134,7 @@ export default function EditProfileScreen() {
   };
 
   useEffect(() => {
-    loadAvatar();
+    getAvatar();
   }, []);
 
   return (
@@ -161,7 +150,7 @@ export default function EditProfileScreen() {
         <View style={{ alignItems: "center" }}>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             {avatar ? (
-              <Avatar.Image source={{ uri: avatar.uri }} size={64} />
+              <Avatar.Image source={{ uri: avatar }} size={64} />
             ) : (
               <Avatar.Icon icon="person-outline" size={64} />
             )}

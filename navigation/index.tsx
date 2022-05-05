@@ -409,6 +409,10 @@ function BottomTabNavigator() {
         tabBarShowLabel: false,
         headerShown: false,
         unmountOnBlur: true,
+
+        tabBarStyle: {
+          backgroundColor: "#fff",
+        },
       }}
     >
       <BottomTab.Screen

@@ -125,9 +125,9 @@ const NotiItem = (props: PropsNotiItem) => {
             }}
           >
             {avatar ? (
-              <Avatar.Image source={{ uri: avatar }} size={48} />
+              <Avatar.Image source={{ uri: avatar }} size={24} />
             ) : (
-              <Avatar.Icon icon="person-outline" size={48} />
+              <Avatar.Icon icon="person-outline" size={24} />
             )}
           </View>
           <View>
