@@ -412,6 +412,9 @@ function BottomTabNavigator() {
 
         tabBarStyle: {
           backgroundColor: "#fff",
+
+          borderTopWidth: 1,
+          borderTopColor: "#e5e5e5",
         },
       }}
     >
