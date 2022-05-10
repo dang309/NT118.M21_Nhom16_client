@@ -24,6 +24,7 @@ import {
   List,
   Title,
   ToggleButton,
+  Caption,
 } from "react-native-paper";
 
 import PROFILE_CONSTANT from "./../constants/Profile";
@@ -36,10 +37,11 @@ import { User } from "../types";
 import { IUser } from "./../features/UserSlice";
 
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
-import { Post } from "../components";
+import { Icon, Post } from "../components";
 import { createDraftSafeSelector } from "@reduxjs/toolkit";
 import { RootState } from "../app/store";
 import { DBContext } from "../context/db";
+import moment from "moment";
 
 const renderStat = (header: string, quantity: number, styles: object) => {
   return (
@@ -195,10 +197,72 @@ export default function ProfileScreen() {
 
                         <Title>{USER.loggedInUser.username}</Title>
                         {USER.loggedInUser.bio.length > 0 && (
-                          <Text style={{ fontSize: 14 }}>
+                          <Text style={{ fontSize: 14, marginVertical: 4 }}>
                             {USER.loggedInUser.bio}
                           </Text>
                         )}
+
+                        <View
+                          style={{
+                            alignItems: "center",
+                            flex: 1,
+                            width: "100%",
+                          }}
+                        >
+                          {USER.loggedInUser.phone_number.length > 0 && (
+                            <View
+                              style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                              }}
+                            >
+                              <Icon
+                                name="phone-portrait-outline"
+                                size={20}
+                                style={{ marginRight: 8 }}
+                              />
+                              <Caption>
+                                {USER.loggedInUser.phone_number}
+                              </Caption>
+                            </View>
+                          )}
+
+                          {USER.loggedInUser.address.length > 0 && (
+                            <View
+                              style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                              }}
+                            >
+                              <Icon
+                                name="home-outline"
+                                size={20}
+                                style={{ marginRight: 8 }}
+                              />
+                              <Caption>{USER.loggedInUser.address}</Caption>
+                            </View>
+                          )}
+
+                          {USER.loggedInUser.birthday.length > 0 && (
+                            <View
+                              style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                              }}
+                            >
+                              <Icon
+                                name="calendar-outline"
+                                size={20}
+                                style={{ marginRight: 8 }}
+                              />
+                              <Caption>
+                                {moment(USER.loggedInUser.birthday).format(
+                                  "MM/DD/YYYY"
+                                )}
+                              </Caption>
+                            </View>
+                          )}
+                        </View>
                       </View>
 
                       <View

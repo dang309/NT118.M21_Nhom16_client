@@ -32,7 +32,7 @@ import { REQUEST } from "../utils";
 
 import { IUser } from "../features/UserSlice";
 import { DELETE_POST, IPostItem, UPDATE_POST } from "../features/PostSlice";
-import { IComment } from "../features/CommentSlice";
+import { ADD_COMMENT, IComment } from "../features/CommentSlice";
 
 import { useAppDispatch, useAppSelector } from "../app/hook";
 
@@ -47,6 +47,8 @@ import { DBContext } from "../context/db";
 import useSWR from "swr";
 
 import * as FileSystem from "expo-file-system";
+import { createDraftSafeSelector } from "@reduxjs/toolkit";
+import { RootState } from "../app/store";
 
 type Props = IPostItem & { setSelectedProfile?: (value: string) => void };
 
@@ -63,11 +65,11 @@ const Post = (props: Props) => {
 
   const cache = new Map();
 
+  const state = useAppSelector<RootState>((state) => state);
   const USER = useAppSelector<IUser>((state) => state.user);
   const comment = useAppSelector<IComment>((state) => state.comment);
   const isLoading = useAppSelector<boolean>((state) => state.common.loading);
 
-  const [mounted, setMounted] = useState<boolean>(false);
   const [sound, setSound] = useState<any>(null);
   const [playbackStatus, setPlaybackStatus] = useState<AVPlaybackStatus | null>(
     null
@@ -319,22 +321,14 @@ const Post = (props: Props) => {
     }
   };
 
-  useEffect(() => {
-    if (!mounted) return;
-    loadSound();
-  }, [mounted]);
-
-  useFocusEffect(
-    useCallback(() => {
-      setMounted(true);
-      return () => {
-        setMounted(false);
-        // if (sound) {
-        //   sound.unloadAsync();
-        // }
-      };
-    }, [])
+  const countComment = createDraftSafeSelector(
+    (state: RootState) => state.comment,
+    (comment) => comment.list.filter((o) => o.post_id === props.id).length
   );
+
+  useEffect(() => {
+    loadSound();
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -632,7 +626,7 @@ const Post = (props: Props) => {
                     />
                   </TouchableOpacity>
                   <Text style={{ fontWeight: "bold" }}>
-                    {comment.list.length}
+                    {countComment(state)}
                   </Text>
                 </View>
 

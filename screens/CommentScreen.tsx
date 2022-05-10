@@ -4,7 +4,12 @@ import React, { useState, useEffect } from "react";
 import { TextInput, Title } from "react-native-paper";
 
 import { useAppDispatch, useAppSelector } from "../app/hook";
-import { IComment, SET_COMMENT, ADD_COMMENT } from "../features/CommentSlice";
+import {
+  IComment,
+  SET_COMMENT,
+  ADD_COMMENT,
+  CLEAR_COMENT,
+} from "../features/CommentSlice";
 
 import { REQUEST } from "../utils";
 import { CommentItem } from "../components";
@@ -12,44 +17,20 @@ import { IUser } from "../features/UserSlice";
 
 // components
 import { Header } from "../components";
-import { useRoute } from "@react-navigation/native";
+import { RouteProp, useRoute } from "@react-navigation/native";
+import { createDraftSafeSelector } from "@reduxjs/toolkit";
+import { RootState } from "../app/store";
 
 const CommentScreen = () => {
   const dispatch = useAppDispatch();
 
-  const route = useRoute();
+  const route: RouteProp<{ params: { postId: string } }, "params"> = useRoute();
 
+  const state = useAppSelector<RootState>((state) => state);
   const comment = useAppSelector<IComment>((state) => state.comment);
   const USER = useAppSelector<IUser>((state) => state.user);
 
   const [content, setContent] = useState<string>("");
-
-  const loadComment = async () => {
-    console.log(route.params?.postId);
-    try {
-      let filters = [];
-      filters.push({
-        key: "post_id",
-        operator: "=",
-        value: route.params?.postId,
-      });
-      const params = {
-        filters: JSON.stringify(filters),
-      };
-      const res = await REQUEST({
-        method: "GET",
-        url: "/comments",
-        params,
-      });
-
-      if (res && res.data.result) {
-        console.log(res.data);
-        dispatch(SET_COMMENT(res.data.data.results));
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   const handleAddComment = async () => {
     try {
@@ -73,25 +54,32 @@ const CommentScreen = () => {
     }
   };
 
-  useEffect(() => {
-    loadComment();
-  }, []);
+  const getComments = createDraftSafeSelector(
+    (state: RootState) => state.comment,
+    (comment) => comment.list.filter((o) => o.post_id === route.params.postId)
+  );
+
   return (
     <View style={styles.container}>
       <View>
-        <Header showLeftIcon showRightIcon={false} title="Bình luận" />
+        <Header
+          showLeftIcon
+          showRightIcon={false}
+          title="Bình luận"
+          handleUpdateProfile={() => console.log("")}
+        />
         <View style={{ margin: 8 }}>
-          {comment.list.length > 0 && (
+          {getComments(state).length > 0 && (
             <ScrollView>
               <View>
-                {comment.list.map((item) => {
+                {getComments(state).map((item) => {
                   return <CommentItem key={item.id} {...item} />;
                 })}
               </View>
             </ScrollView>
           )}
 
-          {comment.list.length === 0 && (
+          {getComments(state).length === 0 && (
             <View style={{ flex: 1, alignItems: "center" }}>
               <Title>Chưa có bình luận nào.</Title>
             </View>

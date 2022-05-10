@@ -49,7 +49,6 @@ const Header = ({
             size={24}
             onPress={() => {
               handleUpdateProfile();
-              navigation.goBack();
             }}
           />
         )}

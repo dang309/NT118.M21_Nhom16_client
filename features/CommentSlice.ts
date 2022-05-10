@@ -29,7 +29,7 @@ const CommentSlice = createSlice({
       state.list = action.payload;
     },
     ADD_COMMENT: (state, action) => {
-      Object.assign(state, { list: [...state.list, action.payload] });
+      state.list.push.apply(state.list, action.payload);
     },
     UPDATE_COMMENT: (state, action: any) => {
       state.list = state.list.map((item) => {
@@ -39,10 +39,13 @@ const CommentSlice = createSlice({
         return { ...item };
       });
     },
+    CLEAR_COMENT: (state) => {
+      state.list = [];
+    },
   },
 });
 
-export const { SET_COMMENT, ADD_COMMENT, UPDATE_COMMENT } =
+export const { SET_COMMENT, ADD_COMMENT, UPDATE_COMMENT, CLEAR_COMENT } =
   CommentSlice.actions;
 
 export default CommentSlice.reducer;

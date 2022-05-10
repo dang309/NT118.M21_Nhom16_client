@@ -50,6 +50,7 @@ import { DBContext } from "../context/db";
 
 import * as FileSystem from "expo-file-system";
 import { FOLDERS } from "../context/files";
+import { ADD_COMMENT } from "../features/CommentSlice";
 
 export default function Navigation({
   colorScheme,
@@ -213,8 +214,7 @@ function BottomTabNavigator() {
   const dispatch = useAppDispatch();
 
   const USER = useAppSelector<IUser>((state) => state.user);
-
-  console.log(USER);
+  const POST = useAppSelector<IPost>((state) => state.post);
 
   const loadSound = async (post: IPostItem) => {
     try {
@@ -268,6 +268,31 @@ function BottomTabNavigator() {
     }
   };
 
+  const loadComments = async (post: IPostItem) => {
+    try {
+      let filters = [];
+      filters.push({
+        key: "post_id",
+        operator: "=",
+        value: post.id,
+      });
+      const params = {
+        filters: JSON.stringify(filters),
+      };
+      const res = await REQUEST({
+        method: "GET",
+        url: "/comments",
+        params,
+      });
+
+      if (res && res.data.result) {
+        dispatch(ADD_COMMENT(res.data.data.results));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const loadPosts = async () => {
     try {
       dispatch(START_LOADING());
@@ -293,6 +318,7 @@ function BottomTabNavigator() {
           _thumbnail = await loadThumbnail(temp[i]);
           _user = await COMMON.getUserById(temp[i].user_id);
           _avatar = await loadAvatar(_user);
+          await loadComments(temp[i]);
           if (
             temp[i].users_like.some((o: any) => o === USER.loggedInUser.id) &&
             temp[i].users_listening.some((o: any) => o === USER.loggedInUser.id)
@@ -394,12 +420,13 @@ function BottomTabNavigator() {
   useFocusEffect(
     useCallback(() => {
       if (!USER.loggedInUser.id.length) return;
+      if (POST.list.length > 0) return;
       loadPosts();
 
       return () => {
         console.log("unfocused");
       };
-    }, [USER.loggedInUser.id])
+    }, [])
   );
 
   return (
@@ -409,7 +436,7 @@ function BottomTabNavigator() {
         tabBarActiveTintColor: "#00adb5",
         tabBarShowLabel: false,
         headerShown: false,
-        unmountOnBlur: true,
+        unmountOnBlur: false,
 
         tabBarStyle: {
           backgroundColor: "#fff",

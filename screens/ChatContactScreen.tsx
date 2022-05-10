@@ -148,7 +148,7 @@ const ChatContactScreen = () => {
       const res = await REQUEST({
         method: "GET",
         url: "/users",
-        // params,
+        params,
       });
 
       if (res && res.data.result) {
@@ -205,7 +205,7 @@ const ChatContactScreen = () => {
       <Text style={{ fontWeight: "bold", marginBottom: 8 }}>Tin nhắn</Text>
 
       <View>
-        {following && followers ? (
+        {following ? (
           <SectionList
             sections={[{ title: "Gợi ý", data: following }]}
             keyExtractor={(item, index) => item.id}

@@ -1,15 +1,24 @@
-import { StyleSheet, Text, View } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useState, useEffect } from "react";
 
-import { Header } from "../components/";
+import { Header, Icon } from "../components/";
 
 import {
   Avatar,
   Button,
+  Dialog,
   HelperText,
   IconButton,
+  Portal,
   RadioButton,
   TextInput,
+  Title,
 } from "react-native-paper";
 
 import * as DocumentPicker from "expo-document-picker";
@@ -24,13 +33,16 @@ import * as AUTH_CONSTANT from "../constants/Auth";
 import { USER_SERVICES } from "../services";
 
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
+import moment from "moment";
+import { useNavigation } from "@react-navigation/native";
 
 export default function EditProfileScreen() {
-  const dispatch = useAppDispatch();
-
   const USER = useAppSelector<IUser>((state) => state.user);
 
+  const navigation = useNavigation();
+
   const [avatar, setAvatar] = useState<any>(null);
+  const [toggleDialog, setToggleDialog] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
   const EditProfileSchema = Yup.object().shape({
@@ -77,9 +89,10 @@ export default function EditProfileScreen() {
     validateOnBlur: false,
     onSubmit: async (values) => {
       try {
+        let flag = false;
         setError("");
 
-        if (!values.email.trim().length) return;
+        if (!values.email.trim().length) return false;
 
         const dataToSend = new FormData();
 
@@ -90,6 +103,10 @@ export default function EditProfileScreen() {
         });
 
         dataToSend.append("email", values.email.trim());
+        dataToSend.append("phone_number", values.phoneNumber.trim());
+        dataToSend.append("address", values.address.trim());
+        dataToSend.append("sex", values.sex.trim() === "Male");
+        dataToSend.append("birthday", values.birthday);
         dataToSend.append("bio", values.bio.trim());
 
         const res = await REQUEST({
@@ -106,8 +123,14 @@ export default function EditProfileScreen() {
             return dataToSend;
           },
         });
+
+        if (res && res.data.result) {
+          flag = true;
+          setToggleDialog(true);
+        }
+
+        return flag;
       } catch (err) {
-        console.log(err);
         if (err.response) {
           setError(err.response.data.message);
         }
@@ -148,7 +171,7 @@ export default function EditProfileScreen() {
 
   const handleChangeBirthday = () => {
     DateTimePickerAndroid.open({
-      value: values.birthday,
+      value: new Date(values.birthday),
       onChange: (e, selectedDate) => setFieldValue("birthday", selectedDate),
       mode: "date",
     });
@@ -167,135 +190,160 @@ export default function EditProfileScreen() {
         handleUpdateProfile={handleSubmit}
       />
 
-      <View style={{ padding: 16, backgroundColor: "#fff" }}>
-        <View style={{ alignItems: "center" }}>
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            {avatar ? (
-              <Avatar.Image source={{ uri: avatar.uri }} size={64} />
-            ) : (
-              <Avatar.Icon icon="person-outline" size={64} />
-            )}
-            <IconButton icon="camera-outline" onPress={handleChangeAvatar} />
-          </View>
-        </View>
-
-        <View
-          style={{
-            alignItems: "center",
-            marginVertical: 8,
-          }}
-        >
-          <RadioButton.Group
-            onValueChange={handleChange("sex")}
-            value={values.sex}
-          >
-            <View style={{ flexDirection: "row" }}>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Text>Nam</Text>
-                <RadioButton value="Male" />
-              </View>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Text>Nữ</Text>
-                <RadioButton value="Female" />
-              </View>
+      <ScrollView>
+        <View style={{ padding: 16, backgroundColor: "#fff" }}>
+          <View style={{ alignItems: "center" }}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              {avatar ? (
+                <Avatar.Image source={{ uri: avatar.uri }} size={64} />
+              ) : (
+                <Avatar.Icon icon="person-outline" size={64} />
+              )}
+              <IconButton icon="camera-outline" onPress={handleChangeAvatar} />
             </View>
-          </RadioButton.Group>
+          </View>
+
+          <View
+            style={{
+              alignItems: "center",
+              marginVertical: 8,
+            }}
+          >
+            <RadioButton.Group
+              onValueChange={handleChange("sex")}
+              value={values.sex}
+            >
+              <View style={{ flexDirection: "row" }}>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Text>Nam</Text>
+                  <RadioButton value="Male" />
+                </View>
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Text>Nữ</Text>
+                  <RadioButton value="Female" />
+                </View>
+              </View>
+            </RadioButton.Group>
+          </View>
+
+          <View style={{ marginVertical: 8 }}>
+            <View style={{ marginBottom: 8 }}>
+              <TextInput
+                value={values.email}
+                onChangeText={handleChange("email")}
+                onBlur={handleBlur("email")}
+                placeholder="Email"
+                label="Email"
+                mode="outlined"
+                autoComplete="off"
+                outlineColor="#e5e5e5"
+                left={<TextInput.Icon name="at" color="#999" />}
+                error={Boolean(touched.email && errors.email)}
+                style={{ width: "100%", backgroundColor: "#fff" }}
+              />
+              {errors.email?.length && (
+                <HelperText type="error" visible={!!errors.email?.length}>
+                  {errors.email}
+                </HelperText>
+              )}
+            </View>
+
+            <View style={{ marginBottom: 8 }}>
+              <TextInput
+                value={values.phoneNumber}
+                onChangeText={handleChange("phoneNumber")}
+                onBlur={handleBlur("phoneNumber")}
+                placeholder="Số điện thoại"
+                label="Số điện thoại"
+                mode="outlined"
+                autoComplete="off"
+                outlineColor="#e5e5e5"
+                left={
+                  <TextInput.Icon name="phone-portrait-outline" color="#999" />
+                }
+                error={Boolean(touched.phoneNumber && errors.phoneNumber)}
+                style={{ width: "100%", backgroundColor: "#fff" }}
+              />
+            </View>
+
+            <View style={{ marginBottom: 8 }}>
+              <TextInput
+                value={values.address}
+                onChangeText={handleChange("address")}
+                onBlur={handleBlur("address")}
+                placeholder="Địa chỉ"
+                label="Địa chỉ"
+                mode="outlined"
+                autoComplete="off"
+                outlineColor="#e5e5e5"
+                left={<TextInput.Icon name="home-outline" color="#999" />}
+                error={Boolean(touched.address && errors.address)}
+                style={{ width: "100%", backgroundColor: "#fff" }}
+              />
+            </View>
+
+            <View style={{ marginBottom: 8 }}>
+              <TouchableOpacity onPress={handleChangeBirthday}>
+                <TextInput
+                  value={moment(values.birthday).format("MM/DD/YYYY")}
+                  placeholder="Ngày sinh (MM/DD/YYYY)"
+                  label="Ngày sinh (MM/DD/YYYY)"
+                  mode="outlined"
+                  editable={false}
+                  autoComplete="off"
+                  outlineColor="#e5e5e5"
+                  left={<TextInput.Icon name="calendar-outline" color="#999" />}
+                  error={Boolean(touched.birthday && errors.birthday)}
+                  style={{ width: "100%", backgroundColor: "#fff" }}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ marginBottom: 8 }}>
+              <TextInput
+                value={values.bio}
+                onChangeText={handleChange("bio")}
+                onBlur={handleBlur("bio")}
+                placeholder="Mô tả bản thân"
+                label="Mô tả bản thân"
+                mode="outlined"
+                autoComplete="off"
+                multiline
+                numberOfLines={7}
+                left={<TextInput.Icon name="newspaper-outline" color="#999" />}
+                outlineColor="#e5e5e5"
+                error={Boolean(touched.bio && errors.bio)}
+                style={{ width: "100%", backgroundColor: "#fff" }}
+              />
+            </View>
+          </View>
+
+          <View>
+            <Button mode="contained">Đổi mật khẩu</Button>
+          </View>
         </View>
+      </ScrollView>
 
-        <View style={{ marginVertical: 8 }}>
-          <View style={{ marginBottom: 8 }}>
-            <TextInput
-              value={values.email}
-              onChangeText={handleChange("email")}
-              onBlur={handleBlur("email")}
-              placeholder="Email"
-              label="Email"
-              mode="outlined"
-              autoComplete="off"
-              outlineColor="#e5e5e5"
-              left={<TextInput.Icon name="at" color="#999" />}
-              error={Boolean(touched.email && errors.email)}
-              style={{ width: "100%", backgroundColor: "#fff" }}
-            />
-            {errors.email?.length && (
-              <HelperText type="error" visible={!!errors.email?.length}>
-                {errors.email}
-              </HelperText>
-            )}
-          </View>
-
-          <View style={{ marginBottom: 8 }}>
-            <TextInput
-              value={values.phoneNumber}
-              onChangeText={handleChange("phoneNumber")}
-              onBlur={handleBlur("phoneNumber")}
-              placeholder="Số điện thoại"
-              label="Số điện thoại"
-              mode="outlined"
-              autoComplete="off"
-              outlineColor="#e5e5e5"
-              left={
-                <TextInput.Icon name="phone-portrait-outline" color="#999" />
-              }
-              error={Boolean(touched.phoneNumber && errors.phoneNumber)}
-              style={{ width: "100%", backgroundColor: "#fff" }}
-            />
-          </View>
-
-          <View style={{ marginBottom: 8 }}>
-            <TextInput
-              value={values.address}
-              onChangeText={handleChange("address")}
-              onBlur={handleBlur("address")}
-              placeholder="Địa chỉ"
-              label="Địa chỉ"
-              mode="outlined"
-              autoComplete="off"
-              outlineColor="#e5e5e5"
-              left={<TextInput.Icon name="home-outline" color="#999" />}
-              error={Boolean(touched.address && errors.address)}
-              style={{ width: "100%", backgroundColor: "#fff" }}
-            />
-          </View>
-
-          <View style={{ marginBottom: 8 }}>
-            <TextInput
-              value={values.birthday}
-              onChangeText={setFieldValue}
-              placeholder="Ngày sinh"
-              label="Ngày sinh"
-              mode="outlined"
-              autoComplete="off"
-              outlineColor="#e5e5e5"
-              left={<TextInput.Icon name="home-outline" color="#999" />}
-              error={Boolean(touched.birthday && errors.birthday)}
-              style={{ width: "100%", backgroundColor: "#fff" }}
-            />
-          </View>
-
-          <View style={{ marginBottom: 8 }}>
-            <TextInput
-              value={values.bio}
-              onChangeText={handleChange("bio")}
-              onBlur={handleBlur("bio")}
-              placeholder="Mô tả bản thân"
-              label="Mô tả bản thân"
-              mode="outlined"
-              autoComplete="off"
-              multiline
-              numberOfLines={7}
-              left={<TextInput.Icon name="newspaper-outline" color="#999" />}
-              outlineColor="#e5e5e5"
-              error={Boolean(touched.bio && errors.bio)}
-              style={{ width: "100%", backgroundColor: "#fff" }}
-            />
-          </View>
-        </View>
-
-        <View>
-          <Button mode="contained">Đổi mật khẩu</Button>
-        </View>
-      </View>
+      <Portal>
+        <Dialog visible={toggleDialog} onDismiss={() => setToggleDialog(false)}>
+          <Dialog.Content>
+            <View style={{ alignItems: "center" }}>
+              <Icon name="checkmark-circle" size={64} color="green" />
+              <Title style={{ marginVertical: 8 }}>Cập nhật thành công!</Title>
+              <Button
+                icon="arrow-back"
+                mode="contained"
+                onPress={() => {
+                  navigation.goBack();
+                  setToggleDialog(false);
+                }}
+              >
+                Quay lại
+              </Button>
+            </View>
+          </Dialog.Content>
+        </Dialog>
+      </Portal>
     </View>
   );
 }

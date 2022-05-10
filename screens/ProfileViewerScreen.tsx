@@ -3,8 +3,6 @@ import { useState, useEffect, useContext } from "react";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { NavigationProfileProps } from "../types";
-
 import {
   Avatar,
   Headline,
@@ -24,13 +22,13 @@ import {
 import PROFILE_CONSTANT from "./../constants/Profile";
 import { REQUEST } from "../utils";
 import { useAppDispatch, useAppSelector } from "./../app/hook";
-import { CLEAR_USER, SET_USER, UPDATE_USER } from "../features/UserSlice";
+import { SET_USER, UPDATE_USER } from "../features/UserSlice";
 import { IPost, IPostItem, SET_POST } from "../features/PostSlice";
 
 import { User } from "../types";
 import { IUser } from "./../features/UserSlice";
 
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { Header, Post } from "../components";
 
 import { SocketContext } from "../context/socket";
@@ -51,7 +49,7 @@ export default function ProfileViewerScreen() {
   const USER = useAppSelector<IUser>((state) => state.user);
 
   const navigation = useNavigation();
-  const route = useRoute();
+  const route: RouteProp<{ params: { userId: string } }, "params"> = useRoute();
 
   const socket = useContext(SocketContext);
 
@@ -126,7 +124,7 @@ export default function ProfileViewerScreen() {
       temp = Object.assign(temp, {
         avatar: _avatar || "",
       });
-      if (temp.followers.some((o) => o === USER.loggedInUser.id)) {
+      if (temp.followers.some((o: string) => o === USER.loggedInUser.id)) {
         setToggleFollow(true);
       }
       setUser(temp);
@@ -175,7 +173,12 @@ export default function ProfileViewerScreen() {
 
   return (
     <View style={styles.container}>
-      <Header showLeftIcon showRightIcon={false} title="Hồ sơ cá nhân" />
+      <Header
+        showLeftIcon
+        showRightIcon={false}
+        title="Hồ sơ cá nhân"
+        handleUpdateProfile={() => console.log("")}
+      />
       {user && (
         <View>
           <ScrollView>

@@ -6,29 +6,23 @@ import { Avatar, Caption, IconButton } from "react-native-paper";
 import { REQUEST } from "../utils";
 
 import moment from "moment";
+import { USER_SERVICES } from "../services";
+import { ISingleUser } from "../features/UserSlice";
 
 const CommentItem = (props: any) => {
-  const [userComment, setUserComment] = useState<any | null>(null);
+  const [userComment, setUserComment] = useState<ISingleUser | null>(null);
+  const [avatar, setAvatar] = useState<any>(null);
 
-  const getUserById = async () => {
-    try {
-      const res = await REQUEST({
-        method: "GET",
-        url: `/users/${props.user_comment_id}`,
-      });
+  const loadUserComment = async () => {
+    const _user = await USER_SERVICES.getUserById(props.user_comment_id);
+    const _avatar = await USER_SERVICES.loadAvatar(_user);
 
-      if (res && !res.data.result) return;
-
-      console.log(res.data.data);
-
-      setUserComment(res.data.data);
-    } catch (e) {
-      console.error(e);
-    }
+    setUserComment(_user);
+    setAvatar(_avatar);
   };
 
   useEffect(() => {
-    getUserById();
+    loadUserComment();
   }, []);
 
   return (
@@ -41,7 +35,11 @@ const CommentItem = (props: any) => {
       }}
     >
       <View style={{ marginRight: 8 }}>
-        <Avatar.Icon icon="person" size={48} />
+        {avatar ? (
+          <Avatar.Image source={{ uri: avatar }} size={48} />
+        ) : (
+          <Avatar.Icon icon="person" size={48} />
+        )}
       </View>
       <View style={{ flex: 1 }}>
         <View
