@@ -21,7 +21,7 @@ class UserServices {
 
   loadAvatar = async (user: ISingleUser | null) => {
     try {
-      if (!user?.avatar.key.length) return;
+      if (!user?.avatar?.key.length) return;
       const URL = `https://api-nhom16.herokuapp.com/v1/users/avatar/${user.id}`;
       const fileToSave =
         FOLDERS.POST.AVATARS +

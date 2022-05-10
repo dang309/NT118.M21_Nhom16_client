@@ -8,6 +8,7 @@ import {
   Button,
   HelperText,
   IconButton,
+  RadioButton,
   TextInput,
 } from "react-native-paper";
 
@@ -17,10 +18,12 @@ import FormData from "form-data";
 import { REQUEST } from "../utils";
 import { useAppDispatch, useAppSelector } from "../app/hook";
 import { IUser, SET_USER } from "../features/UserSlice";
-import { useFormik } from "formik";
+import { useFormik, useFormikContext } from "formik";
 import * as Yup from "yup";
 import * as AUTH_CONSTANT from "../constants/Auth";
 import { USER_SERVICES } from "../services";
+
+import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 
 export default function EditProfileScreen() {
   const dispatch = useAppDispatch();
@@ -35,6 +38,10 @@ export default function EditProfileScreen() {
       .email(AUTH_CONSTANT.INVALID_EMAIL)
       .required(AUTH_CONSTANT.REQUIRED_EMAIL),
     bio: Yup.string(),
+    phoneNumber: Yup.string(),
+    address: Yup.string(),
+    birthday: Yup.date(),
+    sex: Yup.string(),
   });
 
   const ChangePasswordSchema = Yup.object().shape({
@@ -60,6 +67,10 @@ export default function EditProfileScreen() {
     initialValues: {
       email: USER.loggedInUser.email,
       bio: USER.loggedInUser.bio,
+      phoneNumber: USER.loggedInUser.phone_number,
+      address: USER.loggedInUser.address,
+      birthday: USER.loggedInUser.birthday,
+      sex: USER.loggedInUser.sex ? "Male" : "Female",
     },
     validationSchema: EditProfileSchema,
     validateOnChange: false,
@@ -112,6 +123,7 @@ export default function EditProfileScreen() {
     handleSubmit,
     handleBlur,
     handleChange,
+    setFieldValue,
   } = formik;
 
   const getAvatar = async () => {
@@ -132,6 +144,14 @@ export default function EditProfileScreen() {
     } catch (e) {
       console.log(e);
     }
+  };
+
+  const handleChangeBirthday = () => {
+    DateTimePickerAndroid.open({
+      value: values.birthday,
+      onChange: (e, selectedDate) => setFieldValue("birthday", selectedDate),
+      mode: "date",
+    });
   };
 
   useEffect(() => {
@@ -159,6 +179,29 @@ export default function EditProfileScreen() {
           </View>
         </View>
 
+        <View
+          style={{
+            alignItems: "center",
+            marginVertical: 8,
+          }}
+        >
+          <RadioButton.Group
+            onValueChange={handleChange("sex")}
+            value={values.sex}
+          >
+            <View style={{ flexDirection: "row" }}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Text>Nam</Text>
+                <RadioButton value="Male" />
+              </View>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Text>Nữ</Text>
+                <RadioButton value="Female" />
+              </View>
+            </View>
+          </RadioButton.Group>
+        </View>
+
         <View style={{ marginVertical: 8 }}>
           <View style={{ marginBottom: 8 }}>
             <TextInput
@@ -180,6 +223,56 @@ export default function EditProfileScreen() {
               </HelperText>
             )}
           </View>
+
+          <View style={{ marginBottom: 8 }}>
+            <TextInput
+              value={values.phoneNumber}
+              onChangeText={handleChange("phoneNumber")}
+              onBlur={handleBlur("phoneNumber")}
+              placeholder="Số điện thoại"
+              label="Số điện thoại"
+              mode="outlined"
+              autoComplete="off"
+              outlineColor="#e5e5e5"
+              left={
+                <TextInput.Icon name="phone-portrait-outline" color="#999" />
+              }
+              error={Boolean(touched.phoneNumber && errors.phoneNumber)}
+              style={{ width: "100%", backgroundColor: "#fff" }}
+            />
+          </View>
+
+          <View style={{ marginBottom: 8 }}>
+            <TextInput
+              value={values.address}
+              onChangeText={handleChange("address")}
+              onBlur={handleBlur("address")}
+              placeholder="Địa chỉ"
+              label="Địa chỉ"
+              mode="outlined"
+              autoComplete="off"
+              outlineColor="#e5e5e5"
+              left={<TextInput.Icon name="home-outline" color="#999" />}
+              error={Boolean(touched.address && errors.address)}
+              style={{ width: "100%", backgroundColor: "#fff" }}
+            />
+          </View>
+
+          <View style={{ marginBottom: 8 }}>
+            <TextInput
+              value={values.birthday}
+              onChangeText={setFieldValue}
+              placeholder="Ngày sinh"
+              label="Ngày sinh"
+              mode="outlined"
+              autoComplete="off"
+              outlineColor="#e5e5e5"
+              left={<TextInput.Icon name="home-outline" color="#999" />}
+              error={Boolean(touched.birthday && errors.birthday)}
+              style={{ width: "100%", backgroundColor: "#fff" }}
+            />
+          </View>
+
           <View style={{ marginBottom: 8 }}>
             <TextInput
               value={values.bio}
@@ -196,11 +289,6 @@ export default function EditProfileScreen() {
               error={Boolean(touched.bio && errors.bio)}
               style={{ width: "100%", backgroundColor: "#fff" }}
             />
-            {errors.bio?.length && (
-              <HelperText type="error" visible={!!errors.bio}>
-                {errors.bio}
-              </HelperText>
-            )}
           </View>
         </View>
 

@@ -214,6 +214,8 @@ function BottomTabNavigator() {
 
   const USER = useAppSelector<IUser>((state) => state.user);
 
+  console.log(USER);
+
   const loadSound = async (post: IPostItem) => {
     try {
       const URL = `https://api-nhom16.herokuapp.com/v1/posts/sound/${post.id}`;
@@ -250,11 +252,11 @@ function BottomTabNavigator() {
 
   const loadAvatar = async (user: ISingleUser) => {
     try {
-      if (!user.avatar.key.length) return;
+      if (!user?.avatar?.key.length) return;
       const URL = `https://api-nhom16.herokuapp.com/v1/users/avatar/${user.id}`;
       const fileToSave =
         FOLDERS.POST.AVATARS +
-        user.avatar.key.split("/")[1].replace(/[(\s+)-]/gi, "_");
+        user?.avatar?.key.split("/")[1].replace(/[(\s+)-]/gi, "_");
       const fileInfo = await FileSystem.getInfoAsync(fileToSave);
       if (fileInfo.exists) {
         return fileToSave;
@@ -391,7 +393,6 @@ function BottomTabNavigator() {
 
   useFocusEffect(
     useCallback(() => {
-      console.log("focused");
       if (!USER.loggedInUser.id.length) return;
       loadPosts();
 

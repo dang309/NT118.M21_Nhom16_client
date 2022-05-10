@@ -16,6 +16,10 @@ export interface ISingleUser {
     bucket: string;
     uri: string;
   };
+  sex: boolean;
+  phone_number: string;
+  address: string;
+  birthday: string;
   balance_dcoin: number;
   created_at: string;
   updated_at: string;
@@ -42,6 +46,10 @@ const INITIAL_STATE: IUser = {
       bucket: "",
       uri: "",
     },
+    sex: false,
+    phone_number: "",
+    address: "",
+    birthday: "",
     balance_dcoin: 0,
     created_at: "",
     updated_at: "",
@@ -53,7 +61,7 @@ const UserSlice = createSlice({
   initialState: INITIAL_STATE,
   reducers: {
     SET_USER: (state, action) => {
-      state.loggedInUser = action.payload;
+      Object.assign(state.loggedInUser, action.payload);
     },
     UPDATE_USER: (state, action) => {
       Object.assign(state.loggedInUser, {

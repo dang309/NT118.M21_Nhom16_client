@@ -71,10 +71,6 @@ export default function ForgotPasswordScreen({
         });
 
         if (res && res.data.result) {
-          await AsyncStorage.setItem(
-            "@email/retrieve-password",
-            dataToSend.email
-          );
           navigation.navigate("EmailVerification");
         }
       } catch (err) {

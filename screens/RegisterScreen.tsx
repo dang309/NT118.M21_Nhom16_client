@@ -85,7 +85,19 @@ export default function RegisterScreen({
         });
 
         if (res && res.data.result) {
-          navigation.navigate("Login");
+          const resEmailVerfication = await REQUEST({
+            method: "POST",
+            url: "/auth/forgot-password",
+            data: {
+              email: values.email.trim(),
+            },
+          });
+
+          if (resEmailVerfication && resEmailVerfication.data.result) {
+            navigation.navigate("EmailVerification", {
+              action: "register",
+            });
+          }
         }
       } catch (err) {
         setError(err.response.data.message);
@@ -131,7 +143,10 @@ export default function RegisterScreen({
         <ScrollView>
           <View style={styles.container}>
             <View style={{ alignItems: "center" }}>
-              <Image source={require('../assets/images/register.png')} resizeMode="cover"/>
+              <Image
+                source={require("../assets/images/register.png")}
+                resizeMode="cover"
+              />
             </View>
             <View style={{ justifyContent: "center", marginBottom: 16 }}>
               <View style={{ marginBottom: 8 }}>

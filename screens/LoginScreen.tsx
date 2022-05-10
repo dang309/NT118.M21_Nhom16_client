@@ -83,15 +83,16 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
             "@tokens",
             JSON.stringify(res.data.data.tokens)
           );
-          const { tokens } = res.data.data;
-          let temp: ISingleUser & IToken = res.data.data;
+          const { user, tokens } = res.data.data;
+          let temp: ISingleUser & IToken = user;
           const _avatar = await loadAvatar(temp);
-          temp = Object.assign(temp, {
+          Object.assign(temp, {
             avatar: {
               ...temp.avatar,
               uri: _avatar,
             },
           });
+          console.log(temp);
           dispatch(SET_USER(temp));
           dispatch(SET_TOKEN(tokens));
           navigation.navigate("Root");
@@ -126,11 +127,11 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
 
   const loadAvatar = async (user: ISingleUser) => {
     try {
-      if (!user.avatar.key.length) return;
+      if (!user?.avatar?.key.length) return;
       const URL = `https://api-nhom16.herokuapp.com/v1/users/avatar/${user.id}`;
       const fileToSave =
         FOLDERS.USER.AVATARS +
-        user.avatar.key.split("/")[1].replace(/[(\s+)-]/gi, "_");
+        user?.avatar?.key.split("/")[1].replace(/[(\s+)-]/gi, "_");
       const fileInfo = await FileSystem.getInfoAsync(fileToSave);
       if (fileInfo.exists) {
         return fileToSave;

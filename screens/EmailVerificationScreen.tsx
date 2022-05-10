@@ -32,6 +32,7 @@ import { REQUEST } from "../utils";
 import * as AUTH_CONSTANT from "../constants/Auth";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { RouteProp, useRoute } from "@react-navigation/native";
 
 const BORDER_RADIUS = 8;
 const BORDER_COLOR = "#e5e5e5";
@@ -40,10 +41,8 @@ const PRIMARY_COLOR = "#00ADB5";
 export default function EmailVerificationScreen({
   navigation,
 }: NavigationEmailVerificationProps) {
-  const dispatch = useAppDispatch();
-  const theme = useColorScheme();
+  const route: RouteProp<{ params: { action: string } }, "params"> = useRoute();
 
-  const [email, setEmail] = useState<string>("");
   const [error, setError] = useState("");
 
   const EmailVerificationSchema = Yup.object().shape({
@@ -70,6 +69,10 @@ export default function EmailVerificationScreen({
         });
 
         if (res && res.data.result) {
+          if (route.params.action === "register") {
+            navigation.navigate("Login");
+            return;
+          }
           navigation.navigate("ResetPassword");
         }
       } catch (err) {

@@ -21,7 +21,11 @@ export type RootStackParamList = {
   Register: undefined;
   ForgotPassword: undefined;
   ResetPassword: undefined;
-  EmailVerification: undefined;
+  EmailVerification:
+    | {
+        action: string;
+      }
+    | undefined;
   Root:
     | NavigatorScreenParams<RootTabParamList>
     | {
