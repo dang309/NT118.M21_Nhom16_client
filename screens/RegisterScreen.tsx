@@ -1,37 +1,23 @@
-import { useState, useEffect } from "react";
-import {
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  Text,
-  View,
-  ScrollView,
-} from "react-native";
+import { useState } from "react";
+import { StyleSheet, Image, Text, View, ScrollView } from "react-native";
 
-import {
-  TextInput,
-  Button,
-  Divider,
-  HelperText,
-  Snackbar,
-} from "react-native-paper";
+import { TextInput, Button, HelperText, Snackbar } from "react-native-paper";
 
-import { Icon, GGButton } from "../components";
+import { GGButton } from "../components";
 
 import { NavigationRegisterProps } from "../types";
 
-import { useFormik, Form, FormikProvider } from "formik";
+import { useFormik } from "formik";
 
 import { useAppDispatch } from "../app/hook";
-import { SET_USER } from "../features/UserSlice";
 
 import * as Yup from "yup";
 import { REQUEST } from "../utils";
 
 import * as AUTH_CONSTANT from "../constants/Auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const BORDER_RADIUS = 8;
-const BORDER_COLOR = "#e5e5e5";
 const PRIMARY_COLOR = "#00ADB5";
 
 export default function RegisterScreen({
@@ -73,31 +59,28 @@ export default function RegisterScreen({
     onSubmit: async (values) => {
       try {
         setError("");
-        const dataToSend = {
-          username: values.username.trim(),
-          email: values.email.trim(),
-          password: values.password.trim(),
-        };
-        const res = await REQUEST({
+
+        const resEmailVerfication = await REQUEST({
           method: "POST",
-          url: "/auth/register",
-          data: dataToSend,
+          url: "/auth/send-verification-email",
+          data: {
+            email: values.email.trim(),
+          },
         });
 
-        if (res && res.data.result) {
-          const resEmailVerfication = await REQUEST({
-            method: "POST",
-            url: "/auth/forgot-password",
-            data: {
-              email: values.email.trim(),
-            },
+        if (resEmailVerfication && resEmailVerfication.data.result) {
+          const dataToSend = {
+            username: values.username.trim(),
+            email: values.email.trim(),
+            password: values.password.trim(),
+          };
+          await AsyncStorage.setItem(
+            "@register-data",
+            JSON.stringify(dataToSend)
+          );
+          navigation.navigate("EmailVerification", {
+            action: "register",
           });
-
-          if (resEmailVerfication && resEmailVerfication.data.result) {
-            navigation.navigate("EmailVerification", {
-              action: "register",
-            });
-          }
         }
       } catch (err) {
         setError(err.response.data.message);

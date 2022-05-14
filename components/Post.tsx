@@ -298,6 +298,22 @@ const Post = (props: Props) => {
     socket.emit("post:listen", dataToSend);
   };
 
+  const handleBookmarkPost = () => {
+    const dataToSend = {
+      postId: props.id,
+      userId: USER.loggedInUser.id,
+    };
+    dispatch(
+      UPDATE_POST({
+        postId: props.id,
+        dataToUpdate: {
+          is_bookmarked_from_me: !props.is_bookmarked_from_me,
+        },
+      })
+    );
+    socket.emit("user:add_bookmarked_post", dataToSend);
+  };
+
   const handleSelectProfile = () => {
     if (props.posting_user.id === USER.loggedInUser.id) return;
     if (props.setSelectedProfile) {
@@ -657,17 +673,12 @@ const Post = (props: Props) => {
                 </View>
 
                 {USER.loggedInUser.id !== props.posting_user.id && (
-                  <TouchableOpacity>
-                    <Icon
-                      name="download-outline"
-                      size={24}
-                      style={{ marginRight: 8 }}
-                    />
-                  </TouchableOpacity>
-                )}
-                {USER.loggedInUser.id !== props.posting_user.id && (
-                  <TouchableOpacity>
-                    <Icon name="bookmark-outline" size={24} />
+                  <TouchableOpacity onPress={handleBookmarkPost}>
+                    {props.is_bookmarked_from_me ? (
+                      <Icon name="bookmark-sharp" size={24} />
+                    ) : (
+                      <Icon name="bookmark-outline" size={24} />
+                    )}
                   </TouchableOpacity>
                 )}
               </View>

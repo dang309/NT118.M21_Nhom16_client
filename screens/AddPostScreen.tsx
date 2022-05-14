@@ -24,7 +24,13 @@ import {
   Chip,
   Headline,
 } from "react-native-paper";
-import { Icon, SoundPicker, ThumbnailPicker, DescForm } from "../components";
+import {
+  Icon,
+  SoundPicker,
+  ThumbnailPicker,
+  DescForm,
+  Header,
+} from "../components";
 import { COMMON, REQUEST } from "../utils";
 
 import { useAppDispatch, useAppSelector } from "./../app/hook";
@@ -217,14 +223,25 @@ export default function AddPostScreen() {
         flex: 1,
 
         backgroundColor: "#fff",
-        padding: StatusBar.currentHeight,
+        // padding: StatusBar.currentHeight,
       }}
     >
+      <View>
+        <Header
+          title="Thêm bài viết"
+          showLeftIcon
+          showRightIcon={false}
+          handleUpdateProfile={() => console.log("")}
+        />
+      </View>
+
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
           justifyContent: "space-between",
           backgroundColor: "#fff",
+
+          paddingVertical: 16,
         }}
       >
         <View>

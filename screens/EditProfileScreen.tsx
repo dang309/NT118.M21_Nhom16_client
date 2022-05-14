@@ -26,8 +26,8 @@ import * as DocumentPicker from "expo-document-picker";
 import FormData from "form-data";
 import { REQUEST } from "../utils";
 import { useAppDispatch, useAppSelector } from "../app/hook";
-import { IUser, SET_USER } from "../features/UserSlice";
-import { useFormik, useFormikContext } from "formik";
+import { IUser, SET_USER, UPDATE_USER } from "../features/UserSlice";
+import { setIn, useFormik, useFormikContext } from "formik";
 import * as Yup from "yup";
 import * as AUTH_CONSTANT from "../constants/Auth";
 import { USER_SERVICES } from "../services";
@@ -37,10 +37,13 @@ import moment from "moment";
 import { useNavigation } from "@react-navigation/native";
 
 export default function EditProfileScreen() {
+  const dispatch = useAppDispatch();
+
   const USER = useAppSelector<IUser>((state) => state.user);
 
   const navigation = useNavigation();
 
+  const [initAvatar, setInitAvatar] = useState<string>("");
   const [avatar, setAvatar] = useState<any>(null);
   const [toggleDialog, setToggleDialog] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -89,24 +92,27 @@ export default function EditProfileScreen() {
     validateOnBlur: false,
     onSubmit: async (values) => {
       try {
-        let flag = false;
         setError("");
 
-        if (!values.email.trim().length) return false;
+        if (values.email.trim().length === 0) return;
 
         const dataToSend = new FormData();
 
-        dataToSend.append("avatar", {
-          uri: avatar?.uri,
-          name: avatar?.name,
-          type: "image/" + avatar?.name.split(".")[1],
-        });
-
+        if (avatar) {
+          dataToSend.append("avatar", {
+            uri: avatar?.uri,
+            name: avatar?.name,
+            type: "image/" + avatar?.name.split(".")[1],
+          });
+        }
         dataToSend.append("email", values.email.trim());
         dataToSend.append("phone_number", values.phoneNumber.trim());
         dataToSend.append("address", values.address.trim());
         dataToSend.append("sex", values.sex.trim() === "Male");
-        dataToSend.append("birthday", values.birthday);
+        dataToSend.append(
+          "birthday",
+          new Date(values.birthday).toLocaleDateString()
+        );
         dataToSend.append("bio", values.bio.trim());
 
         const res = await REQUEST({
@@ -118,18 +124,23 @@ export default function EditProfileScreen() {
             "Content-Type": "multipart/form-data",
           },
           transformRequest: (data, headers) => {
-            // !!! override data to return formData
-            // since axios converts that to string
             return dataToSend;
           },
         });
 
         if (res && res.data.result) {
-          flag = true;
+          let temp = res.data.data;
+          const _avatar = await USER_SERVICES.loadAvatar(temp);
+          Object.assign(temp, {
+            avatar: {
+              ...temp.avatar,
+              uri: _avatar,
+            },
+          });
+          console.log(temp);
+          dispatch(UPDATE_USER(temp));
           setToggleDialog(true);
         }
-
-        return flag;
       } catch (err) {
         if (err.response) {
           setError(err.response.data.message);
@@ -151,8 +162,8 @@ export default function EditProfileScreen() {
 
   const getAvatar = async () => {
     const _avatar = await USER_SERVICES.loadAvatar(USER.loggedInUser);
-    let temp = Object.assign({}, { uri: _avatar });
-    setAvatar(temp);
+    if (!_avatar) return;
+    setInitAvatar(_avatar);
   };
 
   const handleChangeAvatar = async () => {
@@ -162,7 +173,8 @@ export default function EditProfileScreen() {
       });
 
       if (avatar.type !== "cancel") {
-        setAvatar(avatar.uri);
+        console.log(avatar);
+        setAvatar(avatar);
       }
     } catch (e) {
       console.log(e);
@@ -181,6 +193,8 @@ export default function EditProfileScreen() {
     getAvatar();
   }, []);
 
+  const showAvatar = Boolean(avatar || initAvatar);
+
   return (
     <View style={styles.container}>
       <Header
@@ -188,14 +202,21 @@ export default function EditProfileScreen() {
         showRightIcon
         title="Chỉnh sửa thông tin"
         handleUpdateProfile={handleSubmit}
+        isSubmitting={isSubmitting}
       />
 
       <ScrollView>
         <View style={{ padding: 16, backgroundColor: "#fff" }}>
           <View style={{ alignItems: "center" }}>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              {avatar ? (
-                <Avatar.Image source={{ uri: avatar.uri }} size={64} />
+              {showAvatar ? (
+                avatar ? (
+                  <Avatar.Image source={{ uri: avatar.uri }} size={64} />
+                ) : initAvatar ? (
+                  <Avatar.Image source={{ uri: initAvatar }} size={64} />
+                ) : (
+                  <Avatar.Icon icon="person-outline" size={64} />
+                )
               ) : (
                 <Avatar.Icon icon="person-outline" size={64} />
               )}
@@ -258,6 +279,7 @@ export default function EditProfileScreen() {
                 mode="outlined"
                 autoComplete="off"
                 outlineColor="#e5e5e5"
+                keyboardType="numeric"
                 left={
                   <TextInput.Icon name="phone-portrait-outline" color="#999" />
                 }

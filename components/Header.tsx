@@ -1,7 +1,7 @@
 import { View, Text } from "react-native";
 import React from "react";
 
-import { IconButton, Title } from "react-native-paper";
+import { Button, IconButton, Title } from "react-native-paper";
 
 import { useNavigation } from "@react-navigation/core";
 
@@ -10,6 +10,7 @@ type Props = {
   showRightIcon: boolean;
   title: string;
   handleUpdateProfile: () => void;
+  isSubmitting?: boolean;
 };
 
 const Header = ({
@@ -17,6 +18,7 @@ const Header = ({
   showRightIcon,
   title,
   handleUpdateProfile,
+  isSubmitting,
 }: Props) => {
   const navigation = useNavigation();
   return (
@@ -29,6 +31,8 @@ const Header = ({
 
           borderBottomWidth: 1,
           borderBottomColor: "#e5e5e5",
+
+          paddingHorizontal: 8,
         }}
       >
         <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -43,14 +47,20 @@ const Header = ({
         </View>
 
         {showRightIcon && (
-          <IconButton
+          <Button
+            mode="contained"
             icon="checkmark"
             color="green"
-            size={24}
-            onPress={() => {
-              handleUpdateProfile();
+            style={{
+              backgroundColor: "#00adb5",
+              borderRadius: 16,
+              elevation: 4,
             }}
-          />
+            loading={!!isSubmitting}
+            onPress={handleUpdateProfile}
+          >
+            Lưu
+          </Button>
         )}
       </View>
     </View>

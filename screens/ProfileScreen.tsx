@@ -31,7 +31,7 @@ import PROFILE_CONSTANT from "./../constants/Profile";
 import { REQUEST } from "../utils";
 import { useAppDispatch, useAppSelector } from "./../app/hook";
 import { SET_USER } from "../features/UserSlice";
-import { IPost, SET_POST } from "../features/PostSlice";
+import { getPosts, IPost, SET_POST } from "../features/PostSlice";
 
 import { User } from "../types";
 import { IUser } from "./../features/UserSlice";
@@ -119,12 +119,24 @@ export default function ProfileScreen() {
     }
   );
 
-  const getBookmarkedPost = createDraftSafeSelector(
-    (state: RootState) => state,
-    (state) => {
-      return state.post.list.filter(
-        (o) => o.posting_user.id === USER.loggedInUser.id
-      );
+  const getBookmarkedPosts = createDraftSafeSelector(
+    (state: RootState) => state.post,
+    (post) => {
+      return post.list
+        .map((item) => {
+          let temp = { ...item };
+          if (item.users_like.some((o) => o === USER.loggedInUser.id)) {
+            Object.assign(temp, { is_like_from_me: true });
+          }
+          if (item.users_listening.some((o) => o === USER.loggedInUser.id)) {
+            Object.assign(temp, { is_hear_from_me: true });
+          }
+          if (USER.loggedInUser.bookmarked_posts.some((o) => o === item.id)) {
+            Object.assign(temp, { is_bookmarked_from_me: true });
+          }
+          return { ...temp };
+        })
+        .filter((o) => o.is_bookmarked_from_me);
     }
   );
 
@@ -184,7 +196,7 @@ export default function ProfileScreen() {
                           padding: 8,
                         }}
                       >
-                        {!USER.loggedInUser.avatar.uri.length ? (
+                        {!USER.loggedInUser?.avatar?.uri?.length ? (
                           <Avatar.Icon size={64} icon="person-outline" />
                         ) : (
                           <Avatar.Image
@@ -371,14 +383,231 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        {/* {btnIndex === "bookmarks" && (
-            <View>
-              {post.list.length > 0 &&
-                post.list.map((item) => {
-                  return <Post key={item.id} {...item} />;
-                })}
-            </View>
-          )} */}
+        {btnIndex === "bookmarks" && (
+          <View>
+            <FlatList
+              // ref={flatListRef}
+              data={getBookmarkedPosts(state)}
+              renderItem={({ item }) => <Post key={item.id} {...item} />}
+              keyExtractor={(item) => {
+                return item.id;
+              }}
+              getItemLayout={(data, index) => ({
+                length: data?.length || 0,
+                offset: (data?.length || 0) * index,
+                index,
+              })}
+              onScrollToIndexFailed={(info) => {
+                const wait = new Promise((resolve) => setTimeout(resolve, 500));
+                wait.then(() => {
+                  flatListRef.current?.scrollToIndex({
+                    index: info.index,
+                    animated: true,
+                  });
+                });
+              }}
+              ListHeaderComponent={
+                <>
+                  <View style={{ marginBottom: 8, flex: 1 }}>
+                    <View
+                      style={{
+                        paddingTop: 8,
+                        marginBottom: 16,
+                      }}
+                    >
+                      <View
+                        style={{
+                          alignItems: "center",
+                          marginBottom: 8,
+                          padding: 8,
+                        }}
+                      >
+                        {!USER.loggedInUser?.avatar?.uri?.length ? (
+                          <Avatar.Icon size={64} icon="person-outline" />
+                        ) : (
+                          <Avatar.Image
+                            size={64}
+                            source={{
+                              uri: USER.loggedInUser.avatar.uri,
+                            }}
+                          />
+                        )}
+
+                        <Title>{USER.loggedInUser.username}</Title>
+                        {USER.loggedInUser.bio.length > 0 && (
+                          <Text style={{ fontSize: 14, marginVertical: 4 }}>
+                            {USER.loggedInUser.bio}
+                          </Text>
+                        )}
+
+                        <View
+                          style={{
+                            alignItems: "center",
+                            flex: 1,
+                            width: "100%",
+                          }}
+                        >
+                          {USER.loggedInUser.phone_number.length > 0 && (
+                            <View
+                              style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                              }}
+                            >
+                              <Icon
+                                name="phone-portrait-outline"
+                                size={20}
+                                style={{ marginRight: 8 }}
+                              />
+                              <Caption>
+                                {USER.loggedInUser.phone_number}
+                              </Caption>
+                            </View>
+                          )}
+
+                          {USER.loggedInUser.address.length > 0 && (
+                            <View
+                              style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                              }}
+                            >
+                              <Icon
+                                name="home-outline"
+                                size={20}
+                                style={{ marginRight: 8 }}
+                              />
+                              <Caption>{USER.loggedInUser.address}</Caption>
+                            </View>
+                          )}
+
+                          {USER.loggedInUser.birthday.length > 0 && (
+                            <View
+                              style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                              }}
+                            >
+                              <Icon
+                                name="calendar-outline"
+                                size={20}
+                                style={{ marginRight: 8 }}
+                              />
+                              <Caption>
+                                {moment(USER.loggedInUser.birthday).format(
+                                  "MM/DD/YYYY"
+                                )}
+                              </Caption>
+                            </View>
+                          )}
+                        </View>
+                      </View>
+
+                      <View
+                        style={{
+                          flex: 1,
+                          paddingVertical: 8,
+                          borderTopWidth: 1,
+                          borderTopColor: "#e5e5e5",
+                          borderBottomWidth: 1,
+                          borderBottomColor: "#e5e5e5",
+                        }}
+                      >
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            justifyContent: "space-around",
+                            alignItems: "center",
+                            marginBottom: 8,
+                          }}
+                        >
+                          {renderStat(
+                            PROFILE_CONSTANT.SOUNDS,
+                            countPersonalPost(state),
+                            {
+                              alignItems: "center",
+                            }
+                          )}
+                          {renderStat(
+                            PROFILE_CONSTANT.FOLLOWERS,
+                            USER.loggedInUser.followers.length,
+                            {
+                              alignItems: "center",
+                            }
+                          )}
+
+                          {renderStat(
+                            PROFILE_CONSTANT.FOLLOWING,
+                            USER.loggedInUser.following.length,
+                            {
+                              alignItems: "center",
+                            }
+                          )}
+                        </View>
+                      </View>
+                    </View>
+
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <View style={{ flex: 1, marginHorizontal: 8 }}>
+                        <Button
+                          mode="outlined"
+                          uppercase
+                          icon="pencil-outline"
+                          onPress={handleEditProfile}
+                          style={{
+                            borderWidth: 1,
+                            borderColor: "#00ADB5",
+                            width: "100%",
+                          }}
+                        >
+                          Chỉnh sửa thông tin
+                        </Button>
+                      </View>
+
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <IconButton
+                          onPress={handleLogout}
+                          icon="log-out-outline"
+                        />
+                      </View>
+                    </View>
+                  </View>
+
+                  <View style={{ alignItems: "center" }}>
+                    <ToggleButton.Row
+                      onValueChange={setBtnIndex}
+                      value={btnIndex}
+                    >
+                      <ToggleButton
+                        icon="grid-outline"
+                        value="posts"
+                        style={{ borderBottomWidth: 0, width: "50%" }}
+                      />
+                      <ToggleButton
+                        icon="bookmark"
+                        value="bookmarks"
+                        style={{ borderBottomWidth: 0, width: "50%" }}
+                      />
+                    </ToggleButton.Row>
+                  </View>
+
+                  <Divider style={{ height: 1 }} />
+                </>
+              }
+            />
+          </View>
+        )}
       </View>
     </View>
   );

@@ -73,6 +73,12 @@ const NotiItem = (props: PropsNotiItem) => {
           color: "#F9D923",
         });
         break;
+      case "Bookmarked":
+        Object.assign(result, {
+          icon: "bookmark-sharp",
+          color: "#000",
+        });
+        break;
     }
     return result;
   };
@@ -243,7 +249,7 @@ const NotificationsDialog = (props: Props) => {
           onDismiss={() => props.setToggleNotiDialog(false)}
         >
           <Dialog.Title>Thông báo</Dialog.Title>
-          <Dialog.Content>
+          <Dialog.ScrollArea>
             {isLoading && <ActivityIndicator color="#00adb5" />}
             {noti.list.length > 0 && !isLoading && (
               <SectionList
@@ -278,7 +284,7 @@ const NotificationsDialog = (props: Props) => {
                 <Text>Không có thông báo nào cả.</Text>
               </View>
             )}
-          </Dialog.Content>
+          </Dialog.ScrollArea>
         </Dialog>
       </Portal>
     </View>

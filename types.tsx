@@ -32,6 +32,7 @@ export type RootStackParamList = {
         params: any;
       }
     | undefined;
+  AddPost: undefined;
   ChatConversation: { userId: string };
   EditProfile: undefined;
   ProfileViewer: { userId: string };
@@ -44,7 +45,7 @@ export type RootStackParamList = {
 export type RootTabParamList = {
   NewsFeed: undefined;
   Ranking: undefined;
-  AddPost: undefined;
+
   Chat: undefined;
   Profile: {
     params: {

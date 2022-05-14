@@ -1,4 +1,6 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createDraftSafeSelector, createSlice } from "@reduxjs/toolkit";
+import { useAppSelector } from "../app/hook";
+import { RootState } from "../app/store";
 
 export interface IPostItem {
   id: string;
@@ -38,6 +40,7 @@ export interface IPostItem {
 
   is_like_from_me: boolean;
   is_hear_from_me: boolean;
+  is_bookmarked_from_me: boolean;
 }
 
 export interface IPost {
@@ -78,6 +81,42 @@ const PostSlice = createSlice({
     },
   },
 });
+
+export const getPosts = (des: "newsfeed" | "personal" | "bookmarked") =>
+  createDraftSafeSelector(
+    (state: RootState) => state,
+    (state) => {
+      let temp = state.post.list.map((item) => {
+        if (item.users_like.some((o) => o === state.user.loggedInUser.id)) {
+          return { ...item, is_like_from_me: true };
+        } else if (
+          item.users_listening.some((o) => o === state.user.loggedInUser.id)
+        ) {
+          return { ...item, is_hear_from_me: true };
+        } else if (
+          state.user.loggedInUser.bookmarked_posts.some((o) => o === item.id)
+        ) {
+          return { ...item, is_bookmarked_from_me: true };
+        } else {
+          return { ...item };
+        }
+      });
+      if (des === "newsfeed") {
+        return temp;
+      }
+      if (des === "personal") {
+        return temp.filter(
+          (o) => o.posting_user.id === state.user.loggedInUser.id
+        );
+      }
+
+      if (des === "bookmarked") {
+        return temp.filter((o) => o.is_bookmarked_from_me);
+      }
+
+      return temp;
+    }
+  );
 
 export const { SET_POST, ADD_POST, UPDATE_POST, DELETE_POST } =
   PostSlice.actions;

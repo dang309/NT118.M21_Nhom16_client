@@ -109,6 +109,12 @@ function RootNavigator() {
       />
 
       <Stack.Screen
+        name="AddPost"
+        component={SCREENS.AddPostScreen}
+        options={{ headerShown: false }}
+      />
+
+      <Stack.Screen
         name="ChatConversation"
         component={SCREENS.ChatConversationScreen}
         options={{ headerShown: false }}
@@ -313,102 +319,34 @@ function BottomTabNavigator() {
         let _avatar;
         let result = [];
         let temp = res.data.data.results;
+        console.log(USER);
         for (let i = 0; i < temp.length; i++) {
           _sound = await loadSound(temp[i]);
           _thumbnail = await loadThumbnail(temp[i]);
           _user = await COMMON.getUserById(temp[i].user_id);
           _avatar = await loadAvatar(_user);
           await loadComments(temp[i]);
-          if (
-            temp[i].users_like.some((o: any) => o === USER.loggedInUser.id) &&
-            temp[i].users_listening.some((o: any) => o === USER.loggedInUser.id)
-          ) {
-            result.push({
-              ...temp[i],
-              sound: {
-                ...temp[i].sound,
-                uri: _sound,
+          result.push({
+            ...temp[i],
+            sound: {
+              ...temp[i].sound,
+              uri: _sound,
+            },
+            thumbnail: {
+              ...temp[i].thumbnail,
+              uri: _thumbnail,
+            },
+            posting_user: {
+              ..._user,
+              avatar: {
+                ..._user.avatar,
+                uri: _avatar,
               },
-              thumbnail: {
-                ...temp[i].thumbnail,
-                uri: _thumbnail,
-              },
-              posting_user: {
-                ..._user,
-                avatar: {
-                  ..._user.avatar,
-                  uri: _avatar,
-                },
-              },
-              is_like_from_me: true,
-              is_hear_from_me: true,
-            });
-          } else if (
-            temp[i].users_like.some((o: any) => o === USER.loggedInUser.id)
-          ) {
-            result.push({
-              ...temp[i],
-              sound: {
-                ...temp[i].sound,
-                uri: _sound,
-              },
-              thumbnail: {
-                ...temp[i].thumbnail,
-                uri: _thumbnail,
-              },
-              posting_user: {
-                ..._user,
-                avatar: {
-                  ..._user.avatar,
-                  uri: _avatar,
-                },
-              },
-              is_like_from_me: true,
-            });
-          } else if (
-            temp[i].users_listening.some((o: any) => o === USER.loggedInUser.id)
-          ) {
-            result.push({
-              ...temp[i],
-              sound: {
-                ...temp[i].sound,
-                uri: _sound,
-              },
-              thumbnail: {
-                ...temp[i].thumbnail,
-                uri: _thumbnail,
-              },
-              posting_user: {
-                ..._user,
-                avatar: {
-                  ..._user.avatar,
-                  uri: _avatar,
-                },
-              },
-              is_hear_from_me: true,
-            });
-          } else {
-            result.push({
-              ...temp[i],
-              sound: {
-                ...temp[i].sound,
-                uri: _sound,
-              },
-              thumbnail: {
-                ...temp[i].thumbnail,
-                uri: _thumbnail,
-              },
-              posting_user: {
-                ..._user,
-                avatar: {
-                  ..._user.avatar,
-                  uri: _avatar,
-                },
-              },
-            });
-          }
+            },
+          });
         }
         dispatch(SET_POST(result));
+        dispatch(STOP_LOADING());
       }
     } catch (e) {
       console.error(e);
@@ -417,17 +355,9 @@ function BottomTabNavigator() {
     }
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      if (!USER.loggedInUser.id.length) return;
-      if (POST.list.length > 0) return;
-      loadPosts();
-
-      return () => {
-        console.log("unfocused");
-      };
-    }, [])
-  );
+  useEffect(() => {
+    loadPosts();
+  }, []);
 
   return (
     <BottomTab.Navigator
@@ -457,21 +387,11 @@ function BottomTabNavigator() {
       />
 
       <BottomTab.Screen
-        name="Ranking"
-        component={SCREENS.RankingScreen}
+        name="Search"
+        component={SCREENS.SearchScreen}
         options={{
           tabBarIcon: ({ color, size }) => (
-            <Icon name="medal-sharp" color={color} size={size} />
-          ),
-        }}
-      />
-
-      <BottomTab.Screen
-        name="AddPost"
-        component={SCREENS.AddPostScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="add-circle-sharp" color={color} size={size} />
+            <Icon name="search-sharp" color={color} size={size} />
           ),
         }}
       />

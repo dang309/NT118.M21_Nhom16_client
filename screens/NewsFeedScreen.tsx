@@ -19,6 +19,7 @@ import { useNavigation, useIsFocused } from "@react-navigation/core";
 import {
   ActivityIndicator,
   Badge,
+  FAB,
   IconButton,
   Title,
 } from "react-native-paper";
@@ -27,14 +28,13 @@ import { CryptoTransfer, NotificationsDialog } from "../components";
 import { useFocusEffect } from "@react-navigation/native";
 import { createDraftSafeSelector } from "@reduxjs/toolkit";
 import { RootState } from "../app/store";
-import moment from "moment";
-import { INotification } from "../features/NotificationSlice";
+import { IUser } from "../features/UserSlice";
 
 export default function NewsFeedScreen() {
   const navigation = useNavigation();
 
   const state = useAppSelector<RootState>((state) => state);
-  const noti = useAppSelector<INotification>((state) => state.notification);
+  const USER = useAppSelector<IUser>((state) => state.user);
   const isLoading = useAppSelector<boolean>((state) => state.common.loading);
 
   const [toggleCryptoDialog, setToggleCryptoDialog] = useState<boolean>(false);
@@ -49,7 +49,20 @@ export default function NewsFeedScreen() {
   const getNewsfeedPosts = createDraftSafeSelector(
     (state: RootState) => state.post,
     (post) => {
-      return post.list;
+      let temp = {};
+      return post.list.map((item) => {
+        temp = { ...item };
+        if (item.users_like.some((o) => o === USER.loggedInUser.id)) {
+          Object.assign(temp, { is_like_from_me: true });
+        }
+        if (item.users_listening.some((o) => o === USER.loggedInUser.id)) {
+          Object.assign(temp, { is_hear_from_me: true });
+        }
+        if (USER.loggedInUser.bookmarked_posts.some((o) => o === item.id)) {
+          Object.assign(temp, { is_bookmarked_from_me: true });
+        }
+        return temp;
+      });
     }
   );
 
@@ -78,6 +91,13 @@ export default function NewsFeedScreen() {
       <ScrollView>
         <View>
           <View style={styles.header}>
+            <View>
+              <Image
+                source={require("../assets/images/logo.png")}
+                style={{ width: 64 }}
+                resizeMode="contain"
+              />
+            </View>
             <View
               style={{
                 flexDirection: "row",
@@ -92,7 +112,7 @@ export default function NewsFeedScreen() {
 
                 flex: 1,
 
-                marginRight: 8,
+                marginHorizontal: 8,
               }}
             >
               <TextInput
@@ -103,21 +123,17 @@ export default function NewsFeedScreen() {
             </View>
 
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <IconButton
-                icon="logo-bitcoin"
-                size={24}
-                color="#FFA800"
-                onPress={() => setToggleCryptoDialog(true)}
-              />
               <TouchableOpacity onPress={() => setToggleNotiDialog(true)}>
                 <View>
                   <IconButton icon="notifications" size={24} color="#000" />
-                  <Badge
-                    size={20}
-                    style={{ position: "absolute", top: "10%", right: "15%" }}
-                  >
-                    {countUnreadNotis(state)}
-                  </Badge>
+                  {countUnreadNotis(state) > 0 && (
+                    <Badge
+                      size={20}
+                      style={{ position: "absolute", top: "10%", right: "15%" }}
+                    >
+                      {countUnreadNotis(state)}
+                    </Badge>
+                  )}
                 </View>
               </TouchableOpacity>
             </View>
@@ -159,6 +175,16 @@ export default function NewsFeedScreen() {
           )} */}
         </View>
       </ScrollView>
+      <FAB
+        icon="add"
+        style={{
+          backgroundColor: "#00adb5",
+          position: "absolute",
+          bottom: "4%",
+          right: "4%",
+        }}
+        onPress={() => navigation.navigate("AddPost")}
+      />
     </SafeAreaView>
   );
 }

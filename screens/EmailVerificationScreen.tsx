@@ -15,6 +15,8 @@ import {
   HelperText,
   Snackbar,
   Title,
+  Portal,
+  Dialog,
 } from "react-native-paper";
 
 import { Icon, GGButton } from "../components";
@@ -43,6 +45,7 @@ export default function EmailVerificationScreen({
 }: NavigationEmailVerificationProps) {
   const route: RouteProp<{ params: { action: string } }, "params"> = useRoute();
 
+  const [toggleDialog, setToggleDialog] = useState<boolean>(false);
   const [error, setError] = useState("");
 
   const EmailVerificationSchema = Yup.object().shape({
@@ -70,7 +73,21 @@ export default function EmailVerificationScreen({
 
         if (res && res.data.result) {
           if (route.params.action === "register") {
-            navigation.navigate("Login");
+            const temp = await AsyncStorage.getItem("@register-data");
+            if (!temp) return;
+
+            const dataToSend = JSON.parse(temp);
+
+            const resRegister = await REQUEST({
+              method: "POST",
+              url: "/auth/register",
+              data: dataToSend,
+            });
+
+            if (resRegister && resRegister.data.result) {
+              await AsyncStorage.removeItem("@register-data");
+              setToggleDialog(true);
+            }
             return;
           }
           navigation.navigate("ResetPassword");
@@ -91,10 +108,6 @@ export default function EmailVerificationScreen({
     handleChange,
     getFieldProps,
   } = formik;
-
-  const handleToggleShowPassword = () => {
-    setShowPassword((prev) => !prev);
-  };
 
   const handleSignInWithGG = async () => {
     console.log("logged in");
@@ -157,6 +170,27 @@ export default function EmailVerificationScreen({
           {AUTH_CONSTANT.SIGN_IN}
         </Text>
       </View>
+
+      <Portal>
+        <Dialog visible={toggleDialog} onDismiss={() => setToggleDialog(false)}>
+          <Dialog.Content>
+            <View style={{ alignItems: "center" }}>
+              <Icon name="checkmark-circle" size={64} color="green" />
+              <Title style={{ marginVertical: 8 }}>Đăng ký thành công!</Title>
+              <Button
+                icon="arrow-back"
+                mode="contained"
+                onPress={() => {
+                  navigation.navigate("Login");
+                  setToggleDialog(false);
+                }}
+              >
+                Đăng nhập
+              </Button>
+            </View>
+          </Dialog.Content>
+        </Dialog>
+      </Portal>
 
       <Snackbar
         visible={!!error.length}
