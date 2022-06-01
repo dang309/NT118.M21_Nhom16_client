@@ -66,6 +66,7 @@ const ChatConversation = () => {
       });
       const params = {
         filters: JSON.stringify(filters),
+        sortBy: "created_at:desc",
         limit: 15,
       };
       const res = await REQUEST({
@@ -76,16 +77,17 @@ const ChatConversation = () => {
 
       if (res && res.data.result) {
         let temp = res.data.data.results;
-        temp.forEach((item: any) => {
-          dispatch(
-            ADD_MESSAGE({
-              ...item,
-              contactId: item.contactId,
-              messageId: item.message_id,
-              isUnreadAtTo: item.is_unread_at_to,
-            })
-          );
-        });
+        const data = temp
+          .map((item: any) => ({
+            ...item,
+            contactId: item.contactId,
+            messageId: item.message_id,
+            isUnreadAtTo: item.is_unread_at_to,
+          }))
+          .slice()
+          .reverse();
+
+        dispatch(SET_MESSAGES(data));
       }
     } catch (err) {
       console.error(err);
