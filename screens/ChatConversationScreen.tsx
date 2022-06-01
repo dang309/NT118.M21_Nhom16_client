@@ -72,7 +72,7 @@ const ChatConversation = () => {
         to: route.params?.partnerId,
       };
       socket.emit("messenger:send_private_message", dataToSend);
-      // dispatch(ADD_MESSAGE(dataToSend));
+      dispatch(ADD_MESSAGE(dataToSend));
       setContent("");
     } catch (err) {
       console.error(err);
@@ -99,7 +99,6 @@ const ChatConversation = () => {
       });
 
       if (res && res.data.result) {
-        console.log(res.data);
         let temp = res.data.data.results;
         temp = temp.map((item: any) => {
           return {

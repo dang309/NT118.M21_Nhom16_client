@@ -14,14 +14,21 @@ export interface IConversation {
   id: string;
 }
 
+export interface IUnreadMessages {
+  contactId: string;
+  quantity: number;
+}
+
 export interface IMessenger {
   conversations: IConversation[];
   messages: IMessage[];
+  unreadMessages: IUnreadMessages[];
 }
 
 const INITIAL_STATE: IMessenger = {
   conversations: [],
   messages: [],
+  unreadMessages: [],
 };
 
 const MessengerSlice = createSlice({
@@ -30,6 +37,15 @@ const MessengerSlice = createSlice({
   reducers: {
     SET_MESSAGES: (state, action) => {
       state.messages = [...action.payload];
+    },
+    SET_UNREAD_MESSAGES: (state, action) => {
+      if (
+        state.unreadMessages.some(
+          (o) => o.contactId === action.payload.contactId
+        )
+      )
+        return;
+      state.unreadMessages.push(action.payload);
     },
     ADD_CONVERSATION: (state, action) => {
       Object.assign(state, {
@@ -57,6 +73,7 @@ const MessengerSlice = createSlice({
 
 export const {
   SET_MESSAGES,
+  SET_UNREAD_MESSAGES,
   ADD_CONVERSATION,
   ADD_MESSAGE,
   READ_MESSAGES,

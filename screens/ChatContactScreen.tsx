@@ -27,6 +27,7 @@ import {
   IMessenger,
   READ_MESSAGES,
   SET_MESSAGES,
+  SET_UNREAD_MESSAGES,
 } from "../features/MessengerSlice";
 import { createDraftSafeSelector } from "@reduxjs/toolkit";
 import { RootState } from "../app/store";
@@ -39,9 +40,8 @@ const ChatContactItem = (props: TPropsChatContactItem) => {
 
   const socket = useContext(SocketContext);
 
-  const [unReadMessages, setUnreadMessages] = React.useState<number>(0);
-
   const USER = useAppSelector<IUser>((state) => state.user);
+  const state = useAppSelector<RootState>((state) => state);
   const messenger = useAppSelector<IMessenger>((state) => state.messenger);
 
   const [avatar, setAvatar] = useState<any>(null);
@@ -102,27 +102,29 @@ const ChatContactItem = (props: TPropsChatContactItem) => {
       });
 
       if (res && res.data.result) {
-        setUnreadMessages(res.data.data.totalResults);
+        dispatch(
+          SET_UNREAD_MESSAGES({
+            contactId: _contactIds.sort().join("_"),
+            quantity: res.data.data.totalResults,
+          })
+        );
       }
     } catch (err) {
       console.error(err);
     }
   };
 
-  const getUnReadMessages = () => {
-    return messenger.messages.reduce((acc, item) => {
-      let _contactIds = [];
+  const getUnreadMessages = createDraftSafeSelector(
+    (state: RootState) => state.messenger,
+    (messenger) => {
+      let _contactIds: string[] = [];
       _contactIds.push(USER.loggedInUser.id);
       _contactIds.push(props.id);
-      if (
-        item.contactId === _contactIds.sort().join("_") &&
-        item.isUnreadAtTo
-      ) {
-        acc += 1;
-      }
-      return acc;
-    }, 0);
-  };
+      return messenger.unreadMessages.filter(
+        (o) => o.contactId === _contactIds.sort().join("_")
+      );
+    }
+  );
 
   useEffect(() => {
     getAvatar();
@@ -171,10 +173,10 @@ const ChatContactItem = (props: TPropsChatContactItem) => {
               <Caption>{socket.connected ? "online" : "offline"}</Caption>
             </View>
 
-            {unReadMessages > 0 && (
+            {getUnreadMessages(state) > 0 && (
               <View>
                 <Badge size={24} style={{ paddingHorizontal: 4 }}>
-                  {unReadMessages + " tin nhắn chưa đọc"}
+                  {getUnreadMessages(state) + " tin nhắn chưa đọc"}
                 </Badge>
               </View>
             )}

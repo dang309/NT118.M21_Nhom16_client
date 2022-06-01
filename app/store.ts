@@ -16,6 +16,11 @@ export const store = configureStore({
     notification: NotificationSlice,
     common: CommonSlice,
   },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      immutableCheck: { warnAfter: 256 },
+      serializableCheck: { warnAfter: 256 },
+    }),
 });
 
 export type AppDispatch = typeof store.dispatch;
