@@ -56,7 +56,10 @@ const ChatContactItem = (props: TPropsChatContactItem) => {
       let _contactIds = [];
       _contactIds.push(USER.loggedInUser.id);
       _contactIds.push(props.id);
-      if (item.contactId === _contactIds.sort().join("_") && item.isUnread) {
+      if (
+        item.contactId === _contactIds.sort().join("_") &&
+        item.isUnreadAtTo
+      ) {
         acc += 1;
       }
       return acc;

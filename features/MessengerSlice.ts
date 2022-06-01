@@ -6,7 +6,8 @@ export interface IMessage {
   content: string;
   from: string;
   to: string;
-  isUnread: boolean;
+  isUnreadAtFrom: boolean;
+  isUnreadAtTo: boolean;
 }
 
 export interface IConversation {
