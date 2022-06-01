@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { View, Text, ScrollView, StyleSheet, FlatList } from "react-native";
 import React, { useState, useEffect } from "react";
 
 import { TextInput, Title } from "react-native-paper";
@@ -46,7 +46,7 @@ const CommentScreen = () => {
       });
 
       if (res && res.data.result) {
-        dispatch(ADD_COMMENT(res.data.data));
+        dispatch(ADD_COMMENT([{ ...res.data.data }]));
         setContent("");
       }
     } catch (e) {
@@ -61,33 +61,29 @@ const CommentScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View>
-        <Header
-          showLeftIcon
-          showRightIcon={false}
-          title="Bình luận"
-          handleUpdateProfile={() => console.log("")}
-        />
-        <View style={{ margin: 8 }}>
-          {getComments(state).length > 0 && (
-            <ScrollView>
-              <View>
-                {getComments(state).map((item) => {
-                  return <CommentItem key={item.id} {...item} />;
-                })}
-              </View>
-            </ScrollView>
-          )}
+      <Header
+        showLeftIcon
+        showRightIcon={false}
+        title="Bình luận"
+        handleUpdateProfile={() => console.log("")}
+      />
+      <View style={{ marginHorizontal: 8, paddingVertical: 8, flex: 1 }}>
+        {getComments(state).length > 0 && (
+          <FlatList
+            data={getComments(state)}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <CommentItem key={item.id} {...item} />}
+          />
+        )}
 
-          {getComments(state).length === 0 && (
-            <View style={{ flex: 1, alignItems: "center" }}>
-              <Title>Chưa có bình luận nào.</Title>
-            </View>
-          )}
-        </View>
+        {getComments(state).length === 0 && (
+          <View style={{ flex: 1, alignItems: "center" }}>
+            <Title>Chưa có bình luận nào.</Title>
+          </View>
+        )}
       </View>
 
-      <View style={{ position: "absolute", bottom: 0, width: "100%" }}>
+      <View>
         <TextInput
           mode="outlined"
           autoComplete="off"

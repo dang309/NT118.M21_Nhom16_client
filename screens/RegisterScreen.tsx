@@ -60,30 +60,40 @@ export default function RegisterScreen({
       try {
         setError("");
 
-        const resEmailVerfication = await REQUEST({
+        const resIsEmailTaken = await REQUEST({
           method: "POST",
-          url: "/auth/send-verification-email",
+          url: "/auth/is-email-taken",
           data: {
             email: values.email.trim(),
           },
         });
 
-        if (resEmailVerfication && resEmailVerfication.data.result) {
-          const dataToSend = {
-            username: values.username.trim(),
-            email: values.email.trim(),
-            password: values.password.trim(),
-          };
-          await AsyncStorage.setItem(
-            "@register-data",
-            JSON.stringify(dataToSend)
-          );
-          navigation.navigate("EmailVerification", {
-            action: "register",
+        if (resIsEmailTaken && resIsEmailTaken.data.result) {
+          const resEmailVerfication = await REQUEST({
+            method: "POST",
+            url: "/auth/send-verification-email",
+            data: {
+              email: values.email.trim(),
+            },
           });
+
+          if (resEmailVerfication && resEmailVerfication.data.result) {
+            const dataToSend = {
+              username: values.username.trim(),
+              email: values.email.trim(),
+              password: values.password.trim(),
+            };
+            await AsyncStorage.setItem(
+              "@register-data",
+              JSON.stringify(dataToSend)
+            );
+            navigation.navigate("EmailVerification", {
+              action: "register",
+            });
+          }
         }
       } catch (err) {
-        setError(err.response.data.message);
+        setError(err?.response?.data?.message);
       }
     },
   });
@@ -274,7 +284,7 @@ export default function RegisterScreen({
           </View>
 
           <Snackbar
-            visible={!!error.length}
+            visible={!!error?.length}
             duration={5000}
             onDismiss={() => setError("")}
             style={{

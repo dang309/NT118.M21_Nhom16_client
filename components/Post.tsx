@@ -359,333 +359,311 @@ const Post = (props: Props) => {
 
   return (
     <View style={styles.container}>
-      {!props.id.length ? (
-        <View style={{ marginVertical: 8 }}>
-          <Instagram />
-        </View>
-      ) : (
-        <>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={handleSelectProfile}>
-              <View style={styles.header__left}>
-                <View
-                  style={{
-                    marginRight: 8,
-                  }}
-                >
-                  {props.posting_user.avatar.uri ? (
-                    <Avatar.Image
-                      size={32}
-                      source={{ uri: props.posting_user.avatar.uri }}
-                    />
-                  ) : (
-                    <Avatar.Icon size={32} icon="person" />
-                  )}
-                </View>
-                <View>
-                  <Text
-                    style={{
-                      fontSize: 16,
-                      fontWeight: "bold",
-                      marginBottom: -4,
-                    }}
-                  >
-                    {props.posting_user.username}
-                  </Text>
-
-                  <Caption>
-                    {moment(props.created_at).format("MMM DD, YYYY HH:mm")}
-                  </Caption>
-                </View>
-              </View>
-            </TouchableOpacity>
-
-            <Menu
-              visible={toggleMenuOptions}
-              onDismiss={() => setToggleMenuOptions(false)}
-              anchor={
-                <TouchableOpacity onPress={() => setToggleMenuOptions(true)}>
-                  <Icon name="ellipsis-horizontal" size={24} />
-                </TouchableOpacity>
-              }
+      <View style={styles.header}>
+        <TouchableOpacity onPress={handleSelectProfile}>
+          <View style={styles.header__left}>
+            <View
+              style={{
+                marginRight: 8,
+              }}
             >
-              {USER.loggedInUser.id !== props.posting_user.id && (
-                <Menu.Item onPress={() => {}} title="Hủy theo dõi" />
+              {props.posting_user.avatar.uri ? (
+                <Avatar.Image
+                  size={32}
+                  source={{ uri: props.posting_user.avatar.uri }}
+                />
+              ) : (
+                <Avatar.Icon size={32} icon="person" />
               )}
-              {USER.loggedInUser.id === props.posting_user.id && (
-                <Menu.Item onPress={() => {}} title="Chỉnh sửa" />
-              )}
-              {USER.loggedInUser.id === props.posting_user.id && (
-                <>
-                  <Divider style={{ height: 1 }} />
-                  <Menu.Item
-                    onPress={() => {
-                      setToggleDeletePostConfirm(true);
-                      setToggleMenuOptions(false);
-                    }}
-                    title="Xóa"
-                    icon="trash-outline"
-                  />
-                </>
-              )}
-            </Menu>
-          </View>
+            </View>
+            <View>
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: "bold",
+                  marginBottom: -4,
+                }}
+              >
+                {props.posting_user.username}
+              </Text>
 
-          <View style={styles.caption}>
-            <Text>{props.caption}</Text>
+              <Caption>
+                {moment(props.created_at).format("MMM DD, YYYY HH:mm")}
+              </Caption>
+            </View>
           </View>
+        </TouchableOpacity>
 
+        <Menu
+          visible={toggleMenuOptions}
+          onDismiss={() => setToggleMenuOptions(false)}
+          anchor={
+            <TouchableOpacity onPress={() => setToggleMenuOptions(true)}>
+              <Icon name="ellipsis-horizontal" size={24} />
+            </TouchableOpacity>
+          }
+        >
+          {USER.loggedInUser.id !== props.posting_user.id && (
+            <Menu.Item onPress={() => {}} title="Hủy theo dõi" />
+          )}
+          {USER.loggedInUser.id === props.posting_user.id && (
+            <Menu.Item onPress={() => {}} title="Chỉnh sửa" />
+          )}
+          {USER.loggedInUser.id === props.posting_user.id && (
+            <>
+              <Divider style={{ height: 1 }} />
+              <Menu.Item
+                onPress={() => {
+                  setToggleDeletePostConfirm(true);
+                  setToggleMenuOptions(false);
+                }}
+                title="Xóa"
+                icon="trash-outline"
+              />
+            </>
+          )}
+        </Menu>
+      </View>
+
+      <View style={styles.caption}>
+        <Text>{props.caption}</Text>
+      </View>
+
+      <View
+        style={{
+          borderBottomWidth: 1,
+          borderBottomColor: "#e5e5e5",
+          padding: 8,
+          paddingTop: 2,
+        }}
+      >
+        <View style={styles.body}>
+          {props.thumbnail.uri ? (
+            <Image
+              style={{
+                width: "50%",
+                height: "100%",
+                borderRadius: 16,
+                borderTopRightRadius: 0,
+                borderBottomRightRadius: 0,
+                marginHorizontal: "auto",
+              }}
+              source={{
+                uri: props.thumbnail.uri,
+              }}
+              resizeMode="cover"
+            />
+          ) : (
+            <ActivityIndicator
+              color="#00adb5"
+              style={{
+                width: "45%",
+                marginHorizontal: "auto",
+              }}
+            />
+          )}
           <View
             style={{
-              borderBottomWidth: 1,
-              borderBottomColor: "#e5e5e5",
-              padding: 8,
-              paddingTop: 2,
+              alignItems: "center",
+              justifyContent: "center",
+              width: "50%",
+
+              borderWidth: 1,
+              borderColor: "#e5e5e5",
+              borderRadius: 16,
+              borderLeftWidth: 0,
+              borderTopLeftRadius: 0,
+              borderBottomLeftRadius: 0,
+
+              padding: 4,
             }}
           >
-            <View style={styles.body}>
-              {props.thumbnail.uri ? (
-                <Image
-                  style={{
-                    width: "50%",
-                    height: "100%",
-                    borderRadius: 16,
-                    borderTopRightRadius: 0,
-                    borderBottomRightRadius: 0,
-                    marginHorizontal: "auto",
-                  }}
-                  source={{
-                    uri: props.thumbnail.uri,
-                  }}
-                  resizeMode="cover"
-                />
+            <Text style={{ fontSize: 20, fontWeight: "bold" }}>
+              {props.title}
+            </Text>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                paddingVertical: 16,
+              }}
+            >
+              <TouchableOpacity onPress={handleDecrease10Seconds}>
+                <Icon name="play-back" size={24} />
+              </TouchableOpacity>
+
+              {sound ? (
+                <TouchableOpacity onPress={handleChangeAudioStatus}>
+                  {!audioStatus ? (
+                    <Icon
+                      name="play-circle"
+                      style={{ paddingHorizontal: 16 }}
+                      size={48}
+                    />
+                  ) : (
+                    <Icon
+                      name="pause-circle"
+                      style={{ paddingHorizontal: 16 }}
+                      size={48}
+                    />
+                  )}
+                </TouchableOpacity>
               ) : (
                 <ActivityIndicator
                   color="#00adb5"
-                  style={{
-                    width: "45%",
-                    marginHorizontal: "auto",
-                  }}
+                  style={{ paddingHorizontal: 16 }}
                 />
               )}
-              <View
-                style={{
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "50%",
 
-                  borderWidth: 1,
-                  borderColor: "#e5e5e5",
-                  borderRadius: 16,
-                  borderLeftWidth: 0,
-                  borderTopLeftRadius: 0,
-                  borderBottomLeftRadius: 0,
-
-                  padding: 4,
-                }}
-              >
-                <Text style={{ fontSize: 20, fontWeight: "bold" }}>
-                  {props.title}
-                </Text>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    paddingVertical: 16,
-                  }}
-                >
-                  <TouchableOpacity onPress={handleDecrease10Seconds}>
-                    <Icon name="play-back" size={24} />
-                  </TouchableOpacity>
-
-                  {sound ? (
-                    <TouchableOpacity onPress={handleChangeAudioStatus}>
-                      {!audioStatus ? (
-                        <Icon
-                          name="play-circle"
-                          style={{ paddingHorizontal: 16 }}
-                          size={48}
-                        />
-                      ) : (
-                        <Icon
-                          name="pause-circle"
-                          style={{ paddingHorizontal: 16 }}
-                          size={48}
-                        />
-                      )}
-                    </TouchableOpacity>
-                  ) : (
-                    <ActivityIndicator
-                      color="#00adb5"
-                      style={{ paddingHorizontal: 16 }}
-                    />
-                  )}
-
-                  <TouchableOpacity onPress={handleIncrease10Seconds}>
-                    <Icon name="play-forward" size={24} />
-                  </TouchableOpacity>
-                </View>
-
-                <View
-                  style={{
-                    width: "80%",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                >
-                  <View style={{ marginBottom: 2, width: "100%", flex: 1 }}>
-                    <Slider
-                      style={{ flex: 1 }}
-                      value={
-                        playbackStatus?.isLoaded
-                          ? playbackStatus.positionMillis
-                          : 0
-                      }
-                      minimumValue={0}
-                      maximumValue={
-                        playbackStatus?.isLoaded
-                          ? playbackStatus.durationMillis
-                          : 0
-                      }
-                      minimumTrackTintColor="#00ADB5"
-                      maximumTrackTintColor="#000"
-                      onSlidingComplete={async (value) => {
-                        sound?.setPositionAsync(value);
-                        await sound?.playAsync();
-                        handleChangeAudioStatus();
-                      }}
-                      onSlidingStart={async () => {
-                        await sound?.pauseAsync();
-                        handleChangeAudioStatus();
-                      }}
-                    />
-                  </View>
-
-                  <View
-                    style={{
-                      width: "100%",
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <Text style={{ fontSize: 12 }}>
-                      {millisToMinutesAndSeconds(
-                        playbackStatus?.isLoaded
-                          ? playbackStatus.positionMillis
-                          : 0
-                      )}
-                    </Text>
-                    <Text style={{ fontSize: 12 }}>
-                      {millisToMinutesAndSeconds(
-                        playbackStatus?.isLoaded
-                          ? playbackStatus.durationMillis
-                          : 0
-                      )}
-                    </Text>
-                  </View>
-                </View>
-              </View>
+              <TouchableOpacity onPress={handleIncrease10Seconds}>
+                <Icon name="play-forward" size={24} />
+              </TouchableOpacity>
             </View>
 
-            <View style={styles.actions}>
+            <View
+              style={{
+                width: "80%",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <View style={{ marginBottom: 2, width: "100%", flex: 1 }}>
+                <Slider
+                  style={{ flex: 1 }}
+                  value={
+                    playbackStatus?.isLoaded ? playbackStatus.positionMillis : 0
+                  }
+                  minimumValue={0}
+                  maximumValue={
+                    playbackStatus?.isLoaded ? playbackStatus.durationMillis : 0
+                  }
+                  minimumTrackTintColor="#00ADB5"
+                  maximumTrackTintColor="#000"
+                  onSlidingComplete={async (value) => {
+                    sound?.setPositionAsync(value);
+                    await sound?.playAsync();
+                    handleChangeAudioStatus();
+                  }}
+                  onSlidingStart={async () => {
+                    await sound?.pauseAsync();
+                    handleChangeAudioStatus();
+                  }}
+                />
+              </View>
+
               <View
                 style={{
+                  width: "100%",
                   flexDirection: "row",
-                  justifyContent: "center",
-                  alignItems: "center",
+                  justifyContent: "space-between",
                 }}
               >
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginRight: 8,
-                  }}
-                >
-                  <TouchableOpacity onPress={handleLikePost}>
-                    {props.is_like_from_me ? (
-                      <Icon
-                        name="heart-sharp"
-                        size={24}
-                        color="#f44336"
-                        style={{ marginRight: 2 }}
-                      />
-                    ) : (
-                      <Icon
-                        name="heart-outline"
-                        size={24}
-                        style={{ marginRight: 2 }}
-                      />
-                    )}
-                  </TouchableOpacity>
-                  <Text style={{ fontWeight: "bold" }}>
-                    {props.users_like.length}
-                  </Text>
-                </View>
-
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginRight: 8,
-                  }}
-                >
-                  <TouchableOpacity
-                    onPress={() =>
-                      navigation.navigate("Comment", { postId: props.id })
-                    }
-                  >
-                    <Icon
-                      name="chatbubble-ellipses-outline"
-                      size={24}
-                      style={{ marginRight: 2 }}
-                    />
-                  </TouchableOpacity>
-                  <Text style={{ fontWeight: "bold" }}>
-                    {countComment(state)}
-                  </Text>
-                </View>
-
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginRight: 8,
-                  }}
-                >
-                  {props.is_hear_from_me ? (
-                    <Icon
-                      name="ear-sharp"
-                      size={24}
-                      color="#F9D923"
-                      style={{ marginRight: 2 }}
-                    />
-                  ) : (
-                    <Icon
-                      name="ear-outline"
-                      size={24}
-                      style={{ marginRight: 2 }}
-                    />
+                <Text style={{ fontSize: 12 }}>
+                  {millisToMinutesAndSeconds(
+                    playbackStatus?.isLoaded ? playbackStatus.positionMillis : 0
                   )}
-                  <Text style={{ fontWeight: "bold" }}>
-                    {props.users_listening.length}
-                  </Text>
-                </View>
-
-                {USER.loggedInUser.id !== props.posting_user.id && (
-                  <TouchableOpacity onPress={handleBookmarkPost}>
-                    {props.is_bookmarked_from_me ? (
-                      <Icon name="bookmark-sharp" size={24} />
-                    ) : (
-                      <Icon name="bookmark-outline" size={24} />
-                    )}
-                  </TouchableOpacity>
-                )}
+                </Text>
+                <Text style={{ fontSize: 12 }}>
+                  {millisToMinutesAndSeconds(
+                    playbackStatus?.isLoaded ? playbackStatus.durationMillis : 0
+                  )}
+                </Text>
               </View>
             </View>
           </View>
-        </>
-      )}
+        </View>
+
+        <View style={styles.actions}>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginRight: 8,
+              }}
+            >
+              <TouchableOpacity onPress={handleLikePost}>
+                {props.is_like_from_me ? (
+                  <Icon
+                    name="heart-sharp"
+                    size={24}
+                    color="#f44336"
+                    style={{ marginRight: 2 }}
+                  />
+                ) : (
+                  <Icon
+                    name="heart-outline"
+                    size={24}
+                    style={{ marginRight: 2 }}
+                  />
+                )}
+              </TouchableOpacity>
+              <Text style={{ fontWeight: "bold" }}>
+                {props.users_like.length}
+              </Text>
+            </View>
+
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginRight: 8,
+              }}
+            >
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.navigate("Comment", { postId: props.id })
+                }
+              >
+                <Icon
+                  name="chatbubble-ellipses-outline"
+                  size={24}
+                  style={{ marginRight: 2 }}
+                />
+              </TouchableOpacity>
+              <Text style={{ fontWeight: "bold" }}>{countComment(state)}</Text>
+            </View>
+
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginRight: 8,
+              }}
+            >
+              {props.is_hear_from_me ? (
+                <Icon
+                  name="ear-sharp"
+                  size={24}
+                  color="#F9D923"
+                  style={{ marginRight: 2 }}
+                />
+              ) : (
+                <Icon name="ear-outline" size={24} style={{ marginRight: 2 }} />
+              )}
+              <Text style={{ fontWeight: "bold" }}>
+                {props.users_listening.length}
+              </Text>
+            </View>
+
+            {USER.loggedInUser.id !== props.posting_user.id && (
+              <TouchableOpacity onPress={handleBookmarkPost}>
+                {props.is_bookmarked_from_me ? (
+                  <Icon name="bookmark-sharp" size={24} />
+                ) : (
+                  <Icon name="bookmark-outline" size={24} />
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </View>
 
       <Portal>
         <Dialog

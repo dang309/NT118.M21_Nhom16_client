@@ -44,7 +44,6 @@ const ChatContactItem = (props: TPropsChatContactItem) => {
       partnerId: props.id,
       contactId: _contactIds.sort().join("_"),
     });
-    console.log(_contactIds);
   };
 
   const getAvatar = async () => {
@@ -52,9 +51,12 @@ const ChatContactItem = (props: TPropsChatContactItem) => {
     setAvatar(_avatar);
   };
 
-  const getUnReadMessages = (parterId: string) => {
+  const getUnReadMessages = () => {
     return messenger.messages.reduce((acc, item) => {
-      if (item.from === parterId && item.isUnread) {
+      let _contactIds = [];
+      _contactIds.push(USER.loggedInUser.id);
+      _contactIds.push(props.id);
+      if (item.contactId === _contactIds.sort().join("_") && item.isUnread) {
         acc += 1;
       }
       return acc;
@@ -107,10 +109,10 @@ const ChatContactItem = (props: TPropsChatContactItem) => {
               <Caption>Đang hoạt động</Caption>
             </View>
 
-            {getUnReadMessages(props.id) !== 0 && (
+            {getUnReadMessages() > 0 && (
               <View>
                 <Badge size={24} style={{ paddingHorizontal: 2 }}>
-                  {getUnReadMessages(props.id) + " tin nhắn chưa đọc"}
+                  {getUnReadMessages() + " tin nhắn chưa đọc"}
                 </Badge>
               </View>
             )}
@@ -131,15 +133,14 @@ const ChatContactScreen = () => {
   const USER = useAppSelector<IUser>((state) => state.user);
 
   const [searchValue, setSearchValue] = useState<string>("");
-  const [following, setFollowing] = useState<any>(null);
-  const [followers, setFollowers] = useState<any>(null);
+  const [chatContacts, setChatContacts] = useState<ISingleUser[] | null>(null);
 
-  const loadChatContactFollowings = async () => {
+  const loadChatContact = async () => {
     let filters = [];
     filters.push({
-      key: ["_id"],
-      operator: "in",
-      value: USER.loggedInUser.following,
+      key: "_id",
+      operator: "not",
+      value: USER.loggedInUser.id,
     });
     const params = {
       filters: JSON.stringify(filters),
@@ -152,32 +153,7 @@ const ChatContactScreen = () => {
       });
 
       if (res && res.data.result) {
-        setFollowing(res.data.data.results);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const loadChatContactFollowers = async () => {
-    let filters = [];
-    filters.push({
-      key: ["_id"],
-      operator: "in",
-      value: USER.loggedInUser.followers,
-    });
-    const params = {
-      filters: JSON.stringify(filters),
-    };
-    try {
-      const res = await REQUEST({
-        method: "GET",
-        url: "/users",
-        params,
-      });
-
-      if (res && res.data.result) {
-        setFollowers(res.data.data.results);
+        setChatContacts(res.data.data.results);
       }
     } catch (err) {
       console.error(err);
@@ -186,8 +162,7 @@ const ChatContactScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      loadChatContactFollowings();
-      loadChatContactFollowers();
+      loadChatContact();
     }, [])
   );
 
@@ -205,9 +180,9 @@ const ChatContactScreen = () => {
       <Text style={{ fontWeight: "bold", marginBottom: 8 }}>Tin nhắn</Text>
 
       <View>
-        {following ? (
+        {chatContacts ? (
           <SectionList
-            sections={[{ title: "Gợi ý", data: following }]}
+            sections={[{ title: "Gợi ý", data: chatContacts }]}
             keyExtractor={(item, index) => item.id}
             renderSectionHeader={({ section: { title } }) => (
               <View>

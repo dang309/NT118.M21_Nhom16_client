@@ -100,7 +100,7 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
       } catch (err) {
         console.log(err);
         if (err.response) {
-          setError(err.response.data.message);
+          setError(err?.response?.data?.message);
         }
       }
     },
@@ -303,7 +303,7 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
           </View>
 
           <Snackbar
-            visible={!!error.length}
+            visible={!!error?.length}
             duration={5000}
             onDismiss={() => setError("")}
             style={{

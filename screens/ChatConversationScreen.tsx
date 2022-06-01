@@ -114,10 +114,12 @@ const ChatConversation = () => {
       });
 
       if (res && res.data.result) {
+        console.log(res.data);
         let temp = res.data.data.results;
         temp = temp.map((item: any) => {
           return {
             ...item,
+            contactId: item.contactId,
             messageId: item.message_id,
             isUnread: item.is_unread,
           };

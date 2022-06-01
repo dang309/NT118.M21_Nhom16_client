@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Image,
@@ -86,7 +86,7 @@ export default function ResetPasswordScreen({
           navigation.navigate("Login");
         }
       } catch (err) {
-        setError(err.response.data.message);
+        setError(err?.response?.data?.message);
       }
     },
   });
@@ -235,7 +235,7 @@ export default function ResetPasswordScreen({
           </View>
 
           <Snackbar
-            visible={!!error.length}
+            visible={!!error?.length}
             duration={5000}
             onDismiss={() => setError("")}
             style={{

@@ -29,6 +29,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { createDraftSafeSelector } from "@reduxjs/toolkit";
 import { RootState } from "../app/store";
 import { IUser } from "../features/UserSlice";
+import { IPostItem } from "../features/PostSlice";
 
 export default function NewsFeedScreen() {
   const navigation = useNavigation();

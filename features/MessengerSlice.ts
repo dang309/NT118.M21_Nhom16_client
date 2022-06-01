@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 export interface IMessage {
   messageId: string;
+  contactId: string;
   content: string;
   from: string;
   to: string;

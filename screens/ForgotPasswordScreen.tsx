@@ -71,10 +71,16 @@ export default function ForgotPasswordScreen({
         });
 
         if (res && res.data.result) {
-          navigation.navigate("EmailVerification");
+          navigation.navigate("EmailVerification", {
+            action: "forgot-password",
+          });
+          await AsyncStorage.setItem(
+            "@email/retrieve-password",
+            values.email.trim()
+          );
         }
       } catch (err) {
-        setError(err.response.data.message);
+        setError(err?.response?.data?.message);
       }
     },
   });
@@ -152,7 +158,7 @@ export default function ForgotPasswordScreen({
       </View>
 
       <Snackbar
-        visible={!!error.length}
+        visible={!!error?.length}
         duration={5000}
         onDismiss={() => setError("")}
         style={{

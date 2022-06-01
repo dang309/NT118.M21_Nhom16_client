@@ -72,28 +72,31 @@ export default function EmailVerificationScreen({
         });
 
         if (res && res.data.result) {
-          if (route.params.action === "register") {
-            const temp = await AsyncStorage.getItem("@register-data");
-            if (!temp) return;
+          if (route?.params?.action) {
+            if (route.params.action === "register") {
+              const temp = await AsyncStorage.getItem("@register-data");
+              if (!temp) return;
 
-            const dataToSend = JSON.parse(temp);
+              const dataToSend = JSON.parse(temp);
 
-            const resRegister = await REQUEST({
-              method: "POST",
-              url: "/auth/register",
-              data: dataToSend,
-            });
+              const resRegister = await REQUEST({
+                method: "POST",
+                url: "/auth/register",
+                data: dataToSend,
+              });
 
-            if (resRegister && resRegister.data.result) {
-              await AsyncStorage.removeItem("@register-data");
-              setToggleDialog(true);
+              if (resRegister && resRegister.data.result) {
+                await AsyncStorage.removeItem("@register-data");
+                setToggleDialog(true);
+              }
+              return;
+            } else if (route.params.action === "forgot-password") {
+              navigation.navigate("ResetPassword");
             }
-            return;
           }
-          navigation.navigate("ResetPassword");
         }
       } catch (err) {
-        setError(err.response.data.message);
+        setError(err?.response?.data?.message);
       }
     },
   });
@@ -193,7 +196,7 @@ export default function EmailVerificationScreen({
       </Portal>
 
       <Snackbar
-        visible={!!error.length}
+        visible={!!error?.length}
         duration={5000}
         onDismiss={() => setError("")}
         style={{

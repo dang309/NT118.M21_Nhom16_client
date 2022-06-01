@@ -143,7 +143,7 @@ export default function EditProfileScreen() {
         }
       } catch (err) {
         if (err.response) {
-          setError(err.response.data.message);
+          setError(err?.response?.data?.message);
         }
       }
     },
