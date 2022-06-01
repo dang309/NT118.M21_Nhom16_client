@@ -48,7 +48,6 @@ function App() {
       const dataToSend = {
         userId: USER.loggedInUser.id,
       };
-      console.log("create-room", dataToSend);
       socket.emit("create_room", dataToSend);
     }
   };
@@ -85,7 +84,6 @@ function App() {
   };
 
   const handleReceivePrivateMessage = (payload: any) => {
-    console.log("haidng", payload);
     const { message_id, contact_id, content, from, to, is_unread_at_to } =
       payload;
 

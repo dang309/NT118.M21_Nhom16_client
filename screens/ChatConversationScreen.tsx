@@ -1,6 +1,11 @@
 import { View, Text, StyleSheet, FlatList, TextInput } from "react-native";
 import React, { useState, useEffect, useContext, useRef } from "react";
-import { Avatar, IconButton, Title } from "react-native-paper";
+import {
+  ActivityIndicator,
+  Avatar,
+  IconButton,
+  Title,
+} from "react-native-paper";
 
 import EmojiPicker from "rn-emoji-keyboard";
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
@@ -48,6 +53,45 @@ const ChatConversation = () => {
     setAvatar(_avatar);
   };
 
+  const loadMessages = async () => {
+    try {
+      let _contactIds = [];
+      _contactIds.push(USER.loggedInUser.id);
+      _contactIds.push(route.params?.partnerId);
+      let filters = [];
+      filters.push({
+        key: "contact_id",
+        operator: "=",
+        value: _contactIds.sort().join("_"),
+      });
+      const params = {
+        filters: JSON.stringify(filters),
+        limit: 15,
+      };
+      const res = await REQUEST({
+        method: "GET",
+        url: "/messages",
+        params,
+      });
+
+      if (res && res.data.result) {
+        let temp = res.data.data.results;
+        temp.forEach((item: any) => {
+          dispatch(
+            ADD_MESSAGE({
+              ...item,
+              contactId: item.contactId,
+              messageId: item.message_id,
+              isUnreadAtTo: item.is_unread_at_to,
+            })
+          );
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleSendPrivateMessage = async () => {
     try {
       if (messenger.messages.length === 0) {
@@ -79,42 +123,6 @@ const ChatConversation = () => {
     }
   };
 
-  const loadMessages = async () => {
-    try {
-      // dispatch(CLEAR_MESSAGES());
-      let filters = [];
-      filters.push({
-        key: "contact_id",
-        operator: "=",
-        value: route.params?.contactId,
-      });
-      const params = {
-        filters: JSON.stringify(filters),
-        limit: 20,
-      };
-      const res = await REQUEST({
-        method: "GET",
-        url: "/messages",
-        params,
-      });
-
-      if (res && res.data.result) {
-        let temp = res.data.data.results;
-        temp = temp.map((item: any) => {
-          return {
-            ...item,
-            contactId: item.contactId,
-            messageId: item.message_id,
-            isUnreadAtTo: item.is_unread_at_to,
-          };
-        });
-        dispatch(SET_MESSAGES(temp));
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   useEffect(() => {
     let isMounted = true;
     if (isMounted) {
@@ -127,14 +135,6 @@ const ChatConversation = () => {
       dispatch(CLEAR_MESSAGES());
     };
   }, []);
-
-  useEffect(() => {
-    if (flatListRef.current) {
-      flatListRef.current.scrollToEnd({
-        animated: true,
-      });
-    }
-  }, [messenger.messages]);
 
   return (
     <View style={styles.container}>
@@ -183,60 +183,35 @@ const ChatConversation = () => {
           paddingVertical: 8,
         }}
       >
-        <FlatList
-          ref={(ref) => (flatListRef.current = ref)}
-          data={messenger.messages}
-          keyExtractor={(item, index) => {
-            return item.messageId;
-          }}
-          renderItem={({ item }) => {
-            let isFromMe = Boolean(item.from === USER.loggedInUser.id);
-            return (
-              <View
-                key={item.messageId}
-                style={{
-                  alignItems: isFromMe ? "flex-end" : "flex-start",
-                }}
-              >
-                {isFromMe ? (
-                  <Text
-                    style={{
-                      backgroundColor: isFromMe ? "#00adb5" : "#000",
-                      color: isFromMe ? "#fff" : "#000",
-
-                      padding: 8,
-                      marginVertical: 2,
-
-                      borderRadius: 16,
-
-                      maxWidth: "60%",
-                    }}
-                  >
-                    {item.content}
-                  </Text>
-                ) : (
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      marginVertical: 2,
-                    }}
-                  >
-                    <Avatar.Icon
-                      icon="person-outline"
-                      size={32}
-                      style={{ marginRight: 4 }}
-                    />
-
+        {messenger.messages.length > 0 ? (
+          <FlatList
+            ref={(ref) => (flatListRef.current = ref)}
+            onContentSizeChange={() =>
+              flatListRef.current.scrollToEnd({ animated: true })
+            }
+            onLayout={() => flatListRef.current.scrollToEnd({ animated: true })}
+            data={messenger.messages}
+            keyExtractor={(item, index) => {
+              return item.messageId;
+            }}
+            renderItem={({ item }) => {
+              let isFromMe = Boolean(item.from === USER.loggedInUser.id);
+              return (
+                <View
+                  key={item.messageId}
+                  style={{
+                    alignItems: isFromMe ? "flex-end" : "flex-start",
+                  }}
+                >
+                  {isFromMe ? (
                     <Text
                       style={{
-                        backgroundColor: "#fff",
-                        color: "#000",
+                        backgroundColor: isFromMe ? "#00adb5" : "#000",
+                        color: isFromMe ? "#fff" : "#000",
 
                         padding: 8,
+                        marginVertical: 2,
 
-                        borderWidth: 1,
-                        borderColor: "#e5e5e5",
                         borderRadius: 16,
 
                         maxWidth: "60%",
@@ -244,12 +219,49 @@ const ChatConversation = () => {
                     >
                       {item.content}
                     </Text>
-                  </View>
-                )}
-              </View>
-            );
-          }}
-        />
+                  ) : (
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        marginVertical: 2,
+                      }}
+                    >
+                      <Avatar.Icon
+                        icon="person-outline"
+                        size={32}
+                        style={{ marginRight: 4 }}
+                      />
+
+                      <Text
+                        style={{
+                          backgroundColor: "#fff",
+                          color: "#000",
+
+                          padding: 8,
+
+                          borderWidth: 1,
+                          borderColor: "#e5e5e5",
+                          borderRadius: 16,
+
+                          maxWidth: "60%",
+                        }}
+                      >
+                        {item.content}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              );
+            }}
+          />
+        ) : (
+          <View
+            style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+          >
+            <ActivityIndicator color="#00adb5" />
+          </View>
+        )}
       </View>
 
       <View

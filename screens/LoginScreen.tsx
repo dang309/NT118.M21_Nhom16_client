@@ -11,7 +11,7 @@ import {
 
 import { TextInput, Button, HelperText, Snackbar } from "react-native-paper";
 
-import { Icon, GGButton } from "../components";
+import { Icon } from "../components";
 
 import { NavigationLoginProps } from "../types";
 
@@ -119,10 +119,6 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
 
   const handleToggleShowPassword = () => {
     setShowPassword((prev) => !prev);
-  };
-
-  const handleSignInWithGG = async () => {
-    console.log("logged in");
   };
 
   const loadAvatar = async (user: ISingleUser) => {
@@ -297,9 +293,9 @@ export default function LoginScreen({ navigation }: NavigationLoginProps) {
               </Text>
             </View>
 
-            <View>
-              <GGButton />
-            </View>
+            {/* <View>
+              <GGButton handleSignInWithGG={handleSignInWithGG} />
+            </View> */}
           </View>
 
           <Snackbar

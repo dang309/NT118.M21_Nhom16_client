@@ -24,6 +24,7 @@ import { useAppDispatch, useAppSelector } from "../app/hook";
 import { ISingleUser, IUser } from "../features/UserSlice";
 import { SocketContext } from "../context/socket";
 import {
+  ADD_MESSAGE,
   IMessenger,
   READ_MESSAGES,
   SET_MESSAGES,
@@ -69,66 +70,23 @@ const ChatContactItem = (props: TPropsChatContactItem) => {
     setAvatar(_avatar);
   };
 
-  const loadUnReadMessages = async () => {
-    try {
-      let _contactIds = [];
-      _contactIds.push(USER.loggedInUser.id);
-      _contactIds.push(props.id);
-
-      let filters = [];
-      filters.push({
-        key: "contact_id",
-        operator: "=",
-        value: _contactIds.sort().join("_"),
-      });
-      filters.push({
-        key: "is_unread_at_to",
-        operator: "=",
-        value: true,
-      });
-      filters.push({
-        key: "to",
-        operator: "=",
-        value: USER.loggedInUser.id,
-      });
-      const params = {
-        filters: JSON.stringify(filters),
-        limit: 20,
-      };
-      const res = await REQUEST({
-        method: "GET",
-        url: "/messages",
-        params,
-      });
-
-      if (res && res.data.result) {
-        dispatch(
-          SET_UNREAD_MESSAGES({
-            contactId: _contactIds.sort().join("_"),
-            quantity: res.data.data.totalResults,
-          })
-        );
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   const getUnreadMessages = createDraftSafeSelector(
     (state: RootState) => state.messenger,
     (messenger) => {
       let _contactIds: string[] = [];
       _contactIds.push(USER.loggedInUser.id);
       _contactIds.push(props.id);
-      return messenger.unreadMessages.filter(
-        (o) => o.contactId === _contactIds.sort().join("_")
-      );
+      return messenger.messages.filter(
+        (o) =>
+          o.contactId === _contactIds.sort().join("_") &&
+          o.isUnreadAtTo &&
+          o.to === USER.loggedInUser.id
+      ).length;
     }
   );
 
   useEffect(() => {
     getAvatar();
-    loadUnReadMessages();
   }, []);
 
   return (

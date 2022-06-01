@@ -3,8 +3,6 @@ import { StyleSheet, Image, Text, View, ScrollView } from "react-native";
 
 import { TextInput, Button, HelperText, Snackbar } from "react-native-paper";
 
-import { GGButton } from "../components";
-
 import { NavigationRegisterProps } from "../types";
 
 import { useFormik } from "formik";
@@ -276,10 +274,6 @@ export default function RegisterScreen({
                   {AUTH_CONSTANT.SIGN_IN}
                 </Text>
               </Text>
-            </View>
-
-            <View>
-              <GGButton />
             </View>
           </View>
 

@@ -53,6 +53,8 @@ const MessengerSlice = createSlice({
       });
     },
     ADD_MESSAGE: (state, action) => {
+      if (state.messages.some((o) => o.messageId === action.payload.messageId))
+        return;
       state.messages.push(action.payload);
     },
     READ_MESSAGES: (state: IMessenger, action) => {
@@ -61,6 +63,13 @@ const MessengerSlice = createSlice({
       state.messages = temp.map((item) => {
         if (item.contactId === contactId) {
           return { ...item, isUnreadAtTo: false };
+        }
+        return { ...item };
+      });
+      let temp2 = state.unreadMessages;
+      state.unreadMessages = temp2.map((item) => {
+        if (item.contactId === contactId) {
+          return { ...item, quantity: 0 };
         }
         return { ...item };
       });
