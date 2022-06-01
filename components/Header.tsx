@@ -47,20 +47,11 @@ const Header = ({
         </View>
 
         {showRightIcon && (
-          <Button
-            mode="contained"
+          <IconButton
             icon="checkmark"
             color="green"
-            style={{
-              backgroundColor: "#00adb5",
-              borderRadius: 16,
-              elevation: 4,
-            }}
-            loading={!!isSubmitting}
             onPress={handleUpdateProfile}
-          >
-            Lưu
-          </Button>
+          />
         )}
       </View>
     </View>

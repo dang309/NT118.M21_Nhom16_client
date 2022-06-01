@@ -17,6 +17,7 @@ import {
   IconButton,
   Portal,
   RadioButton,
+  Snackbar,
   TextInput,
   Title,
 } from "react-native-paper";
@@ -46,7 +47,32 @@ export default function EditProfileScreen() {
   const [initAvatar, setInitAvatar] = useState<string>("");
   const [avatar, setAvatar] = useState<any>(null);
   const [toggleDialog, setToggleDialog] = useState<boolean>(false);
+  const [resetPasswordDialog, setResetPasswordDialog] =
+    useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const [password, setPassword] = useState<{
+    oldPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+  }>({
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
+  const [showPassword, setShowPassword] = useState<{
+    oldPassword: boolean;
+    newPassword: boolean;
+    confirmPassword: boolean;
+  }>({
+    oldPassword: false,
+    newPassword: false,
+    confirmPassword: false,
+  });
+
+  const [showSnackbar, setShowSnackbar] = useState<boolean>(false);
 
   const EditProfileSchema = Yup.object().shape({
     email: Yup.string()
@@ -187,6 +213,43 @@ export default function EditProfileScreen() {
       onChange: (e, selectedDate) => setFieldValue("birthday", selectedDate),
       mode: "date",
     });
+  };
+
+  const handleSaveNewPassword = async () => {
+    try {
+      setError("");
+      setLoading(true);
+      if (Object.values(password).filter(Boolean).length < 3) {
+        setError("Thông tin không được trống!");
+        return;
+      }
+      if (password.newPassword !== password.confirmPassword) {
+        setError("Mật khẩu không trùng khớp!");
+        return;
+      }
+
+      const dataToSend = {
+        email: USER.loggedInUser.email,
+        oldPassword: password.oldPassword,
+        newPassword: password.newPassword,
+      };
+
+      console.log(dataToSend);
+
+      const res = await REQUEST({
+        method: "POST",
+        url: "/auth/change-password",
+        data: dataToSend,
+      });
+
+      if (res && res.data.result) {
+        setResetPasswordDialog(false);
+      }
+    } catch (err) {
+      setError(err?.response?.data?.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -341,10 +404,120 @@ export default function EditProfileScreen() {
           </View>
 
           <View>
-            <Button mode="contained">Đổi mật khẩu</Button>
+            <Button
+              mode="contained"
+              onPress={() => setResetPasswordDialog(true)}
+            >
+              Đổi mật khẩu
+            </Button>
           </View>
         </View>
       </ScrollView>
+
+      <Portal>
+        <Dialog
+          visible={resetPasswordDialog}
+          onDismiss={() => setResetPasswordDialog(false)}
+        >
+          <Dialog.Content>
+            <View style={{ justifyContent: "center", marginBottom: 4 }}>
+              {/* Old Password Input */}
+              <View style={{ marginBottom: 8 }}>
+                <TextInput
+                  value={password.oldPassword}
+                  onChangeText={(v: string) =>
+                    setPassword((prev) => ({ ...prev, oldPassword: v }))
+                  }
+                  placeholder={AUTH_CONSTANT.OLD_PASSWORD}
+                  label={AUTH_CONSTANT.OLD_PASSWORD}
+                  mode="outlined"
+                  autoComplete="off"
+                  outlineColor="#e5e5e5"
+                  right={
+                    <TextInput.Icon
+                      name={showPassword.oldPassword ? "eye-off" : "eye"}
+                      color="#999"
+                      onPress={() =>
+                        setShowPassword((prev) => ({
+                          ...prev,
+                          oldPassword: !prev.oldPassword,
+                        }))
+                      }
+                    />
+                  }
+                  secureTextEntry={!showPassword.oldPassword}
+                />
+              </View>
+
+              {/* New Password input */}
+              <View style={{ marginBottom: 8 }}>
+                <TextInput
+                  value={password.newPassword}
+                  onChangeText={(v: string) =>
+                    setPassword((prev) => ({ ...prev, newPassword: v }))
+                  }
+                  placeholder={AUTH_CONSTANT.NEW_PASSWORD}
+                  label={AUTH_CONSTANT.NEW_PASSWORD}
+                  mode="outlined"
+                  autoComplete="off"
+                  outlineColor="#e5e5e5"
+                  right={
+                    <TextInput.Icon
+                      name={showPassword.newPassword ? "eye-off" : "eye"}
+                      color="#999"
+                      onPress={() =>
+                        setShowPassword((prev) => ({
+                          ...prev,
+                          newPassword: !prev.newPassword,
+                        }))
+                      }
+                    />
+                  }
+                  secureTextEntry={!showPassword.newPassword}
+                />
+              </View>
+
+              {/* Confirm password input */}
+              <View style={{ marginBottom: 8 }}>
+                <TextInput
+                  value={password.confirmPassword}
+                  onChangeText={(v: string) =>
+                    setPassword((prev) => ({ ...prev, confirmPassword: v }))
+                  }
+                  placeholder={AUTH_CONSTANT.CONFIRM_PASSWORD}
+                  label={AUTH_CONSTANT.CONFIRM_PASSWORD}
+                  mode="outlined"
+                  autoComplete="off"
+                  outlineColor="#e5e5e5"
+                  right={
+                    <TextInput.Icon
+                      name={showPassword.confirmPassword ? "eye-off" : "eye"}
+                      color="#999"
+                      onPress={() =>
+                        setShowPassword((prev) => ({
+                          ...prev,
+                          confirmPassword: !prev.confirmPassword,
+                        }))
+                      }
+                    />
+                  }
+                  secureTextEntry={!showPassword.confirmPassword}
+                />
+              </View>
+
+              <View style={{ alignItems: "center" }}>
+                <Button
+                  mode="contained"
+                  onPress={handleSaveNewPassword}
+                  loading={loading}
+                >
+                  Lưu
+                </Button>
+              </View>
+            </View>
+          </Dialog.Content>
+        </Dialog>
+      </Portal>
 
       <Portal>
         <Dialog visible={toggleDialog} onDismiss={() => setToggleDialog(false)}>
@@ -365,6 +538,17 @@ export default function EditProfileScreen() {
             </View>
           </Dialog.Content>
         </Dialog>
+      </Portal>
+
+      <Portal>
+        <Snackbar
+          visible={!!error?.length}
+          onDismiss={() => setError("")}
+          duration={2000}
+          style={{ backgroundColor: !!error?.length ? "red" : "green" }}
+        >
+          {error}
+        </Snackbar>
       </Portal>
     </View>
   );

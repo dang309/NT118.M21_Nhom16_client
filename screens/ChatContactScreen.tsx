@@ -192,13 +192,6 @@ const ChatContactScreen = () => {
     <View style={{ padding: 16, backgroundColor: "#fff", flex: 1 }}>
       <Title style={{ marginBottom: 8 }}>Trò chuyện</Title>
 
-      <Searchbar
-        value={searchValue}
-        onChangeText={setSearchValue}
-        placeholder="Tìm kiếm..."
-        style={{ marginBottom: 8 }}
-      />
-
       <Text style={{ fontWeight: "bold", marginBottom: 8 }}>Tin nhắn</Text>
 
       <View>
