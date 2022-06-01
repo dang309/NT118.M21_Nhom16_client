@@ -23,7 +23,11 @@ import { useAppDispatch, useAppSelector } from "../app/hook";
 
 import { ISingleUser, IUser } from "../features/UserSlice";
 import { SocketContext } from "../context/socket";
-import { IMessenger, SET_MESSAGES } from "../features/MessengerSlice";
+import {
+  IMessenger,
+  READ_MESSAGES,
+  SET_MESSAGES,
+} from "../features/MessengerSlice";
 import { createDraftSafeSelector } from "@reduxjs/toolkit";
 import { RootState } from "../app/store";
 import { USER_SERVICES } from "../services";
@@ -31,6 +35,12 @@ import { USER_SERVICES } from "../services";
 type TPropsChatContactItem = ISingleUser & { navigation: any };
 
 const ChatContactItem = (props: TPropsChatContactItem) => {
+  const dispatch = useAppDispatch();
+
+  const socket = useContext(SocketContext);
+
+  const [unReadMessages, setUnreadMessages] = React.useState<number>(0);
+
   const USER = useAppSelector<IUser>((state) => state.user);
   const messenger = useAppSelector<IMessenger>((state) => state.messenger);
 
@@ -40,6 +50,14 @@ const ChatContactItem = (props: TPropsChatContactItem) => {
     let _contactIds = [];
     _contactIds.push(USER.loggedInUser.id);
     _contactIds.push(props.id);
+    socket.emit("messenger:read_message", {
+      contactId: _contactIds.sort().join("_"),
+    });
+    dispatch(
+      READ_MESSAGES({
+        contactId: _contactIds.sort().join("_"),
+      })
+    );
     props.navigation.navigate("ChatConversation", {
       partnerId: props.id,
       contactId: _contactIds.sort().join("_"),
@@ -49,6 +67,46 @@ const ChatContactItem = (props: TPropsChatContactItem) => {
   const getAvatar = async () => {
     const _avatar = await USER_SERVICES.loadAvatar(props);
     setAvatar(_avatar);
+  };
+
+  const loadUnReadMessages = async () => {
+    try {
+      let _contactIds = [];
+      _contactIds.push(USER.loggedInUser.id);
+      _contactIds.push(props.id);
+
+      let filters = [];
+      filters.push({
+        key: "contact_id",
+        operator: "=",
+        value: _contactIds.sort().join("_"),
+      });
+      filters.push({
+        key: "is_unread_at_to",
+        operator: "=",
+        value: true,
+      });
+      filters.push({
+        key: "to",
+        operator: "=",
+        value: USER.loggedInUser.id,
+      });
+      const params = {
+        filters: JSON.stringify(filters),
+        limit: 20,
+      };
+      const res = await REQUEST({
+        method: "GET",
+        url: "/messages",
+        params,
+      });
+
+      if (res && res.data.result) {
+        setUnreadMessages(res.data.data.totalResults);
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const getUnReadMessages = () => {
@@ -68,6 +126,7 @@ const ChatContactItem = (props: TPropsChatContactItem) => {
 
   useEffect(() => {
     getAvatar();
+    loadUnReadMessages();
   }, []);
 
   return (
@@ -109,13 +168,13 @@ const ChatContactItem = (props: TPropsChatContactItem) => {
                 {props.username}
               </Text>
 
-              <Caption>Đang hoạt động</Caption>
+              <Caption>{socket.connected ? "online" : "offline"}</Caption>
             </View>
 
-            {getUnReadMessages() > 0 && (
+            {unReadMessages > 0 && (
               <View>
-                <Badge size={24} style={{ paddingHorizontal: 2 }}>
-                  {getUnReadMessages() + " tin nhắn chưa đọc"}
+                <Badge size={24} style={{ paddingHorizontal: 4 }}>
+                  {unReadMessages + " tin nhắn chưa đọc"}
                 </Badge>
               </View>
             )}

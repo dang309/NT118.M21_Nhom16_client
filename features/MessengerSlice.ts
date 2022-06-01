@@ -39,13 +39,28 @@ const MessengerSlice = createSlice({
     ADD_MESSAGE: (state, action) => {
       state.messages.push(action.payload);
     },
+    READ_MESSAGES: (state: IMessenger, action) => {
+      const { contactId } = action.payload;
+      let temp = state.messages;
+      state.messages = temp.map((item) => {
+        if (item.contactId === contactId) {
+          return { ...item, isUnreadAtTo: false };
+        }
+        return { ...item };
+      });
+    },
     CLEAR_MESSAGES: (state) => {
       state.messages = [];
     },
   },
 });
 
-export const { SET_MESSAGES, ADD_CONVERSATION, ADD_MESSAGE, CLEAR_MESSAGES } =
-  MessengerSlice.actions;
+export const {
+  SET_MESSAGES,
+  ADD_CONVERSATION,
+  ADD_MESSAGE,
+  READ_MESSAGES,
+  CLEAR_MESSAGES,
+} = MessengerSlice.actions;
 
 export default MessengerSlice.reducer;

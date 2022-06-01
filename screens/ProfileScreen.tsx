@@ -42,6 +42,7 @@ import { createDraftSafeSelector } from "@reduxjs/toolkit";
 import { RootState } from "../app/store";
 import { DBContext } from "../context/db";
 import moment from "moment";
+import { SocketContext } from "../context/socket";
 
 const renderStat = (header: string, quantity: number, styles: object) => {
   return (
@@ -57,13 +58,13 @@ const renderStat = (header: string, quantity: number, styles: object) => {
 export default function ProfileScreen() {
   const dispatch = useAppDispatch();
 
+  const socket = useContext(SocketContext);
+
   const flatListRef = useRef<any>(null);
 
   const state = useAppSelector<RootState>((state) => state);
   const USER = useAppSelector<IUser>((state) => state.user);
   const post = useAppSelector<IPost>((state) => state.post);
-
-  const db = useContext(DBContext);
 
   const navigation = useNavigation();
   const route: RouteProp<{ params: { postId: string } }, "params"> = useRoute();
@@ -86,15 +87,9 @@ export default function ProfileScreen() {
         },
       });
       await AsyncStorage.clear();
-      db.transaction((tx) => {
-        tx.executeSql("DELETE FROM posts WHERE 1=1", undefined, (_) =>
-          console.log("Deleted posts")
-        );
 
-        tx.executeSql("DELETE FROM users WHERE 1=1", undefined, (_) =>
-          console.log("Deleted user")
-        );
-      });
+      socket.disconnect();
+
       navigation.navigate("Login");
     } catch (err) {
       console.log(err);

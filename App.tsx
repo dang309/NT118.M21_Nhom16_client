@@ -26,6 +26,7 @@ import { DBContext, db } from "./context/db";
 import { FOLDERS } from "./context/files";
 
 import * as FileSystem from "expo-file-system";
+import { ADD_MESSAGE } from "./features/MessengerSlice";
 
 declare global {
   namespace ReactNativePaper {
@@ -43,10 +44,13 @@ function App() {
   const USER = useAppSelector<IUser>((state) => state.user);
 
   const createRoom = () => {
-    const dataToSend = {
-      userId: USER.loggedInUser.id,
-    };
-    socket.emit("create_room", dataToSend);
+    if (USER.loggedInUser.id) {
+      const dataToSend = {
+        userId: USER.loggedInUser.id,
+      };
+      console.log("create-room", dataToSend);
+      socket.emit("create_room", dataToSend);
+    }
   };
 
   const getNumLike = (data: any) => {
@@ -78,6 +82,22 @@ function App() {
         isUnread: is_unread,
       })
     );
+  };
+
+  const handleReceivePrivateMessage = (payload: any) => {
+    const { message_id, contact_id, content, from, to, is_unread_at_to } =
+      payload;
+
+    const data = {
+      messageId: message_id,
+      contactId: contact_id,
+      content,
+      from,
+      to,
+      isUnreadAtTo: is_unread_at_to,
+    };
+
+    dispatch(ADD_MESSAGE(data));
   };
 
   const createPostFolders = async () => {
@@ -120,11 +140,15 @@ function App() {
     createRoom();
     createPostFolders();
 
+    socket.connect();
+
+    socket.on("messenger:send_private_message", handleReceivePrivateMessage);
+
     socket.on("notification:send_notification", handleReceiveNoti);
 
     socket.on("post:num_like", getNumLike);
     socket.on("post:num_listening", getNumListening);
-  }, []);
+  }, [USER.loggedInUser.id]);
 
   if (!isLoadingComplete) {
     return null;

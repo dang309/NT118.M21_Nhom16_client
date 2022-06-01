@@ -151,8 +151,7 @@ export default function NewsFeedScreen() {
             />
           </View>
 
-          {countNewsfeedPosts(state) > 0 &&
-            !isLoading &&
+          {!isLoading &&
             getNewsfeedPosts(state).map((post) => {
               return (
                 <Post

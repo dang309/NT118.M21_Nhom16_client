@@ -304,7 +304,7 @@ function BottomTabNavigator() {
       dispatch(START_LOADING());
       const params = {
         sortBy: "created_at:desc",
-        limit: 5,
+        limit: 3,
       };
       const res = await REQUEST({
         method: "GET",
@@ -319,7 +319,6 @@ function BottomTabNavigator() {
         let _avatar;
         let result = [];
         let temp = res.data.data.results;
-        console.log(USER);
         for (let i = 0; i < temp.length; i++) {
           _sound = await loadSound(temp[i]);
           _thumbnail = await loadThumbnail(temp[i]);
@@ -357,7 +356,7 @@ function BottomTabNavigator() {
 
   useEffect(() => {
     loadPosts();
-  }, []);
+  }, [USER.loggedInUser.id]);
 
   return (
     <BottomTab.Navigator

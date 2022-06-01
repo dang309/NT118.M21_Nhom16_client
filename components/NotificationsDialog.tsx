@@ -193,6 +193,7 @@ const NotificationsDialog = (props: Props) => {
       });
       const params = {
         filters: JSON.stringify(filters),
+        limit: 999,
       };
       const res = await REQUEST({
         method: "GET",

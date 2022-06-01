@@ -70,28 +70,13 @@ const ChatConversation = () => {
         content,
         from: USER.loggedInUser.id,
         to: route.params?.partnerId,
-        isUnread: false,
       };
       socket.emit("messenger:send_private_message", dataToSend);
-      dispatch(ADD_MESSAGE(dataToSend));
+      // dispatch(ADD_MESSAGE(dataToSend));
       setContent("");
     } catch (err) {
       console.error(err);
     }
-  };
-
-  const handleReceivePrivateMessage = (payload: any) => {
-    const { message_id, content, from, to, is_unread } = payload;
-
-    const data = {
-      messageId: message_id,
-      content,
-      from,
-      to,
-      isUnread: is_unread,
-    };
-
-    dispatch(ADD_MESSAGE(data));
   };
 
   const loadMessages = async () => {
@@ -121,7 +106,7 @@ const ChatConversation = () => {
             ...item,
             contactId: item.contactId,
             messageId: item.message_id,
-            isUnread: item.is_unread,
+            isUnreadAtTo: item.is_unread_at_to,
           };
         });
         dispatch(SET_MESSAGES(temp));
@@ -142,10 +127,6 @@ const ChatConversation = () => {
       isMounted = false;
       dispatch(CLEAR_MESSAGES());
     };
-  }, []);
-
-  useEffect(() => {
-    socket.on("messenger:send_private_message", handleReceivePrivateMessage);
   }, []);
 
   useEffect(() => {
