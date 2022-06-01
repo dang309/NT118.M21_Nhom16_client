@@ -214,6 +214,7 @@ const NotificationsDialog = (props: Props) => {
             createdAt: item.created_at,
           };
         });
+        console.log(temp);
         dispatch(SET_NOTIFICATIONS(temp));
       }
     } catch (err) {
