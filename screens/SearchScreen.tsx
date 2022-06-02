@@ -105,12 +105,11 @@ const SearchScreen = () => {
   const loadRecommendedUser = async () => {
     let filters = [];
     filters.push({
-      key: ["_id"],
-      operator: "in",
-      value: USER.loggedInUser.following,
+      key: "_id",
+      operator: "not",
+      value: USER.loggedInUser.id,
     });
     const params = {
-      limit: 5,
       filters: JSON.stringify(filters),
     };
     try {
@@ -121,19 +120,19 @@ const SearchScreen = () => {
       });
 
       if (res && res.data.result) {
-        let temp: ISingleUser[] = res.data.data.results;
-        let _avatar;
+        // let temp: ISingleUser[] = res.data.data.results;
+        // let _avatar;
 
-        let result: ISingleUser[] = [];
-        for (let i = 0; i < temp.length; i++) {
-          _avatar = await USER_SERVICES.loadAvatar(temp[i]);
-          if (!_avatar) continue;
-          result.push({
-            ...temp[i],
-            avatar: { ...temp[i].avatar, uri: _avatar },
-          });
-        }
-        setRecommendedUser(result);
+        // let result: ISingleUser[] = [];
+        // for (let i = 0; i < temp.length; i++) {
+        //   _avatar = await USER_SERVICES.loadAvatar(temp[i]);
+        //   if (!_avatar) continue;
+        //   result.push({
+        //     ...temp[i],
+        //     avatar: { ...temp[i].avatar, uri: _avatar },
+        //   });
+        // }
+        setRecommendedUser(res.data.data.results);
       }
     } catch (err) {
       console.error(err);

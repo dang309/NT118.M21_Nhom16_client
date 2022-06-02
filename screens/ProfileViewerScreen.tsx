@@ -1,4 +1,11 @@
-import { ScrollView, StatusBar, StyleSheet, View, Text } from "react-native";
+import {
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  View,
+  Text,
+  FlatList,
+} from "react-native";
 import { useState, useEffect, useContext } from "react";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -17,12 +24,13 @@ import {
   List,
   Title,
   ToggleButton,
+  ActivityIndicator,
 } from "react-native-paper";
 
 import PROFILE_CONSTANT from "./../constants/Profile";
 import { REQUEST } from "../utils";
 import { useAppDispatch, useAppSelector } from "./../app/hook";
-import { SET_USER, UPDATE_USER } from "../features/UserSlice";
+import { ISingleUser, SET_USER, UPDATE_USER } from "../features/UserSlice";
 import { IPost, IPostItem, SET_POST } from "../features/PostSlice";
 
 import { User } from "../types";
@@ -32,6 +40,12 @@ import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { Header, Post } from "../components";
 
 import { SocketContext } from "../context/socket";
+import { createDraftSafeSelector } from "@reduxjs/toolkit";
+import { RootState } from "../app/store";
+import UserServices from "../services/UserServices";
+import { READ_MESSAGES } from "../features/MessengerSlice";
+
+import { SingletonEventBus } from "../utils/event-bus";
 
 const renderStat = (header: string, quantity: number, styles: object) => {
   return (
@@ -48,86 +62,29 @@ export default function ProfileViewerScreen() {
   const dispatch = useAppDispatch();
   const USER = useAppSelector<IUser>((state) => state.user);
 
+  const state = useAppSelector<RootState>((state) => state);
+
   const navigation = useNavigation();
   const route: RouteProp<{ params: { userId: string } }, "params"> = useRoute();
 
   const socket = useContext(SocketContext);
 
   const [posts, setPosts] = useState<IPostItem[] | null>(null);
-  const [showDialogOptions, setShowDialogOptions] = useState<boolean>(false);
-  const [btnIndex, setBtnIndex] = useState<string>("posts");
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<ISingleUser | null>(null);
+  const [avatar, setAvatar] = useState<any>(null);
   const [toggleFollow, setToggleFollow] = useState<boolean>(false);
   const [toggleUnfollowDialog, setToggleUnfollowDialog] =
     useState<boolean>(false);
 
-  const handleEditProfile = () => {
-    navigation.navigate("EditProfile");
-    setShowDialogOptions(false);
-  };
-
-  const loadThumbnail = async (userId: string, avatar: any) => {
-    if (!avatar?.key.length || !avatar?.bucket.length) return;
-    const response = await fetch(
-      `https://api-nhom16.herokuapp.com/v1/users/avatar/${userId}`,
-      {
-        method: "GET",
-      }
-    );
-    let result;
-    const imageBlob = await response.blob();
-    const reader = new FileReader();
-    reader.readAsDataURL(imageBlob);
-    reader.onloadend = () => {
-      const base64data = reader.result;
-      result = base64data;
-    };
-    return result;
-  };
-
-  const loadPosts = async () => {
+  const loadUserById = async () => {
     try {
-      let filters = [];
-      filters.push({
-        key: "user_id",
-        operator: "=",
-        value: route.params?.userId,
-      });
-      const params = {
-        filters: JSON.stringify(filters),
-      };
-      const res = await REQUEST({
-        method: "GET",
-        url: "/posts",
-        params,
-      });
-
-      if (res && res.data.result) {
-        setPosts(res.data.data.results);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const getUserById = async () => {
-    try {
-      const res = await REQUEST({
-        method: "GET",
-        url: `/users/${route.params?.userId}`,
-      });
-
-      if (res && !res.data.result) return;
-      const { id, avatar } = res.data.data;
-      let temp = res.data.data;
-      const _avatar = await loadThumbnail(id, avatar);
-      temp = Object.assign(temp, {
-        avatar: _avatar || "",
-      });
-      if (temp.followers.some((o: string) => o === USER.loggedInUser.id)) {
+      const _user = await UserServices.getUserById(route.params.userId);
+      const _avatar = await UserServices.loadAvatar(_user);
+      if (_user?.followers.some((o: string) => o === USER.loggedInUser.id)) {
         setToggleFollow(true);
       }
-      setUser(temp);
+      setUser(_user);
+      setAvatar(_avatar);
     } catch (e) {
       console.error(e);
     }
@@ -145,30 +102,60 @@ export default function ProfileViewerScreen() {
     }
   };
 
-  const getNumFollowing = (data: any) => {
-    const { num_following } = data;
-    dispatch(UPDATE_USER({ following: num_following }));
-  };
-
-  const getNumFollowers = (data: any) => {
-    const { num_followers } = data;
-    setUser((prev: any) => ({ ...prev, followers: num_followers }));
-  };
-
   const initConversation = () => {
+    let _contactIds = [];
+    _contactIds.push(USER.loggedInUser.id);
+    _contactIds.push(route.params.userId);
+    socket.emit("messenger:read_message", {
+      contactId: _contactIds.sort().join("_"),
+    });
+    dispatch(
+      READ_MESSAGES({
+        contactId: _contactIds.sort().join("_"),
+      })
+    );
     navigation.navigate("ChatConversation", {
-      userId: route.params?.userId,
+      partnerId: route.params.userId,
+      contactId: _contactIds.sort().join("_"),
     });
   };
 
+  const getPosts = createDraftSafeSelector(
+    (state: RootState) => state.post,
+    (post) => {
+      return post.list
+        .map((item: IPostItem) => {
+          let temp = { ...item };
+          if (item.users_like.some((o) => o === USER.loggedInUser.id)) {
+            Object.assign(temp, { is_like_from_me: true });
+          }
+          if (item.users_listening.some((o) => o === USER.loggedInUser.id)) {
+            Object.assign(temp, { is_hear_from_me: true });
+          }
+          if (USER.loggedInUser.bookmarked_posts.some((o) => o === item.id)) {
+            Object.assign(temp, { is_bookmarked_from_me: true });
+          }
+          return { ...temp };
+        })
+        .filter((o: IPostItem) => o.posting_user.id === route.params?.userId);
+    }
+  );
+
   useEffect(() => {
-    loadPosts();
-    getUserById();
+    loadUserById();
   }, []);
 
   useEffect(() => {
-    socket.on("user:num_following", getNumFollowing);
-    socket.on("user:num_followers", getNumFollowers);
+    const registry = SingletonEventBus.getInstance().register(
+      "followers",
+      (num_followers: number) => {
+        setUser((prev: any) => ({ ...prev, followers: num_followers }));
+      }
+    );
+
+    return () => {
+      registry.unregister();
+    };
   }, []);
 
   return (
@@ -179,7 +166,7 @@ export default function ProfileViewerScreen() {
         title="Hồ sơ cá nhân"
         handleUpdateProfile={() => console.log("")}
       />
-      {user && (
+      {user ? (
         <View>
           <ScrollView>
             <View style={{ marginBottom: 8 }}>
@@ -192,15 +179,10 @@ export default function ProfileViewerScreen() {
                 <View
                   style={{ alignItems: "center", marginBottom: 8, padding: 8 }}
                 >
-                  {user.avatar?.length === 0 ? (
-                    <Avatar.Icon size={64} icon="person-outline" />
+                  {avatar ? (
+                    <Avatar.Image source={{ uri: avatar }} size={64} />
                   ) : (
-                    <Avatar.Image
-                      size={64}
-                      source={{
-                        uri: user.avatar,
-                      }}
-                    />
+                    <Avatar.Icon icon="person-outline" size={64} />
                   )}
 
                   <Title>{user.username}</Title>
@@ -310,12 +292,10 @@ export default function ProfileViewerScreen() {
             </View>
 
             <View>
-              {posts &&
-                posts.length > 0 &&
-                posts.map((item) => {
-                  return <Post key={item.id} {...item} />;
-                })}
-              {(!posts || (posts && posts.length === 0)) && (
+              {getPosts(state).map((post: IPostItem) => {
+                return <Post key={post.id} {...post} />;
+              })}
+              {getPosts(state).length === 0 && (
                 <View style={{ alignItems: "center" }}>
                   <Title style={{ color: "#999" }}>
                     Không có bài viết nào.
@@ -324,6 +304,12 @@ export default function ProfileViewerScreen() {
               )}
             </View>
           </ScrollView>
+        </View>
+      ) : (
+        <View
+          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+        >
+          <ActivityIndicator color="#00adb5" />
         </View>
       )}
 

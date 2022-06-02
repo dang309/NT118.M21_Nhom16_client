@@ -203,9 +203,9 @@ const Post = (props: Props) => {
   //     try {
   //       const URL = `https://api-nhom16.herokuapp.com/v1/users/avatar/${userId}`;
 
-  //       if (props.posting_user.avatar) {
+  //       if (props.posting_user?.avatar) {
   //         if (mounted) {
-  //           setAvatar(props.posting_user.avatar);
+  //           setAvatar(props.posting_user?.avatar);
   //         }
   //         return;
   //       }
@@ -235,7 +235,7 @@ const Post = (props: Props) => {
   //       console.error(err);
   //     }
   //   },
-  //   [props.posting_user.id]
+  //   [props.posting_user?.id]
   // );
 
   const playSound = async () => {
@@ -315,10 +315,10 @@ const Post = (props: Props) => {
   };
 
   const handleSelectProfile = () => {
-    if (props.posting_user.id === USER.loggedInUser.id) return;
-    if (props.setSelectedProfile) {
-      props.setSelectedProfile(props.posting_user.id);
-    }
+    if (props.posting_user?.id === USER.loggedInUser.id) return;
+    navigation.navigate("ProfileViewer", {
+      userId: props.posting_user.id,
+    });
   };
 
   const handleDeletePost = async () => {
@@ -367,10 +367,10 @@ const Post = (props: Props) => {
                 marginRight: 8,
               }}
             >
-              {props.posting_user.avatar.uri ? (
+              {props.posting_user?.avatar?.uri ? (
                 <Avatar.Image
                   size={32}
-                  source={{ uri: props.posting_user.avatar.uri }}
+                  source={{ uri: props.posting_user?.avatar?.uri }}
                 />
               ) : (
                 <Avatar.Icon size={32} icon="person" />
@@ -384,7 +384,7 @@ const Post = (props: Props) => {
                   marginBottom: -4,
                 }}
               >
-                {props.posting_user.username}
+                {props.posting_user?.username}
               </Text>
 
               <Caption>
@@ -403,13 +403,13 @@ const Post = (props: Props) => {
             </TouchableOpacity>
           }
         >
-          {USER.loggedInUser.id !== props.posting_user.id && (
+          {USER.loggedInUser.id !== props.posting_user?.id && (
             <Menu.Item onPress={() => {}} title="Hủy theo dõi" />
           )}
-          {USER.loggedInUser.id === props.posting_user.id && (
+          {USER.loggedInUser.id === props.posting_user?.id && (
             <Menu.Item onPress={() => {}} title="Chỉnh sửa" />
           )}
-          {USER.loggedInUser.id === props.posting_user.id && (
+          {USER.loggedInUser.id === props.posting_user?.id && (
             <>
               <Divider style={{ height: 1 }} />
               <Menu.Item
@@ -652,7 +652,7 @@ const Post = (props: Props) => {
               </Text>
             </View>
 
-            {USER.loggedInUser.id !== props.posting_user.id && (
+            {USER.loggedInUser.id !== props.posting_user?.id && (
               <TouchableOpacity onPress={handleBookmarkPost}>
                 {props.is_bookmarked_from_me ? (
                   <Icon name="bookmark-sharp" size={24} />

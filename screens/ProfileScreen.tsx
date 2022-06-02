@@ -216,6 +216,24 @@ export default function ProfileScreen() {
                             width: "100%",
                           }}
                         >
+                          {
+                            <View
+                              style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                              }}
+                            >
+                              <Icon
+                                name={USER.loggedInUser.sex ? "male" : "female"}
+                                size={20}
+                                style={{ marginRight: 8 }}
+                              />
+                              <Caption>
+                                {USER.loggedInUser.sex ? "Nam" : "Nữ"}
+                              </Caption>
+                            </View>
+                          }
+
                           {USER.loggedInUser.phone_number.length > 0 && (
                             <View
                               style={{

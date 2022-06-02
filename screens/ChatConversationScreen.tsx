@@ -3,6 +3,7 @@ import React, { useState, useEffect, useContext, useRef } from "react";
 import {
   ActivityIndicator,
   Avatar,
+  Caption,
   IconButton,
   Title,
 } from "react-native-paper";
@@ -46,6 +47,8 @@ const ChatConversation = () => {
   const [user, setUser] = useState<any>(null);
   const [avatar, setAvatar] = useState<any>(null);
 
+  const [loading, setLoading] = useState<boolean>(false);
+
   const loadUser = async () => {
     const _user = await USER_SERVICES.getUserById(route.params?.partnerId);
     const _avatar = await USER_SERVICES.loadAvatar(_user);
@@ -55,6 +58,7 @@ const ChatConversation = () => {
 
   const loadMessages = async () => {
     try {
+      setLoading(true);
       let _contactIds = [];
       _contactIds.push(USER.loggedInUser.id);
       _contactIds.push(route.params?.partnerId);
@@ -91,6 +95,8 @@ const ChatConversation = () => {
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -185,7 +191,7 @@ const ChatConversation = () => {
           paddingVertical: 8,
         }}
       >
-        {messenger.messages.length > 0 ? (
+        {messenger.messages.length > 0 && !loading && (
           <FlatList
             ref={(ref) => (flatListRef.current = ref)}
             onContentSizeChange={() =>
@@ -257,7 +263,15 @@ const ChatConversation = () => {
               );
             }}
           />
-        ) : (
+        )}
+        {messenger.messages.length === 0 && !loading && (
+          <View
+            style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+          >
+            <Caption>Chưa có tin nhắn nào.</Caption>
+          </View>
+        )}
+        {loading && (
           <View
             style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
           >

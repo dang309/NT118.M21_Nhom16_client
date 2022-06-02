@@ -50,9 +50,8 @@ export default function NewsFeedScreen() {
   const getNewsfeedPosts = createDraftSafeSelector(
     (state: RootState) => state.post,
     (post) => {
-      let temp = {};
       return post.list.map((item) => {
-        temp = { ...item };
+        let temp = { ...item };
         if (item.users_like.some((o) => o === USER.loggedInUser.id)) {
           Object.assign(temp, { is_like_from_me: true });
         }

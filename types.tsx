@@ -9,6 +9,7 @@ import {
   NavigatorScreenParams,
 } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import EditPostScreen from "./screens/EditPostScreen";
 
 declare global {
   namespace ReactNavigation {
@@ -33,8 +34,9 @@ export type RootStackParamList = {
       }
     | undefined;
   AddPost: undefined;
-  ChatConversation: { userId: string };
+  ChatConversation: { partnerId: string; contactId: string };
   EditProfile: undefined;
+  EditPost: undefined;
   ProfileViewer: { userId: string };
   Comment: { postId: string };
   Search: undefined;

@@ -133,6 +133,12 @@ function RootNavigator() {
       />
 
       <Stack.Screen
+        name="EditPost"
+        component={SCREENS.EditProfileScreen}
+        options={{ headerShown: false }}
+      />
+
+      <Stack.Screen
         name="ProfileViewer"
         component={SCREENS.ProfileViewerScreen}
         options={{ headerShown: false }}

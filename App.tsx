@@ -20,13 +20,15 @@ import { UPDATE_POST } from "./features/PostSlice";
 import { useAppDispatch, useAppSelector } from "./app/hook";
 
 import _omit from "lodash/omit";
-import { IUser } from "./features/UserSlice";
+import { IUser, UPDATE_USER } from "./features/UserSlice";
 import { ADD_NOTIFICATION } from "./features/NotificationSlice";
 import { DBContext, db } from "./context/db";
 import { FOLDERS } from "./context/files";
 
 import * as FileSystem from "expo-file-system";
 import { ADD_MESSAGE } from "./features/MessengerSlice";
+
+import { SingletonEventBus } from "./utils/event-bus";
 
 declare global {
   namespace ReactNativePaper {
@@ -135,6 +137,19 @@ function App() {
     }
   };
 
+  const getNumFollowing = (data: any) => {
+    const { num_following } = data;
+    dispatch(UPDATE_USER({ following: num_following }));
+  };
+
+  const getNumFollowers = (data: any) => {
+    const { num_followers } = data;
+    SingletonEventBus.getInstance().dispatch<number>(
+      "followers",
+      num_followers
+    );
+  };
+
   useEffect(() => {
     createRoom();
     createPostFolders();
@@ -147,6 +162,9 @@ function App() {
 
     socket.on("post:num_like", getNumLike);
     socket.on("post:num_listening", getNumListening);
+
+    socket.on("user:num_following", getNumFollowing);
+    socket.on("user:num_followers", getNumFollowers);
   }, [USER.loggedInUser.id]);
 
   if (!isLoadingComplete) {

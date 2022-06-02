@@ -131,48 +131,7 @@ const DescForm = ({ genres, desc, setDesc }: Props) => {
             );
           })}
         </View>
-        <Button
-          mode="contained"
-          icon="add-outline"
-          style={{ marginLeft: 8 }}
-          onPress={() => setToggleCustomGenreForm(true)}
-        >
-          Thêm
-        </Button>
       </View>
-
-      <Portal>
-        <Dialog
-          visible={toggleCustomGenreForm}
-          onDismiss={() => setToggleCustomGenreForm(false)}
-        >
-          <Dialog.Content>
-            <TextInput
-              mode="outlined"
-              autoComplete="off"
-              placeholder="Thêm thể loại..."
-              value={customGenre}
-              onChangeText={setCustomGenre}
-            />
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button
-              mode="contained"
-              style={{ marginRight: 8 }}
-              onPress={handleAddGenre}
-            >
-              Thêm
-            </Button>
-            <Button
-              mode="outlined"
-              style={{ borderWidth: 1, borderColor: "#00adb5" }}
-              onPress={() => setToggleCustomGenreForm(false)}
-            >
-              Hủy
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
     </View>
   );
 };
