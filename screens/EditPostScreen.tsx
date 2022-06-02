@@ -35,8 +35,9 @@ import { COMMON, REQUEST } from "../utils";
 
 import { useAppDispatch, useAppSelector } from "../app/hook";
 import { IUser } from "../features/UserSlice";
-import { ADD_POST } from "../features/PostSlice";
+import { ADD_POST, IPost, UPDATE_POST } from "../features/PostSlice";
 import { useNavigation } from "@react-navigation/core";
+import { RouteProp, useRoute } from "@react-navigation/native";
 
 interface IGenre {
   id: string;
@@ -45,15 +46,17 @@ interface IGenre {
 
 export default function EditPostScreen() {
   const USER = useAppSelector<IUser>((state) => state.user);
+  const post = useAppSelector<IPost>((state) => state.post);
   const dispatch = useAppDispatch();
 
   const navigation = useNavigation();
+
+  const route: RouteProp<{ params: { postId: string } }, "params"> = useRoute();
 
   const [mounted, setMounted] = useState<boolean>(false);
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [genres, setGenres] = useState<IGenre[]>([]);
   const [sound, setSound] = useState<any>(null);
-  const [recording, setRecording] = useState<any>(null);
   const [thumbnail, setThumbnail] = useState<any>(null);
   const [desc, setDesc] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -145,10 +148,9 @@ export default function EditPostScreen() {
   //   setPostInfo(temp);
   // };
 
-  const handleFinishAddingPost = async () => {
+  const handleFinishUpdatingPost = async () => {
     try {
       const dataToSend = new FormData();
-      dataToSend.append("user_id", USER.loggedInUser.id);
       dataToSend.append("caption", desc?.caption);
       dataToSend.append("title", desc?.title);
       dataToSend.append("sound", {
@@ -167,8 +169,8 @@ export default function EditPostScreen() {
       setIsLoading(true);
 
       const res = await REQUEST({
-        method: "POST",
-        url: "/posts",
+        method: "PUT",
+        url: `/posts/${route.params.postId}`,
         data: dataToSend,
         responseType: "json",
         headers: {
@@ -181,11 +183,11 @@ export default function EditPostScreen() {
 
       if (res && res.data.result) {
         let temp = res.data.data;
-        let _user = await COMMON.getUserById(res.data.data.user_id);
-        temp = Object.assign(temp, {
-          posting_user: _user,
-        });
-        dispatch(ADD_POST(temp));
+        const dataToDispatch = {
+          postId: route.params.postId,
+          dataToUpdate: temp,
+        };
+        dispatch(UPDATE_POST(dataToDispatch));
         navigation.navigate("Root", { screen: "NewsFeed" });
       }
     } catch (e) {
@@ -200,7 +202,23 @@ export default function EditPostScreen() {
       setCurrentStep((prev) => prev + 1);
     } else {
       // extractHashtag();
-      handleFinishAddingPost();
+      handleFinishUpdatingPost();
+    }
+  };
+
+  const loadPostById = async () => {
+    try {
+      console.log("post");
+      const res = await REQUEST({
+        method: "GET",
+        url: `/posts/${route.params.postId}`,
+      });
+
+      if (res && res.data.result) {
+        console.log(res.data);
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -217,6 +235,26 @@ export default function EditPostScreen() {
     };
   }, []);
 
+  useEffect(() => {
+    const selectedPost = post.list.filter((o) => o.id === route.params.postId);
+    if (selectedPost.length > 0) {
+      setSound({
+        name: selectedPost[0].sound.uri?.split("__")[1],
+        size: 5 * 1024 ** 2,
+        uri: selectedPost[0].sound.uri,
+      });
+      setThumbnail({
+        uri: selectedPost[0].thumbnail.uri,
+        name: selectedPost[0].thumbnail.uri?.split("__")[1],
+      });
+      setDesc({
+        title: selectedPost[0].title,
+        caption: selectedPost[0].caption,
+        genres: selectedPost[0].genre_id,
+      });
+    }
+  }, []);
+
   return (
     <View
       style={{
@@ -228,7 +266,7 @@ export default function EditPostScreen() {
     >
       <View>
         <Header
-          title="Thêm bài viết"
+          title="Sửa bài viết"
           showLeftIcon
           showRightIcon={false}
           handleUpdateProfile={() => console.log("")}

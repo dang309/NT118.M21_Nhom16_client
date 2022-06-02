@@ -14,12 +14,12 @@ type Props = {
 const ThumbnailPicker = ({ thumbnail, handlePickThumbnail }: Props) => {
   return (
     <View>
-      <View>
+      <View style={{ alignItems: "center" }}>
         {thumbnail && (
           <Image
             source={{ uri: thumbnail?.uri }}
             style={{
-              width: "100%",
+              width: "95%",
               height: 324,
               borderRadius: 16,
             }}

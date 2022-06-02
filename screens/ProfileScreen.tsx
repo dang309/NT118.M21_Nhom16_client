@@ -99,9 +99,21 @@ export default function ProfileScreen() {
   const getPersonalPost = createDraftSafeSelector(
     (state: RootState) => state,
     (state) => {
-      return state.post.list.filter(
-        (o) => o.posting_user.id === USER.loggedInUser.id
-      );
+      return state.post.list
+        .map((item) => {
+          let temp = { ...item };
+          if (item.users_like.some((o) => o === USER.loggedInUser.id)) {
+            Object.assign(temp, { is_like_from_me: true });
+          }
+          if (item.users_listening.some((o) => o === USER.loggedInUser.id)) {
+            Object.assign(temp, { is_hear_from_me: true });
+          }
+          if (USER.loggedInUser.bookmarked_posts.some((o) => o === item.id)) {
+            Object.assign(temp, { is_bookmarked_from_me: true });
+          }
+          return { ...temp };
+        })
+        .filter((o) => o.posting_user.id === USER.loggedInUser.id);
     }
   );
 

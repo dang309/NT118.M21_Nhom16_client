@@ -36,7 +36,9 @@ export type RootStackParamList = {
   AddPost: undefined;
   ChatConversation: { partnerId: string; contactId: string };
   EditProfile: undefined;
-  EditPost: undefined;
+  EditPost: {
+    postId: string;
+  };
   ProfileViewer: { userId: string };
   Comment: { postId: string };
   Search: undefined;

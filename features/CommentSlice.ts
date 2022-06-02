@@ -29,6 +29,7 @@ const CommentSlice = createSlice({
       state.list = action.payload;
     },
     ADD_COMMENT: (state, action) => {
+      if (action.payload.length < 1) return;
       const cmt = action.payload[0];
       if (state.list.some((o) => o.id === cmt.id)) return;
       state.list.push.apply(state.list, action.payload);

@@ -321,6 +321,13 @@ const Post = (props: Props) => {
     });
   };
 
+  const handlEditPost = async () => {
+    setToggleMenuOptions(false);
+    navigation.navigate("EditPost", {
+      postId: props.id,
+    });
+  };
+
   const handleDeletePost = async () => {
     try {
       const postId = props.id;
@@ -403,11 +410,11 @@ const Post = (props: Props) => {
             </TouchableOpacity>
           }
         >
-          {USER.loggedInUser.id !== props.posting_user?.id && (
+          {/* {USER.loggedInUser.id !== props.posting_user?.id && (
             <Menu.Item onPress={() => {}} title="Hủy theo dõi" />
-          )}
+          )} */}
           {USER.loggedInUser.id === props.posting_user?.id && (
-            <Menu.Item onPress={() => {}} title="Chỉnh sửa" />
+            <Menu.Item onPress={handlEditPost} title="Chỉnh sửa" />
           )}
           {USER.loggedInUser.id === props.posting_user?.id && (
             <>

@@ -134,7 +134,7 @@ function RootNavigator() {
 
       <Stack.Screen
         name="EditPost"
-        component={SCREENS.EditProfileScreen}
+        component={SCREENS.EditPostScreen}
         options={{ headerShown: false }}
       />
 
